@@ -19,7 +19,7 @@ export const revalidate = 60; // Revalidate every 60 seconds
 export const metadata: Metadata = constructMetadata({
   title: "Explore Learning",
   description:
-    "Choose how you want to continue learning with Traders Community — browse community courses or explore the full external Graphy course catalogue.",
+    "Choose how you want to continue learning with Traders Community - browse community courses or explore the full external Graphy course catalogue.",
   canonicalUrl: "/explore",
 });
 

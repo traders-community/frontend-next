@@ -41,7 +41,7 @@ export default function AboutPage() {
               We publish free analytical content and reports on companies within the <strong className="text-foreground font-semibold">Nifty 500 index</strong>, along with a premium learning channel focused on derivatives market concepts and strategies.
             </p>
             <p className="text-sm sm:text-base text-foreground/80">
-              Our core philosophy is straightforward: market success comes from deep business understanding, structured risk management, and independent analysis—not from guesswork, emotion, or speculative tips.
+              Our core philosophy is straightforward: market success comes from deep business understanding, structured risk management, and independent analysis - not from guesswork, emotion, or speculative tips.
             </p>
           </div>
         </section>

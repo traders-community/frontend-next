@@ -47,6 +47,9 @@ export default function RootLayout({
       className={`${ibmPlexSans.variable} ${manrope.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/icon.png?v=2" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/icon.png?v=2" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon.png?v=2" />
         <OrganizationJsonLd />
         <WebSiteJsonLd />
       </head>

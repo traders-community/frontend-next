@@ -19,7 +19,7 @@ export function constructMetadata({
 }: ConstructMetadataParams = {}): Metadata {
   const pageTitle = title
     ? `${title} | ${siteConfig.name}`
-    : `${siteConfig.name} — ${siteConfig.tagline}`;
+    : `${siteConfig.name} | ${siteConfig.tagline}`;
 
   const resolvedUrl = canonicalUrl
     ? `${siteConfig.url}${canonicalUrl.startsWith("/") ? canonicalUrl : `/${canonicalUrl}`}`
@@ -98,9 +98,13 @@ export function constructMetadata({
       },
     },
     icons: {
-      icon: "/logo.png",
-      shortcut: "/logo.png",
-      apple: "/logo.png",
+      icon: [
+        { url: "/icon.png?v=2" },
+        { url: "/icon.png?v=2", sizes: "32x32", type: "image/png" },
+        { url: "/icon.png?v=2", sizes: "192x192", type: "image/png" },
+      ],
+      shortcut: "/icon.png?v=2",
+      apple: "/icon.png?v=2",
     },
   };
 }
