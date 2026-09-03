@@ -32,9 +32,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu and synchronize scrolled state on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setIsScrolled(window.scrollY > 25);
   }, [pathname]);
 
   const navLinks = [
@@ -57,7 +58,7 @@ export function Navbar() {
           className={cn(
             "transition-all duration-300 ease-in-out flex items-center justify-between mx-auto",
             isScrolled
-              ? "max-w-4xl lg:max-w-5xl rounded-full bg-card/85 backdrop-blur-md border border-border/80 shadow-lg shadow-black/5 dark:shadow-black/25 px-5 py-2.5 sm:px-6"
+              ? "max-w-4xl lg:max-w-5xl rounded-full bg-white/60 dark:bg-card/85 backdrop-blur-xl border border-white/80 dark:border-border/80 shadow-lg shadow-black/5 dark:shadow-black/30 ring-1 ring-black/5 dark:ring-white/5 px-5 py-2.5 sm:px-6"
               : "w-full max-w-7xl bg-transparent border-transparent py-2 px-1 sm:px-2"
           )}
         >

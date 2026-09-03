@@ -35,8 +35,12 @@
   --color-muted-foreground: var(--muted-foreground);
 
   /* Typography */
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-outfit: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-ibm-plex), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-ibm-plex: var(--font-ibm-plex), sans-serif;
+  --font-manrope: var(--font-manrope), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
 }
 
 :root {
@@ -67,8 +71,9 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
 }
 
 body {
@@ -76,7 +81,7 @@ body {
   min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   transition: background-color 200ms ease, color 200ms ease;
@@ -238,6 +243,7 @@ body, footer, main, [role="dialog"], .bg-card, .bg-surface, .bg-background, .bor
 .rich-text h4,
 .rich-text h5,
 .rich-text h6 {
+  font-family: var(--font-heading);
   color: var(--foreground);
   font-weight: 700;
   line-height: 1.35;

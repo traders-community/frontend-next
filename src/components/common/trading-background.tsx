@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useMemo } from "react";
+import React from "react";
 
 interface WaveLayer {
   fillPath: string;
@@ -17,16 +16,16 @@ const HEIGHT = 400;
 const STEPS = 300;
 
 /**
- * Exact harmonic wave generator from the original React app (TradingBackground.jsx).
- * Uses the exact pseudorandom seeds, harmonics [1, 2, 3, 4, 5], and amplitude scaling
- * to recreate the authentic parabolic trading chart peaks.
+ * Exact harmonic wave generator with authentic parabolic trading chart curves.
+ * Uses seeds, harmonics [1, 2, 3, 4, 5], and amplitude scaling.
  *
  * One full period across WIDTH guarantees that y(0) === y(WIDTH) and slope(0) === slope(WIDTH),
  * creating a 100% gap-free, infinite animation across all viewport widths.
  */
 function generateOriginalGraphData(seedOffset: number, heightScale: number): string {
   const stepX = WIDTH / STEPS;
-  const startY = HEIGHT * 0.52;
+  // Baseline elevated to 0.46 so peaks climb higher and are clearly visible behind the search bar on mobile
+  const startY = HEIGHT * 0.46;
 
   const harmonics = [1, 2, 3, 4, 5];
   const waves = harmonics.map((freq, i) => {
@@ -54,7 +53,7 @@ function generateOriginalGraphData(seedOffset: number, heightScale: number): str
       yOffset += w.amp * Math.sin(w.freq * theta + w.phase);
     });
 
-    points.push(startY + yOffset);
+    points.push(Math.round((startY + yOffset) * 10) / 10);
   }
 
   let pathD = `M 0,${points[0]}`;
@@ -66,41 +65,41 @@ function generateOriginalGraphData(seedOffset: number, heightScale: number): str
   return `${pathD} L ${WIDTH},${HEIGHT} L 0,${HEIGHT} Z`;
 }
 
+const LAYERS: WaveLayer[] = [
+  // Layer 0: Deep background layer (seed 0, heightScale 65, slower)
+  {
+    fillPath: generateOriginalGraphData(0, 65),
+    colorDark: "#0d6e42",
+    colorLight: "#00a843",
+    opacityDark: 0.38,
+    opacityLight: 0.14,
+    duration: 48,
+    yOffset: 25,
+  },
+  // Layer 1: Middle layer (seed 100, heightScale 75)
+  {
+    fillPath: generateOriginalGraphData(100, 75),
+    colorDark: "#118452",
+    colorLight: "#00b84c",
+    opacityDark: 0.42,
+    opacityLight: 0.18,
+    duration: 36,
+    yOffset: 12,
+  },
+  // Layer 2: Foreground layer (seed 200, heightScale 85, balanced with others, NO harsh glow)
+  {
+    fillPath: generateOriginalGraphData(200, 85),
+    colorDark: "#159c60",
+    colorLight: "#00c950",
+    opacityDark: 0.48,
+    opacityLight: 0.22,
+    duration: 26,
+    yOffset: 0,
+  },
+];
+
 export function TradingBackground() {
-  const layers: WaveLayer[] = useMemo(() => {
-    return [
-      // Layer 0: Deep background layer (seed 0, heightScale 60, slower)
-      {
-        fillPath: generateOriginalGraphData(0, 60),
-        colorDark: "#0d6e42",
-        colorLight: "#00a843",
-        opacityDark: 0.35,
-        opacityLight: 0.12,
-        duration: 48,
-        yOffset: 20,
-      },
-      // Layer 1: Middle layer (seed 100, heightScale 70)
-      {
-        fillPath: generateOriginalGraphData(100, 70),
-        colorDark: "#118452",
-        colorLight: "#00b84c",
-        opacityDark: 0.40,
-        opacityLight: 0.16,
-        duration: 36,
-        yOffset: 10,
-      },
-      // Layer 2: Foreground layer (seed 200, heightScale 80, balanced with others, NO harsh glow)
-      {
-        fillPath: generateOriginalGraphData(200, 80),
-        colorDark: "#159c60",
-        colorLight: "#00c950",
-        opacityDark: 0.45,
-        opacityLight: 0.20,
-        duration: 26,
-        yOffset: -10,
-      },
-    ];
-  }, []);
+  const layers = LAYERS;
 
   return (
     <div
@@ -114,14 +113,14 @@ export function TradingBackground() {
             <React.Fragment key={idx}>
               {/* Dark Mode: Darker, desaturated, softer emerald */}
               <linearGradient id={`chart-grad-dark-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={layer.colorDark} stopOpacity="0.8" />
-                <stop offset="60%" stopColor={layer.colorDark} stopOpacity="0.3" />
+                <stop offset="0%" stopColor={layer.colorDark} stopOpacity="0.85" />
+                <stop offset="60%" stopColor={layer.colorDark} stopOpacity="0.35" />
                 <stop offset="100%" stopColor={layer.colorDark} stopOpacity="0.0" />
               </linearGradient>
 
-              {/* Light Mode: Clean, fresh, visible emerald on #f4f4f4 */}
+              {/* Light Mode: Clean, fresh, visible emerald on light bg */}
               <linearGradient id={`chart-grad-light-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={layer.colorLight} stopOpacity="0.75" />
+                <stop offset="0%" stopColor={layer.colorLight} stopOpacity="0.8" />
                 <stop offset="60%" stopColor={layer.colorLight} stopOpacity="0.25" />
                 <stop offset="100%" stopColor={layer.colorLight} stopOpacity="0.0" />
               </linearGradient>
@@ -130,8 +129,8 @@ export function TradingBackground() {
         </defs>
       </svg>
 
-      {/* Waves Container positioned at bottom of viewport */}
-      <div className="absolute bottom-0 left-0 right-0 h-[50vh] sm:h-[60vh] md:h-[68vh] overflow-hidden pointer-events-none">
+      {/* Waves Container positioned at bottom of viewport: reduced by 50px on mobile */}
+      <div className="absolute bottom-0 left-0 right-0 h-[calc(72vh-50px)] sm:h-[62vh] md:h-[68vh] overflow-hidden pointer-events-none">
         {layers.map((layer, idx) => (
           <div
             key={idx}
@@ -140,19 +139,16 @@ export function TradingBackground() {
               bottom: `${layer.yOffset}px`,
             }}
           >
-            {/* Viewport Track: 200vw guarantees zero screen edge gaps on all resolutions */}
+            {/* Viewport Track: 400vw on mobile, 280vw on tablet, 200vw on desktop */}
             <div
-              className="flex h-full will-change-transform"
+              className="flex h-full will-change-transform w-[400vw] sm:w-[280vw] md:w-[200vw] min-w-[400vw] sm:min-w-[280vw] md:min-w-[200vw]"
               style={{
-                width: "200vw",
-                minWidth: "200vw",
                 animation: `wave-scroll ${layer.duration}s linear infinite`,
               }}
             >
-              {/* Segment 1: Exactly 100vw spanning full screen width */}
+              {/* Segment 1: 200vw on mobile (2x wider waves, eliminating steep narrow spikes!), 140vw on tablet, 100vw on desktop */}
               <div
-                className="h-full shrink-0"
-                style={{ width: "100vw", minWidth: "100vw" }}
+                className="h-full shrink-0 w-[200vw] sm:w-[140vw] md:w-[100vw] min-w-[200vw] sm:min-w-[140vw] md:min-w-[100vw]"
               >
                 <svg
                   viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -161,6 +157,7 @@ export function TradingBackground() {
                 >
                   {/* Dark Mode Wave */}
                   <path
+                    suppressHydrationWarning
                     d={layer.fillPath}
                     fill={`url(#chart-grad-dark-${idx})`}
                     className="hidden dark:block"
@@ -168,6 +165,7 @@ export function TradingBackground() {
                   />
                   {/* Light Mode Wave */}
                   <path
+                    suppressHydrationWarning
                     d={layer.fillPath}
                     fill={`url(#chart-grad-light-${idx})`}
                     className="dark:hidden"
@@ -178,8 +176,7 @@ export function TradingBackground() {
 
               {/* Segment 2: Exact identical clone seamlessly following Segment 1 */}
               <div
-                className="h-full shrink-0"
-                style={{ width: "100vw", minWidth: "100vw" }}
+                className="h-full shrink-0 w-[200vw] sm:w-[140vw] md:w-[100vw] min-w-[200vw] sm:min-w-[140vw] md:min-w-[100vw]"
                 aria-hidden="true"
               >
                 <svg
@@ -189,6 +186,7 @@ export function TradingBackground() {
                 >
                   {/* Dark Mode Wave */}
                   <path
+                    suppressHydrationWarning
                     d={layer.fillPath}
                     fill={`url(#chart-grad-dark-${idx})`}
                     className="hidden dark:block"
@@ -196,6 +194,7 @@ export function TradingBackground() {
                   />
                   {/* Light Mode Wave */}
                   <path
+                    suppressHydrationWarning
                     d={layer.fillPath}
                     fill={`url(#chart-grad-light-${idx})`}
                     className="dark:hidden"

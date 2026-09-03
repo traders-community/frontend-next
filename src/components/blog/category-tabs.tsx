@@ -20,31 +20,33 @@ export function CategoryTabs({
     <nav
       aria-label="Article categories"
       className={cn(
-        "w-full flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-3 px-2 sm:px-4 gap-2.5 sm:gap-3.5 sm:flex-wrap",
+        "w-full overflow-x-auto no-scrollbar py-3 px-2 sm:px-4",
         className
       )}
     >
-      {categories.map((category) => {
-        const isActive = selectedCategory === category;
+      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-nowrap w-max mx-auto px-1">
+        {categories.map((category) => {
+          const isActive = selectedCategory === category;
 
-        return (
-          <button
-            key={category}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onSelectCategory(category)}
-            className={cn(
-              "shrink-0 min-h-10 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors duration-150 border select-none cursor-pointer",
-              isActive
-                ? "bg-primary border-primary text-black font-semibold shadow-md shadow-primary/25"
-                : "border-primary/50 text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/10 bg-transparent"
-            )}
-          >
-            {category}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={category}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onSelectCategory(category)}
+              className={cn(
+                "shrink-0 min-h-10 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors duration-150 border select-none cursor-pointer",
+                isActive
+                  ? "bg-primary border-primary text-black font-semibold shadow-md shadow-primary/25"
+                  : "border-primary/50 text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/10 bg-transparent"
+              )}
+            >
+              {category}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

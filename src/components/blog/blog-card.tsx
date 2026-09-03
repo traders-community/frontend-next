@@ -22,6 +22,7 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
     <article className="group h-full flex flex-col rounded-2xl border border-border/70 bg-card/90 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/50 hover:-translate-y-1 transition-all duration-300">
       <Link
         href={`/blog/${blog.slug || blog._id}`}
+        scroll={true}
         aria-label={`Read article: ${blog.title}`}
         className="flex flex-col h-full"
       >

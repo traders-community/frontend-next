@@ -178,8 +178,8 @@ export function BlogSection({
             <span className="mt-4 text-sm text-muted-foreground font-medium">Loading blog posts...</span>
           </div>
         ) : blogs.length > 0 ? (
-          /* Real Articles Grid without dimming or jarring opacity animation */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+          /* Real Articles Grid with 2 columns on tablet and 3/4 on desktop */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
             {blogs.map((blog, idx) => (
               <BlogCard key={blog._id} blog={blog} priority={idx < 4} />
             ))}
