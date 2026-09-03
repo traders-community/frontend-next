@@ -2,6 +2,12 @@ import { Suspense } from "react";
 import { BlogSection } from "@/components/blog/blog-section";
 import { TradingBackground } from "@/components/common/trading-background";
 import { blogService, categoryService } from "@/services";
+import { constructMetadata } from "@/lib/seo/metadata";
+
+export const metadata = constructMetadata({
+  canonicalUrl: "/",
+  image: "/featured_img.jpg",
+});
 
 export const revalidate = 60; // Incremental Static Regeneration every 60 seconds
 

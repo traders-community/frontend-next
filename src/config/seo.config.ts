@@ -1,13 +1,20 @@
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes("localhost")
+    ? process.env.NEXT_PUBLIC_SITE_URL
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://frontend-next-one-sigma.vercel.app";
+
 export const siteConfig = {
   name: "Traders Community",
   shortName: "TC",
-  tagline: "Learn. Adapt. Execute.",
+  tagline: "Enhancing market understanding through data-driven research and education.",
   description:
-    "Traders Community is a premier financial education and market research platform offering free insights on Nifty 500 companies, technical analysis, and derivatives market concepts.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://traderscommunity.in",
-  ogImage: "/logo.png",
+    "Traders Community is a financial education and market research brand dedicated to helping traders and investors enhance their understanding of the Indian stock market through free analytical content and educational resources.",
+  url: siteUrl,
+  ogImage: "/featured_img.jpg",
   locale: "en_IN",
-  author: "Traders Community Team",
+  author: "Traders Community",
   email: "care.traderscommunity@gmail.com",
   twitterHandle: "@TradersComm",
   socialLinks: {
