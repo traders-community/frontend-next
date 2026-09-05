@@ -53,7 +53,10 @@ export default function RootLayout({
         <OrganizationJsonLd />
         <WebSiteJsonLd />
       </head>
-      <body className="min-h-full font-sans bg-background text-foreground transition-colors duration-150 selection:bg-primary/20 selection:text-primary flex flex-col relative">
+      <body
+        suppressHydrationWarning
+        className="min-h-full font-sans bg-background text-foreground transition-colors duration-150 selection:bg-primary/20 selection:text-primary flex flex-col relative"
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

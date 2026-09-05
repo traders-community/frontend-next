@@ -70,26 +70,26 @@ export function Navbar() {
           >
             {/* Light Mode Logo */}
             <Image
-              src="/logo_black.png"
+              src="/logo_color.png"
               alt="Traders Community Logo"
               width={180}
               height={50}
               priority
               className={cn(
                 "w-auto object-contain transition-all duration-200 group-hover:scale-[1.03] pointer-events-none dark:hidden",
-                isScrolled ? "h-7" : "h-8 sm:h-9 md:h-8"
+                isScrolled ? "h-7" : "h-9 sm:h-10 md:h-9"
               )}
             />
             {/* Dark Mode Logo */}
             <Image
-              src="/logo.png"
+              src="/logo_color.png"
               alt="Traders Community Logo"
               width={180}
               height={50}
               priority
               className={cn(
                 "w-auto object-contain transition-all duration-200 group-hover:scale-[1.03] pointer-events-none hidden dark:block",
-                isScrolled ? "h-7" : "h-8 sm:h-9 md:h-8"
+                isScrolled ? "h-7" : "h-9 sm:h-10 md:h-9"
               )}
             />
           </Link>
