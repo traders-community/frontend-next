@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import { Blog, Comment, Category, SiteSettings, AdminProfile } from "@/types";
+import { Blog, Comment, CommentStatus, Category, SiteSettings, AdminProfile } from "@/types";
 
 export interface DashboardData {
   blogs: number;
@@ -84,6 +84,20 @@ export const adminService = {
    */
   async approveComment(id: string) {
     return api.post<{ success: boolean; message: string }>("/admin/approve-comment", { id });
+  },
+
+  /**
+   * Marks a comment as unapproved by ID.
+   */
+  async unapproveComment(id: string) {
+    return api.post<{ success: boolean; message: string }>("/admin/unapprove-comment", { id });
+  },
+
+  /**
+   * Updates comment status (pending, approved, unapproved).
+   */
+  async updateCommentStatus(id: string, status: CommentStatus) {
+    return api.post<{ success: boolean; message: string }>("/admin/update-comment-status", { id, status });
   },
 
   /**

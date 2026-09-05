@@ -26,12 +26,15 @@ export interface Category {
   updatedAt?: string;
 }
 
+export type CommentStatus = "pending" | "approved" | "unapproved";
+
 export interface Comment {
   _id: string;
   blog: string | { _id: string; title?: string };
   name: string;
   content: string;
   isApproved: boolean;
+  status?: CommentStatus;
   createdAt: string;
   updatedAt?: string;
 }
