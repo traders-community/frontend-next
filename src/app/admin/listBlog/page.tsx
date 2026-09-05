@@ -17,6 +17,8 @@ import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { ConfirmationModal } from "@/components/admin/confirmation-modal";
 import { AddBlogForm } from "@/components/admin/add-blog-form";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
 import { cn } from "@/lib/utils";
 
 export default function AdminListBlogPage() {
@@ -169,13 +171,20 @@ export default function AdminListBlogPage() {
       render: (blog) => (
         <div className="flex items-center gap-3.5 max-w-[320px] sm:max-w-md">
           {/* Thumbnail */}
-          <div className="w-16 aspect-video rounded-xl overflow-hidden bg-surface shrink-0 border border-border/70">
+          <div className="w-16 aspect-video rounded-xl overflow-hidden bg-surface shrink-0 border border-border/70 relative group">
             {blog.image ? (
-              <img
-                src={blog.image}
-                alt={blog.title}
-                className="h-full w-full object-cover"
-              />
+              <PhotoView src={blog.image}>
+                <div className="h-full w-full cursor-zoom-in relative">
+                  <img
+                    src={blog.image}
+                    alt={blog.title}
+                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <RiEyeLine className="h-4 w-4 text-white drop-shadow" />
+                  </div>
+                </div>
+              </PhotoView>
             ) : (
               <div className="h-full w-full flex items-center justify-center text-xs font-bold text-muted-foreground bg-primary/10 text-primary">
                 {blog.title.charAt(0).toUpperCase()}
@@ -299,8 +308,9 @@ export default function AdminListBlogPage() {
 
   return (
     <div className="space-y-6">
-      {/* Single Reusable Table Component */}
-      <AdminDataTable<Blog>
+      {/* Single Reusable Table Component with full-screen photo viewer */}
+      <PhotoProvider speed={() => 300} maskOpacity={0.85}>
+        <AdminDataTable<Blog>
         title="Blog Posts"
         subtitle="Manage articles, publication statuses, and resources across the platform"
         searchPlaceholder="Search posts..."
@@ -458,6 +468,7 @@ export default function AdminListBlogPage() {
           pageSizeOptions: [5, 10, 20, 50],
         }}
       />
+      </PhotoProvider>
 
       {/* Add Blog Modal */}
       <AdminModal

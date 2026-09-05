@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  RiLayoutGridLine,
+  RiDashboardLine,
   RiFileList3Line,
   RiAddCircleLine,
   RiChat1Line,
@@ -229,7 +229,7 @@ export function AdminSidebar() {
   }, [isBlogRoute]);
 
   const mainNav: NavItem[] = [
-    { label: "Dashboard", href: "/admin", icon: RiLayoutGridLine, exact: true },
+    { label: "Dashboard", href: "/admin", icon: RiDashboardLine, exact: true },
   ];
 
   const contentNav: NavItem[] = [

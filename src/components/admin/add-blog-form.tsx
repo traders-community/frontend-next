@@ -1,12 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import {
   RiImageAddLine,
   RiFilePdfLine,
   RiDeleteBinLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiLoader4Line,
+  RiEyeLine,
 } from "@remixicon/react";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
 import { categoryService } from "@/services/category.service";
 import { blogService } from "@/services/blog.service";
 import { Blog, Category } from "@/types";
@@ -21,6 +27,8 @@ export interface AddBlogFormProps {
   onDirtyChange?: (isDirty: boolean) => void;
 }
 
+type SlugStatus = "idle" | "checking" | "available" | "taken" | "error";
+
 export function AddBlogForm({
   initialData,
   isEdit = false,
@@ -29,6 +37,9 @@ export function AddBlogForm({
   onDirtyChange,
 }: AddBlogFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
+  const [slug, setSlug] = useState(initialData?.slug || "");
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugMessage, setSlugMessage] = useState("");
   const [subTitle, setSubTitle] = useState(initialData?.subTitle || "");
   const [category, setCategory] = useState(initialData?.category || "");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -50,11 +61,15 @@ export function AddBlogForm({
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const slugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync state if initialData changes
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");
+      setSlug(initialData.slug || "");
+      setSlugStatus("idle");
+      setSlugMessage("");
       setSubTitle(initialData.subTitle || "");
       setCategory(initialData.category || "");
       setDescription(initialData.description || "");
@@ -67,9 +82,61 @@ export function AddBlogForm({
     }
   }, [initialData]);
 
+  // Debounced slug availability check (edit mode only)
+  const checkSlug = useCallback(
+    (value: string) => {
+      if (!isEdit || !initialData?._id) return;
+      if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+
+      if (value === (initialData?.slug || "")) {
+        setSlugStatus("idle");
+        setSlugMessage("");
+        return;
+      }
+
+      if (!value.trim()) {
+        setSlugStatus("error");
+        setSlugMessage("Slug cannot be empty");
+        return;
+      }
+
+      setSlugStatus("checking");
+      setSlugMessage("");
+
+      slugDebounceRef.current = setTimeout(async () => {
+        try {
+          const res = await blogService.checkSlugAvailability(value, initialData._id);
+          if (res.data?.success) {
+            if (res.data.available) {
+              setSlugStatus("available");
+              setSlugMessage(res.data.normalized ? `Will be saved as: ${res.data.normalized}` : "Slug is available");
+            } else {
+              setSlugStatus("taken");
+              setSlugMessage("This slug is already used by another post");
+            }
+          } else {
+            setSlugStatus("error");
+            setSlugMessage(res.data?.message || "Could not check availability");
+          }
+        } catch {
+          setSlugStatus("error");
+          setSlugMessage("Could not check slug availability");
+        }
+      }, 500);
+    },
+    [isEdit, initialData?._id, initialData?.slug]
+  );
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSlug(val);
+    checkSlug(val);
+  };
+
   // Dirty state tracker
   useEffect(() => {
     const initialTitle = initialData?.title || "";
+    const initialSlug = initialData?.slug || "";
     const initialSubTitle = initialData?.subTitle || "";
     const initialCategory = initialData?.category || "";
     const initialDesc = initialData?.description || "";
@@ -77,6 +144,7 @@ export function AddBlogForm({
 
     const hasChanged = initialData
       ? title !== initialTitle ||
+        slug !== initialSlug ||
         subTitle !== initialSubTitle ||
         (Boolean(category) && category !== initialCategory) ||
         description !== initialDesc ||
@@ -95,6 +163,7 @@ export function AddBlogForm({
     onDirtyChange?.(hasChanged);
   }, [
     title,
+    slug,
     subTitle,
     category,
     description,
@@ -153,6 +222,19 @@ export function AddBlogForm({
     }
   };
 
+  // Slug status icon helper
+  const slugStatusIcon = () => {
+    if (slugStatus === "checking") return <RiLoader4Line className="h-3.5 w-3.5 animate-spin text-muted-foreground" />;
+    if (slugStatus === "available") return <RiCheckLine className="h-3.5 w-3.5 text-emerald-500" />;
+    if (slugStatus === "taken" || slugStatus === "error") return <RiCloseLine className="h-3.5 w-3.5 text-red-500" />;
+    return null;
+  };
+
+  const slugMessageColor =
+    slugStatus === "available" ? "text-emerald-500"
+    : (slugStatus === "taken" || slugStatus === "error") ? "text-red-500"
+    : "text-muted-foreground";
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
 
@@ -164,6 +246,13 @@ export function AddBlogForm({
     if (!category) {
       toast.error("Please select a category");
       return;
+    }
+
+    // Slug validation in edit mode
+    if (isEdit) {
+      if (!slug.trim()) { toast.error("Slug cannot be empty"); return; }
+      if (slugStatus === "taken") { toast.error("Please choose a different slug — this one is already in use"); return; }
+      if (slugStatus === "checking") { toast.error("Please wait while we verify the slug availability"); return; }
     }
 
     // Strip empty HTML like <p><br></p>
@@ -183,7 +272,7 @@ export function AddBlogForm({
 
     try {
       setIsSaving(true);
-      const blogPayload = {
+      const blogPayload: Record<string, unknown> = {
         title: title.trim(),
         subTitle: subTitle.trim(),
         description: cleanDescription,
@@ -191,6 +280,9 @@ export function AddBlogForm({
         isPublished: Boolean(isPublished),
         removePdf,
       };
+
+      // Always include slug when editing so the backend preserves/updates it
+      if (isEdit) blogPayload.slug = slug.trim();
 
       const formData = new FormData();
       formData.append("blog", JSON.stringify(blogPayload));
@@ -226,7 +318,7 @@ export function AddBlogForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 1. Title & Subtitle */}
+      {/* 1. Title, Slug & Subtitle */}
       <div className="space-y-4">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -241,6 +333,46 @@ export function AddBlogForm({
             required
           />
         </div>
+
+        {/* Slug field — always visible in edit mode (WordPress-style) */}
+        {isEdit && (
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+              URL Slug
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={slug}
+                onChange={handleSlugChange}
+                placeholder="url-friendly-slug"
+                spellCheck={false}
+                className={`w-full pl-4 pr-9 py-2.5 text-sm bg-card border rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all font-mono ${
+                  slugStatus === "taken" || slugStatus === "error"
+                    ? "border-red-500/60 focus:border-red-500"
+                    : slugStatus === "available"
+                    ? "border-emerald-500/60 focus:border-emerald-500"
+                    : "border-border/80 focus:border-primary"
+                }`}
+              />
+              {slugStatusIcon() && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  {slugStatusIcon()}
+                </span>
+              )}
+            </div>
+            <div className={`mt-1 flex items-center justify-between gap-2 text-[11px] ${slugMessageColor}`}>
+              <span>
+                {slugMessage || (slug === initialData?.slug ? "Current slug — change only if you want to update the URL" : "")}
+              </span>
+              {slug && (
+                <span className="text-muted-foreground shrink-0 truncate max-w-[220px]">
+                  /blog/<span className="font-mono text-foreground">{slug}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -312,32 +444,47 @@ export function AddBlogForm({
           />
 
           {imagePreview ? (
-            <div className="relative aspect-video w-full max-w-sm rounded-2xl overflow-hidden border border-border/80 group bg-muted">
-              <img
-                src={imagePreview}
-                alt="Cover Preview"
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="px-3 py-1.5 text-xs font-semibold bg-white text-black rounded-lg shadow cursor-pointer"
-                >
-                  Change
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImageFile(null);
-                    setImagePreview("");
-                  }}
-                  className="p-1.5 text-xs font-semibold bg-red-500 text-white rounded-lg shadow cursor-pointer"
-                >
-                  <RiDeleteBinLine className="h-4 w-4" />
-                </button>
+            <PhotoProvider speed={() => 300} maskOpacity={0.85}>
+              <div className="relative aspect-video w-full max-w-sm rounded-2xl overflow-hidden border border-border/80 group bg-muted">
+                <PhotoView src={imagePreview}>
+                  <img
+                    src={imagePreview}
+                    alt="Cover Preview"
+                    className="h-full w-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                  />
+                </PhotoView>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+                  <PhotoView src={imagePreview}>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 text-xs font-semibold bg-white text-black rounded-lg shadow cursor-pointer pointer-events-auto flex items-center gap-1 hover:bg-neutral-100 transition-colors"
+                      title="Preview in full screen"
+                    >
+                      <RiEyeLine className="h-3.5 w-3.5" />
+                      <span>Preview</span>
+                    </button>
+                  </PhotoView>
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="px-3 py-1.5 text-xs font-semibold bg-white text-black rounded-lg shadow cursor-pointer pointer-events-auto hover:bg-neutral-100 transition-colors"
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview("");
+                    }}
+                    className="p-1.5 text-xs font-semibold bg-red-500 text-white rounded-lg shadow cursor-pointer pointer-events-auto hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <RiDeleteBinLine className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            </div>
+            </PhotoProvider>
           ) : (
             <button
               type="button"
@@ -433,7 +580,7 @@ export function AddBlogForm({
         )}
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || (isEdit && (slugStatus === "taken" || slugStatus === "error"))}
           className="inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition-opacity shadow-xs cursor-pointer disabled:opacity-50"
         >
           {isSaving && (

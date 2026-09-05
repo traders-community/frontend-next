@@ -60,6 +60,20 @@ export const blogService = {
   },
 
   /**
+   * Checks whether a slug is available.
+   */
+  async checkSlugAvailability(slug: string, excludeId?: string) {
+    return api.get<{
+      success: boolean;
+      available: boolean;
+      normalized?: string;
+      message?: string;
+    }>("/blog/check-slug", {
+      params: { slug, excludeId },
+    });
+  },
+
+  /**
    * Fetches approved comments for a specific blog post.
    */
   async getBlogComments(blogId: string) {
