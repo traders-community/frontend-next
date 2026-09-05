@@ -64,32 +64,45 @@ async function apiRequest<T = any>(
   const url = resolveUrl(endpoint, queryString);
 
   // --- REQUEST INTERCEPTOR ---
-  const defaultHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+  const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+
+  const defaultHeaders: Record<string, string> = {};
+  if (!isFormData) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
 
   // Attach auth token if present in browser storage
   if (typeof window !== "undefined") {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        (defaultHeaders as Record<string, string>)["Authorization"] = token;
+        defaultHeaders["Authorization"] = token;
       }
     } catch {
       // Storage access may be restricted in some iframe / sandboxed environments
     }
   }
 
+  // Clean custom headers if sending FormData so browser automatically assigns boundary
+  const customHeaders = { ...(headers as Record<string, string> || {}) };
+  if (isFormData) {
+    delete customHeaders["Content-Type"];
+    delete customHeaders["content-type"];
+  }
+
   const fetchConfig: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
     ...rest,
     headers: {
       ...defaultHeaders,
-      ...headers,
+      ...customHeaders,
     },
   };
 
   // Next.js ISR & caching config
-  if (revalidate !== undefined || tags !== undefined) {
+  if (revalidate === 0 || revalidate === false) {
+    fetchConfig.cache = "no-store";
+    fetchConfig.next = { revalidate: 0 };
+  } else if (revalidate !== undefined || tags !== undefined) {
     fetchConfig.next = {
       ...(revalidate !== undefined ? { revalidate } : {}),
       ...(tags !== undefined ? { tags } : {}),
@@ -126,19 +139,23 @@ export const api = {
   get: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "GET", ...options }),
 
-  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, {
+  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => {
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    return apiRequest<T>(endpoint, {
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
       ...options,
-    }),
+    });
+  },
 
-  put: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, {
+  put: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => {
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    return apiRequest<T>(endpoint, {
       method: "PUT",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
       ...options,
-    }),
+    });
+  },
 
   delete: <T = any>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "DELETE", ...options }),

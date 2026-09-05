@@ -53,3 +53,20 @@ export function calculateReadingTime(content: string = ""): number {
   const wordsPerMinute = 200;
   return Math.max(1, Math.ceil(words / wordsPerMinute));
 }
+
+/**
+ * Generic debounce utility function for delaying execution of a function
+ * until after a certain wait time has elapsed since the last time it was invoked.
+ */
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number = 400
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}

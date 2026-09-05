@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans, Manrope, Inter } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
+import { AppShell } from "@/components/layout/app-shell";
 import { constructMetadata } from "@/lib/seo/metadata";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
 import { GoogleAnalytics } from "@/components/common/google-analytics";
 import { AppToastContainer } from "@/components/common/toast-provider";
-import { ScrollToTop } from "@/components/common/scroll-to-top";
-import { DisclaimerGate } from "@/components/common/disclaimer-gate";
 import "./globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -62,13 +59,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
         >
-          <DisclaimerGate />
-          <ScrollToTop />
-          <Navbar />
-          <main className="flex-1 relative z-10">
-            {children}
-          </main>
-          <Footer />
+          <AppShell>{children}</AppShell>
           <AppToastContainer />
         </ThemeProvider>
         <GoogleAnalytics />

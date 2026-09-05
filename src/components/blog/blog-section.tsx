@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Blog } from "@/types";
-import { blogService } from "@/services";
+import { blogService, categoryService } from "@/services";
 import { SearchBar } from "./search-bar";
 import { CategoryTabs } from "./category-tabs";
 import { BlogCard } from "./blog-card";
@@ -45,6 +45,7 @@ export function BlogSection({
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategoryParam);
   const [searchQuery, setSearchQuery] = useState<string>(initialQueryParam);
+  const [activeCategories, setActiveCategories] = useState<string[]>(categories);
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
@@ -54,6 +55,48 @@ export function BlogSection({
 
   const isInitialMount = useRef<boolean>(true);
   const requestIdRef = useRef<number>(0);
+
+  // Sync state if server prop updates
+  useEffect(() => {
+    if (categories && categories.length > 0) {
+      setActiveCategories(categories);
+    }
+  }, [categories]);
+
+  // Client-side auto-refresh on mount, tab focus, or navigation back to Home
+  useEffect(() => {
+    const refreshCategories = () => {
+      categoryService
+        .getPublicCategories(0)
+        .then((res) => {
+          if (res.data?.success && res.data.categories) {
+            const freshCategories = [
+              "All",
+              ...res.data.categories
+                .filter((c) => c.isActive !== false)
+                .map((c) => c.name),
+            ];
+            setActiveCategories((prev) => {
+              if (
+                prev.length === freshCategories.length &&
+                prev.every((val, index) => val === freshCategories[index])
+              ) {
+                return prev;
+              }
+              return freshCategories;
+            });
+          }
+        })
+        .catch(() => {});
+    };
+
+    refreshCategories();
+
+    window.addEventListener("focus", refreshCategories);
+    return () => {
+      window.removeEventListener("focus", refreshCategories);
+    };
+  }, []);
 
   // Synchronize URL query params without reloading the page
   const updateUrlParams = useCallback((cat: string, query: string) => {
@@ -131,6 +174,19 @@ export function BlogSection({
     fetchBlogs(selectedCategory, searchQuery, 1, false);
   }, [selectedCategory, searchQuery, fetchBlogs, initialBlogs.length, updateUrlParams]);
 
+  // If the currently selected category is no longer active, fallback gracefully to "All"
+  useEffect(() => {
+    if (
+      selectedCategory !== "All" &&
+      activeCategories.length > 1 &&
+      !activeCategories.includes(selectedCategory)
+    ) {
+      setSelectedCategory("All");
+      updateUrlParams("All", searchQuery);
+      fetchBlogs("All", searchQuery, 1, false);
+    }
+  }, [activeCategories, selectedCategory, searchQuery, updateUrlParams, fetchBlogs]);
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
   };
@@ -163,7 +219,7 @@ export function BlogSection({
       {/* Category Tabs Container with clean separation */}
       <div className="w-full max-w-5xl px-4 mb-10">
         <CategoryTabs
-          categories={categories}
+          categories={activeCategories}
           selectedCategory={selectedCategory}
           onSelectCategory={handleCategoryChange}
         />

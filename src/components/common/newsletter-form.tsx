@@ -9,7 +9,7 @@ export function NewsletterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
 
-  const handleSubscribe = async (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
     if (!cleanEmail) return;

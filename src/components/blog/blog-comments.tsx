@@ -29,7 +29,7 @@ export function BlogComments({ blogId, initialComments = [] }: BlogCommentsProps
     }
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!name.trim() || !content.trim()) {
       toast.error("Please enter both your name and comment.");

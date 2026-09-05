@@ -76,6 +76,68 @@ export const blogService = {
       content,
     });
   },
+
+  /**
+   * Fetches paginated blogs for admin management.
+   */
+  async getAllBlogsAdmin(
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      category?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+    } = {}
+  ) {
+    return api.get<{
+      success: boolean;
+      blogs: Blog[];
+      page: number;
+      totalPages: number;
+      total: number;
+      message?: string;
+    }>("/admin/blogs", { params });
+  },
+
+  /**
+   * Fetches a single blog for editing by admin.
+   */
+  async getAdminBlogById(id: string) {
+    return api.get<{ success: boolean; blog: Blog; message?: string }>(`/admin/blogs/${id}`);
+  },
+
+  /**
+   * Creates a new blog post with multipart form data (image, pdf).
+   */
+  async addBlog(formData: FormData) {
+    return api.post<{ success: boolean; message: string; blog?: Blog }>("/blog/add", formData);
+  },
+
+  /**
+   * Updates an existing blog post by ID with multipart form data.
+   */
+  async updateBlog(id: string, formData: FormData) {
+    return api.put<{ success: boolean; message: string; blog?: Blog }>(`/blog/${id}`, formData);
+  },
+
+  /**
+   * Deletes a blog post by ID.
+   */
+  async deleteBlog(id: string) {
+    return api.post<{ success: boolean; message: string }>("/blog/delete", { id });
+  },
+
+  /**
+   * Toggles the published status of a blog.
+   */
+  async togglePublish(id: string) {
+    return api.post<{ success: boolean; message: string; isPublished?: boolean }>(
+      "/blog/toggle-publish",
+      { id }
+    );
+  },
 };
 
 export default blogService;

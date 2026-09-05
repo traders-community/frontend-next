@@ -20,7 +20,7 @@ export const settingsService = {
   /**
    * Fetches public site settings (Explore page toggle, Graphy URL, etc.).
    */
-  async getPublicSettings(revalidate: number | false = 300) {
+  async getPublicSettings(revalidate: number | false = 0) {
     return api.get<PublicSettingsResponse>("/admin/public-settings", {
       revalidate,
     });
@@ -29,7 +29,7 @@ export const settingsService = {
   /**
    * Fetches public author/admin profile for author cards on blogs.
    */
-  async getPublicProfile(revalidate: number | false = 300) {
+  async getPublicProfile(revalidate: number | false = 0) {
     return api.get<PublicProfileResponse>("/admin/public-profile", {
       revalidate,
     });

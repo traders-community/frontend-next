@@ -9,13 +9,14 @@ export const metadata = constructMetadata({
   image: "/featured_img.jpg",
 });
 
-export const revalidate = 60; // Incremental Static Regeneration every 60 seconds
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function getInitialHomeData() {
   try {
     const [blogsRes, categoriesRes] = await Promise.all([
-      blogService.getBlogs({ page: 1, limit: 9, revalidate: 60 }),
-      categoryService.getPublicCategories(300),
+      blogService.getBlogs({ page: 1, limit: 9, revalidate: 0 }),
+      categoryService.getPublicCategories(0),
     ]);
 
     const initialBlogs = blogsRes.data?.blogs || [];

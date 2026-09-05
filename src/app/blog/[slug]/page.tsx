@@ -7,6 +7,7 @@ import { constructMetadata } from "@/lib/seo/metadata";
 import { ArticleJsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/seo.config";
 import { formatDate, calculateReadingTime, getPlainExcerpt } from "@/lib/utils";
+import { ArticleRenderer } from "@/components/blog/article-renderer";
 import { PdfAttachment } from "@/components/blog/pdf-attachment";
 import { AuthorBio } from "@/components/blog/author-bio";
 import { SocialShare } from "@/components/blog/social-share";
@@ -16,14 +17,15 @@ interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 60; // ISR cache revalidation every 60 seconds
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * Generate dynamic SEO metadata for each blog article
  */
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const res = await blogService.getBlogById(slug);
+  const res = await blogService.getBlogById(slug, 0);
   const blog = res.data?.blog;
 
   if (!blog) {
@@ -57,8 +59,8 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
 
   // Concurrent server-side data fetching
   const [blogRes, profileRes, commentsRes] = await Promise.all([
-    blogService.getBlogById(slug, 60),
-    settingsService.getPublicProfile(300),
+    blogService.getBlogById(slug, 0),
+    settingsService.getPublicProfile(0),
     blogService.getBlogComments(slug),
   ]);
 
@@ -123,9 +125,9 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
           </div>
         </header>
 
-        {/* Hero Image Banner - Matches Navbar/Footer Width */}
+        {/* Hero Image Banner - 16:9 Aspect Ratio */}
         <div className="w-full my-6 sm:my-10">
-          <div className="relative w-full aspect-[21/9] sm:aspect-[2/1] overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 shadow-xl shadow-primary/5 bg-muted">
+          <div className="relative w-full aspect-video overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 shadow-xl shadow-primary/5 bg-muted">
             {blog.image ? (
               <Image
                 src={blog.image}
@@ -147,10 +149,7 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
         {/* Content Container - Full Width matching Navbar and Footer */}
         <div className="w-full">
           {/* Main Rich-Text Content with Table & Media Overflow Containment */}
-          <article
-            className="rich-text w-full"
-            dangerouslySetInnerHTML={{ __html: blog.description }}
-          />
+          <ArticleRenderer html={blog.description} />
 
           {/* Attachments (PDF) */}
           {blog.pdf && blog.pdf.name && (

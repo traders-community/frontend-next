@@ -116,9 +116,10 @@ export function Footer() {
               <NewsletterForm />
             </div>
 
-            {/* Copyright */}
-            <div className="text-xs text-muted-foreground mt-auto pt-1">
-              <p>All rights reserved © {new Date().getFullYear()} Trader’s Community.</p>
+            {/* Copyright & Credits */}
+            <div className="text-xs text-muted-foreground mt-auto pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+              <p>© {new Date().getFullYear()} Trader’s Community. All rights reserved.</p>
+              
             </div>
           </div>
         </div>

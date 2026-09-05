@@ -18,8 +18,9 @@ export interface Blog {
 export interface Category {
   _id: string;
   name: string;
-  slug: string;
-  isActive: boolean;
+  slug?: string;
+  description?: string;
+  isActive?: boolean;
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -27,7 +28,7 @@ export interface Category {
 
 export interface Comment {
   _id: string;
-  blog: string;
+  blog: string | { _id: string; title?: string };
   name: string;
   content: string;
   isApproved: boolean;
@@ -37,9 +38,11 @@ export interface Comment {
 
 export interface SiteSettings {
   _id?: string;
-  showExplorePage: boolean;
-  graphyUrl: string;
-  exploreOffTarget: "courses" | "graphy";
+  siteName?: string;
+  exploreUrl?: string;
+  showExplorePage?: boolean;
+  graphyUrl?: string;
+  exploreOffTarget?: "courses" | "graphy";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -92,4 +95,15 @@ export interface ConstructMetadataParams {
   publishedTime?: string;
   modifiedTime?: string;
   authors?: string[];
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  token?: string;
+  message?: string;
 }

@@ -14,7 +14,8 @@ import {
   RiBookOpenLine,
 } from "@remixicon/react";
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = constructMetadata({
   title: "Explore Learning",
@@ -27,7 +28,7 @@ export default async function ExplorePage() {
   // Fetch public settings on server
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(60);
+    const res = await settingsService.getPublicSettings(0);
     settings = res.data?.settings;
   } catch (error) {
     console.error("Failed to load settings on Explore page:", error);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { RiSearchLine, RiCloseLine } from "@remixicon/react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface SearchBarProps {
   value: string;
@@ -20,12 +21,13 @@ export function SearchBar({
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedValue = useDebounce(localValue, 400);
 
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     const trimmed = localValue.trim();
     onChange(trimmed);
@@ -45,16 +47,12 @@ export function SearchBar({
     setLocalValue(e.target.value);
   };
 
-  // Debounced realtime search (400ms)
+  // Synchronize debounced value
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localValue !== value) {
-        onChange(localValue.trim());
-      }
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [localValue, onChange, value]);
+    if (debouncedValue !== value) {
+      onChange(debouncedValue.trim());
+    }
+  }, [debouncedValue, onChange, value]);
 
   return (
     <div className="w-full px-4 sm:px-0">

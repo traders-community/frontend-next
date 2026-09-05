@@ -10,7 +10,8 @@ import {
   RiSparklingLine,
 } from "@remixicon/react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = constructMetadata({
   title: "Courses",
@@ -22,7 +23,7 @@ export const metadata: Metadata = constructMetadata({
 export default async function CoursesPage() {
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(60);
+    const res = await settingsService.getPublicSettings(0);
     settings = res.data?.settings;
   } catch {
     // Graceful fallback
