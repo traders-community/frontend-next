@@ -8,7 +8,7 @@ import { RiSunLine, RiMoonLine, RiComputerLine } from "@remixicon/react";
  * Compact icon button toggle that flips between light and dark modes
  */
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -33,7 +33,11 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-      title={`Switch to ${isDark ? "light" : "dark"} mode`}
+      title={
+        theme === "system"
+          ? `System theme (${resolvedTheme}) — Click to switch to ${isDark ? "light" : "dark"}`
+          : `Theme: ${theme === "dark" ? "Dark" : "Light"} — Click to switch to ${isDark ? "light" : "dark"}`
+      }
       className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-foreground/80 transition-colors hover:text-primary active:scale-95 cursor-pointer focus-visible:outline-none ${className}`}
     >
       {isDark ? (
@@ -46,10 +50,10 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 }
 
 /**
- * Segmented control supporting explicit selection of Light, Dark, or System mode
+ * Segmented control supporting explicit selection of System (Default), Light, or Dark mode
  */
 export function ThemeSegmented({ className = "" }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -57,9 +61,9 @@ export function ThemeSegmented({ className = "" }: { className?: string }) {
   }, []);
 
   const options = [
+    { value: "system", label: "System", icon: RiComputerLine },
     { value: "light", label: "Light", icon: RiSunLine },
     { value: "dark", label: "Dark", icon: RiMoonLine },
-    { value: "system", label: "System", icon: RiComputerLine },
   ] as const;
 
   if (!mounted) {
@@ -94,9 +98,14 @@ export function ThemeSegmented({ className = "" }: { className?: string }) {
             role="radio"
             aria-checked={isActive}
             onClick={() => setTheme(value)}
+            title={
+              value === "system"
+                ? `System Default (currently ${resolvedTheme})`
+                : `${label} Mode`
+            }
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all cursor-pointer ${
               isActive
-                ? "bg-card text-foreground shadow-xs border border-border/50"
+                ? "bg-card text-foreground shadow-xs border border-border/50 font-semibold"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

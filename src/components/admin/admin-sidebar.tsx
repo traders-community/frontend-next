@@ -20,7 +20,10 @@ import {
   RiMenuLine,
   RiCloseLine,
   RiSideBarLine,
+  RiSunLine,
+  RiMoonLine,
 } from "@remixicon/react";
+import { useTheme } from "next-themes";
 import { authService } from "@/services/auth.service";
 import { adminService } from "@/services/admin.service";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -37,8 +40,14 @@ interface NavItem {
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleNavigate = (url: string) => {
+    setUserMenuOpen(false);
+    router.push(url);
+  };
 
   // Profile and quick menu state
   const [profileName, setProfileName] = useState<string>(() => {
@@ -130,9 +139,11 @@ export function AdminSidebar() {
   // Close quick menu on click outside or escape key
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setUserMenuOpen(false);
+      const target = event.target as Element | null;
+      if (target && target.closest("[data-user-menu]")) {
+        return;
       }
+      setUserMenuOpen(false);
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -467,10 +478,11 @@ export function AdminSidebar() {
       </div>
 
       {/* Bottom User Profile & Quick Actions Card (Entire card is clickable) */}
-      <div className="p-3 border-t border-border/70 relative" ref={userMenuRef}>
+      <div className="p-3 border-t border-border/70 relative" ref={userMenuRef} data-user-menu="true">
         {/* Floating Quick Actions Popup */}
         {userMenuOpen && (
           <div
+            data-user-menu="true"
             className={cn(
               "absolute bottom-full mb-2.5 bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150",
               isCollapsed ? "left-full ml-2 w-64 -bottom-2" : "left-2 right-2 w-auto"
@@ -488,33 +500,48 @@ export function AdminSidebar() {
 
             <div className="h-[1px] bg-border/60 my-1" />
 
-            {/* Quick Theme Switch Row */}
-            <div className="flex items-center justify-between px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface rounded-xl transition-colors">
-              <span>Theme Mode</span>
-              <ThemeToggle />
-            </div>
+            {/* Theme Mode Item - whole bar is clickable just like settings */}
+            <button
+              type="button"
+              onClick={() => {
+                setTheme(resolvedTheme === "dark" ? "light" : "dark");
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                {resolvedTheme === "dark" ? (
+                  <RiMoonLine className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <RiSunLine className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span>Theme Mode</span>
+              </div>
+              <span className="text-[11px] font-medium text-muted-foreground capitalize px-1.5 py-0.5 rounded-md bg-muted/60">
+                {theme === "system" ? `System (${resolvedTheme})` : resolvedTheme}
+              </span>
+            </button>
 
             <div className="h-[1px] bg-border/60 my-1" />
 
             {/* Profile Settings Link */}
-            <Link
-              href="/admin/settings?tab=profile"
-              onClick={() => setUserMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors"
+            <button
+              type="button"
+              onClick={() => handleNavigate("/admin/settings?tab=profile")}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors cursor-pointer text-left"
             >
               <RiUser3Line className="h-4 w-4 text-muted-foreground" />
               <span>Profile Settings</span>
-            </Link>
+            </button>
 
             {/* General Settings Link */}
-            <Link
-              href="/admin/settings"
-              onClick={() => setUserMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors"
+            <button
+              type="button"
+              onClick={() => handleNavigate("/admin/settings")}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors cursor-pointer text-left"
             >
               <RiSettings4Line className="h-4 w-4 text-muted-foreground" />
               <span>General Settings</span>
-            </Link>
+            </button>
 
             <div className="h-[1px] bg-border/60 my-1" />
 
@@ -525,7 +552,7 @@ export function AdminSidebar() {
                 setUserMenuOpen(false);
                 handleLogout();
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer text-left"
             >
               <RiLogoutBoxRLine className="h-4 w-4" />
               <span>Log out</span>

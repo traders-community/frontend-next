@@ -17,6 +17,17 @@ function SettingsContent() {
   const initialTab = searchParams.get("tab") === "profile" ? "profile" : "general";
 
   const [activeTab, setActiveTab] = useState<"general" | "profile" | "security">(initialTab);
+
+  // Sync activeTab when query param ?tab= updates (e.g. from sidebar links)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "profile" || tab === "security" || tab === "general") {
+      setActiveTab(tab);
+    } else {
+      setActiveTab("general");
+    }
+  }, [searchParams]);
+
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
