@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { RiSearchLine, RiCloseLine } from "@remixicon/react";
+import { RiSearchLine, RiCloseLine, RiLoader4Line } from "@remixicon/react";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface SearchBarProps {
@@ -10,6 +10,7 @@ interface SearchBarProps {
   onSubmit?: () => void;
   placeholder?: string;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function SearchBar({
@@ -18,10 +19,11 @@ export function SearchBar({
   onSubmit,
   placeholder = "Search reports, strategies, or company insights…",
   className = "",
+  isLoading = false,
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debouncedValue = useDebounce(localValue, 400);
+  const debouncedValue = useDebounce(localValue, 300);
 
   useEffect(() => {
     setLocalValue(value);
@@ -55,8 +57,9 @@ export function SearchBar({
   }, [debouncedValue, onChange, value]);
 
   return (
-    <div className="w-full px-4 sm:px-0">
+    <div suppressHydrationWarning className="w-full px-4 sm:px-0">
       <form
+        suppressHydrationWarning
         onSubmit={handleSubmit}
         role="search"
         aria-label="Search reports, strategies, or company insights"
@@ -90,12 +93,17 @@ export function SearchBar({
         {/* Single Right Search Button (Original Design) */}
         <button
           type="submit"
+          disabled={isLoading}
           className="flex-none bg-primary text-black font-semibold
                      h-10 w-10 sm:h-11 sm:w-11 m-1 rounded-full hover:bg-primary/90 active:scale-95
-                     transition-all duration-200 flex items-center justify-center shadow-sm cursor-pointer"
+                     transition-all duration-200 flex items-center justify-center shadow-sm cursor-pointer disabled:opacity-80"
           aria-label="Submit search"
         >
-          <RiSearchLine className="w-4 h-4 text-black" />
+          {isLoading ? (
+            <RiLoader4Line className="w-4 h-4 text-black animate-spin" />
+          ) : (
+            <RiSearchLine className="w-4 h-4 text-black" />
+          )}
           <span className="sr-only">Search</span>
         </button>
       </form>

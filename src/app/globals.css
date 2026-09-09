@@ -87,10 +87,8 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* Smooth 200ms transition for theme surfaces, borders, and text */
+/* Smooth 200ms transition for theme surfaces, borders, and text (header & nav manage their own transition-all) */
 body,
-header,
-nav,
 footer,
 main,
 aside,

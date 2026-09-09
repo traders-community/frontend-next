@@ -14,7 +14,10 @@ import { NewsletterForm } from "@/components/common/newsletter-form";
 
 export function Footer() {
   return (
-    <footer className="w-full bg-transparent text-foreground/80 py-10 sm:py-14 transition-colors relative z-10">
+    <footer
+      suppressHydrationWarning
+      className="w-full bg-transparent text-foreground/80 py-10 sm:py-14 transition-colors relative z-10"
+    >
       <div className="container max-w-7xl mx-auto px-5">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 lg:gap-16 items-stretch">
           {/* Left Column: Brand, Mission & Contact */}

@@ -103,6 +103,7 @@ export function TradingBackground() {
 
   return (
     <div
+      suppressHydrationWarning
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none overflow-hidden bg-transparent select-none z-0"
     >

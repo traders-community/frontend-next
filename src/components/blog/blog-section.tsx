@@ -52,6 +52,7 @@ export function BlogSection({
   const [, setTotal] = useState<number>(initialTotal);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
 
   const isInitialMount = useRef<boolean>(true);
   const requestIdRef = useRef<number>(0);
@@ -63,11 +64,11 @@ export function BlogSection({
     }
   }, [categories]);
 
-  // Client-side auto-refresh on mount, tab focus, or navigation back to Home
+  // Client-side auto-refresh on mount (if needed), tab focus, or navigation back to Home
   useEffect(() => {
     const refreshCategories = () => {
       categoryService
-        .getPublicCategories(0)
+        .getPublicCategories(60)
         .then((res) => {
           if (res.data?.success && res.data.categories) {
             const freshCategories = [
@@ -90,13 +91,16 @@ export function BlogSection({
         .catch(() => {});
     };
 
-    refreshCategories();
+    // Only fire immediately on mount if server didn't provide categories
+    if (!categories || categories.length <= 1) {
+      refreshCategories();
+    }
 
     window.addEventListener("focus", refreshCategories);
     return () => {
       window.removeEventListener("focus", refreshCategories);
     };
-  }, []);
+  }, [categories]);
 
   // Synchronize URL query params without reloading the page
   const updateUrlParams = useCallback((cat: string, query: string) => {
@@ -126,6 +130,8 @@ export function BlogSection({
         setLoadingMore(true);
       } else if (blogs.length === 0) {
         setIsInitialLoading(true);
+      } else {
+        setIsSearching(true);
       }
 
       try {
@@ -154,6 +160,7 @@ export function BlogSection({
         if (currentRequestId === requestIdRef.current) {
           setIsInitialLoading(false);
           setLoadingMore(false);
+          setIsSearching(false);
         }
       }
     },
@@ -206,18 +213,19 @@ export function BlogSection({
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div suppressHydrationWarning className="w-full flex flex-col items-center">
       {/* Search Bar Container with generous vertical breathing room */}
-      <div className="w-full max-w-xl mb-10 sm:mb-16">
+      <div suppressHydrationWarning className="w-full max-w-xl mb-10 sm:mb-16">
         <SearchBar
           value={searchQuery}
           onChange={handleSearchChange}
+          isLoading={isSearching}
           placeholder="Search reports, strategies, or company insights…"
         />
       </div>
 
       {/* Category Tabs Container with clean separation */}
-      <div className="w-full max-w-5xl px-4 mb-10">
+      <div suppressHydrationWarning className="w-full max-w-5xl px-4 mb-10">
         <CategoryTabs
           categories={activeCategories}
           selectedCategory={selectedCategory}
@@ -226,7 +234,7 @@ export function BlogSection({
       </div>
 
       {/* Articles Grid Container (No flickering, smooth transition) */}
-      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20">
+      <div suppressHydrationWarning className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20">
         {isInitialLoading ? (
           /* Clean regular spinner loader (No skeleton flicker) */
           <div className="flex flex-col items-center justify-center py-24">
@@ -235,7 +243,12 @@ export function BlogSection({
           </div>
         ) : blogs.length > 0 ? (
           /* Real Articles Grid with 2 columns on tablet and 3/4 on desktop */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+          <div
+            className={cn(
+              "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 transition-opacity duration-300",
+              isSearching && "opacity-50 pointer-events-none"
+            )}
+          >
             {blogs.map((blog, idx) => (
               <BlogCard key={blog._id} blog={blog} priority={idx < 4} />
             ))}
@@ -282,7 +295,10 @@ export function BlogSection({
               )}
             </button>
           ) : (
-            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground/80 py-2 px-4 rounded-full bg-card/40 border border-border/50">
+            <div
+              suppressHydrationWarning
+              className="inline-flex items-center gap-2 text-xs text-muted-foreground/80 py-2 px-4 rounded-full bg-card/40 border border-border/50"
+            >
               <RiCheckLine className="w-3.5 h-3.5 text-primary" />
               <span>You&apos;ve reached the end of the list</span>
             </div>
