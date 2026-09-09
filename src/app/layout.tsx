@@ -52,14 +52,13 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-full font-sans bg-background text-foreground transition-colors duration-150 selection:bg-primary/20 selection:text-primary flex flex-col relative"
+        className="min-h-full font-sans bg-background text-foreground transition-colors duration-200 selection:bg-primary/20 selection:text-primary flex flex-col relative"
       >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           storageKey="theme"
-          disableTransitionOnChange
         >
           <AppShell>{children}</AppShell>
           <AppToastContainer />

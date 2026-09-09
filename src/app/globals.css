@@ -87,8 +87,22 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* Smooth 200ms transition for theme surfaces, borders, and text (header & nav manage their own transition-all) */
-body, footer, main, [role="dialog"], .bg-card, .bg-surface, .bg-background, .border-border, .text-foreground, .text-muted-foreground {
+/* Smooth 200ms transition for theme surfaces, borders, and text */
+body,
+header,
+nav,
+footer,
+main,
+aside,
+section,
+[role="dialog"],
+.bg-card,
+.bg-surface,
+.bg-background,
+.bg-muted,
+.border-border,
+.text-foreground,
+.text-muted-foreground {
   transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 

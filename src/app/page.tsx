@@ -64,12 +64,22 @@ export default async function Home() {
       <TradingBackground />
       <div className="w-full min-h-screen flex flex-col items-center pt-10 sm:pt-18 pb-20 sm:pb-28">
       {/* Hero Header with generous vertical spacing */}
-      <header className="max-w-2xl mx-auto text-center px-4 pb-10 sm:pb-14">
-        <h1 className="text-3xl sm:text-5xl font-bold">
+      <header className="max-w-3xl mx-auto text-center px-4 pb-8 sm:pb-12">
+        {/* Pill Badge above Title */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-xs sm:text-sm font-medium text-foreground mb-4 sm:mb-5 shadow-xs">
+          <span>Learn</span>
+          <span className="text-primary font-bold">·</span>
+          <span>Adapt</span>
+          <span className="text-primary font-bold">·</span>
+          <span>Execute</span>
+        </div>
+
+        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">
           Traders Community
         </h1>
-        <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground font-medium tracking-wide">
-          Learn<span className="text-primary mx-2 font-bold">·</span>Adapt<span className="text-primary mx-2 font-bold">·</span>Execute
+
+        <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground font-normal">
+          Enhancing market understanding through data-driven research and education.
         </p>
       </header>
 
