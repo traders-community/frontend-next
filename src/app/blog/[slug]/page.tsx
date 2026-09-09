@@ -17,15 +17,15 @@ interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Enable ISR Caching on Vercel Edge with 60-second background revalidation
+export const revalidate = 60;
 
 /**
  * Generate dynamic SEO metadata for each blog article
  */
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const res = await blogService.getBlogById(slug, 0);
+  const res = await blogService.getBlogById(slug, 60);
   const blog = res.data?.blog;
 
   if (!blog) {
@@ -57,10 +57,10 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
 export default async function BlogDetailPage({ params }: BlogPageProps) {
   const { slug } = await params;
 
-  // Concurrent server-side data fetching
+  // Concurrent server-side data fetching with ISR caching
   const [blogRes, profileRes, commentsRes] = await Promise.all([
-    blogService.getBlogById(slug, 0),
-    settingsService.getPublicProfile(0),
+    blogService.getBlogById(slug, 60),
+    settingsService.getPublicProfile(60),
     blogService.getBlogComments(slug),
   ]);
 

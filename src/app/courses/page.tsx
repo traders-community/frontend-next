@@ -10,8 +10,8 @@ import {
   RiSparklingLine,
 } from "@remixicon/react";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Enable ISR Caching on Vercel Edge with 5-minute background revalidation
+export const revalidate = 300;
 
 export const metadata: Metadata = constructMetadata({
   title: "Courses",
@@ -23,7 +23,7 @@ export const metadata: Metadata = constructMetadata({
 export default async function CoursesPage() {
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(0);
+    const res = await settingsService.getPublicSettings(300);
     settings = res.data?.settings;
   } catch {
     // Graceful fallback

@@ -14,8 +14,8 @@ import {
   RiBookOpenLine,
 } from "@remixicon/react";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Enable ISR Caching on Vercel Edge with 5-minute background revalidation
+export const revalidate = 300;
 
 export const metadata: Metadata = constructMetadata({
   title: "Explore Learning",
@@ -25,10 +25,10 @@ export const metadata: Metadata = constructMetadata({
 });
 
 export default async function ExplorePage() {
-  // Fetch public settings on server
+  // Fetch public settings on server with ISR caching
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(0);
+    const res = await settingsService.getPublicSettings(300);
     settings = res.data?.settings;
   } catch (error) {
     console.error("Failed to load settings on Explore page:", error);
