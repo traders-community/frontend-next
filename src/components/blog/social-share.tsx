@@ -25,10 +25,11 @@ export function SocialShare({ title, subTitle }: SocialShareProps) {
   };
 
   const handleNativeShare = async () => {
-    const { title: shareTitle, text, url } = getSharePayload();
+    const { title: shareTitle, url } = getSharePayload();
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: shareTitle, text, url });
+        // Omitting redundant plain text body so iOS / WhatsApp renders the rich link card preview
+        await navigator.share({ title: shareTitle, url });
         toast.success("Article link shared");
       } catch {
         // User dismissed the native dialog
@@ -60,8 +61,11 @@ export function SocialShare({ title, subTitle }: SocialShareProps) {
         shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
         break;
       case "whatsapp":
-        shareUrl = `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`;
-        break;
+        // WhatsApp requires ONLY the raw URL for iOS/Android to generate the rich OpenGraph preview card.
+        // Prepending text causes WhatsApp iOS to treat the message as plain text and skips link scraping.
+        shareUrl = `https://wa.me/?text=${encodedUrl}`;
+        window.open(shareUrl, "_blank");
+        return;
       case "linkedin":
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;

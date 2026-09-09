@@ -48,7 +48,6 @@ export default function RootLayout({
         <link rel="icon" href="/icon.png?v=2" type="image/png" sizes="any" />
         <link rel="shortcut icon" href="/icon.png?v=2" type="image/png" />
         <link rel="apple-touch-icon" href="/icon.png?v=2" />
-        <link rel="image_src" href={`${siteConfig.url}/featured_img.jpg`} />
         <OrganizationJsonLd />
         <WebSiteJsonLd />
       </head>
