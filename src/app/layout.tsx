@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { constructMetadata } from "@/lib/seo/metadata";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
+import { siteConfig } from "@/config/seo.config";
 import { GoogleAnalytics } from "@/components/common/google-analytics";
 import { AppToastContainer } from "@/components/common/toast-provider";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({
         <link rel="icon" href="/icon.png?v=2" type="image/png" sizes="any" />
         <link rel="shortcut icon" href="/icon.png?v=2" type="image/png" />
         <link rel="apple-touch-icon" href="/icon.png?v=2" />
+        <link rel="image_src" href={`${siteConfig.url}/featured_img.jpg`} />
         <OrganizationJsonLd />
         <WebSiteJsonLd />
       </head>

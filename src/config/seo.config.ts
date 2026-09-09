@@ -1,9 +1,13 @@
-const siteUrl =
+const rawSiteUrl =
   process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes("localhost")
     ? process.env.NEXT_PUBLIC_SITE_URL
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "https://frontend-next-one-sigma.vercel.app";
+    : process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://traderscommunity.in";
+
+const siteUrl = rawSiteUrl.replace(/\/+$/, "");
 
 export const siteConfig = {
   name: "Traders Community",

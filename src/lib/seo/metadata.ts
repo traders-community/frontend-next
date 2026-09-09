@@ -21,9 +21,13 @@ export function constructMetadata({
     ? `${title} | ${siteConfig.name}`
     : `${siteConfig.name} | ${siteConfig.tagline}`;
 
-  const resolvedUrl = canonicalUrl
-    ? `${siteConfig.url}${canonicalUrl.startsWith("/") ? canonicalUrl : `/${canonicalUrl}`}`
-    : siteConfig.url;
+  const cleanSiteUrl = siteConfig.url.replace(/\/+$/, "");
+  const cleanCanonical = canonicalUrl
+    ? canonicalUrl.startsWith("/")
+      ? canonicalUrl
+      : `/${canonicalUrl}`
+    : "";
+  const resolvedUrl = canonicalUrl ? `${cleanSiteUrl}${cleanCanonical}` : cleanSiteUrl;
 
   const rawImage = image || siteConfig.ogImage;
   const isLocalOrInvalid =
@@ -36,11 +40,19 @@ export function constructMetadata({
 
   let resolvedImage = finalImage.startsWith("http")
     ? finalImage
-    : `${siteConfig.url}${finalImage.startsWith("/") ? finalImage : `/${finalImage}`}`;
+    : `${cleanSiteUrl}/${finalImage.replace(/^\/+/, "")}`;
 
-  // WhatsApp and some mobile crawlers prefer JPG/PNG over WebP; if using ImageKit, ensure JPEG delivery
-  if (resolvedImage.includes("ik.imagekit.io") && resolvedImage.includes("f-webp")) {
-    resolvedImage = resolvedImage.replace("f-webp", "f-jpg");
+  // WhatsApp and iOS scrapers strictly require standard JPEG or PNG under 300KB
+  // For ImageKit URLs: automatically apply transformation for 1200x630 progressive JPEG at ~75KB
+  if (resolvedImage.includes("ik.imagekit.io")) {
+    if (resolvedImage.includes("/tr:")) {
+      resolvedImage = resolvedImage.replace(/\/tr:[^/]+/, "/tr:w-1200,h-630,fo-auto,q-75,f-jpg");
+    } else {
+      const match = resolvedImage.match(/(https:\/\/ik\.imagekit\.io\/[^/]+)\/(.+)/);
+      if (match) {
+        resolvedImage = `${match[1]}/tr:w-1200,h-630,fo-auto,q-75,f-jpg/${match[2]}`;
+      }
+    }
   }
 
   return {
