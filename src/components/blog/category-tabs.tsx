@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { EASE } from "@/lib/motion";
 
 interface CategoryTabsProps {
   categories: string[];
@@ -29,11 +31,14 @@ export function CategoryTabs({
           const isActive = selectedCategory === category;
 
           return (
-            <button
+            <motion.button
               key={category}
               type="button"
               role="tab"
               aria-selected={isActive}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.12, ease: EASE.outCubic }}
               onClick={() => onSelectCategory(category)}
               className={cn(
                 "shrink-0 min-h-10 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors duration-150 border select-none cursor-pointer",
@@ -43,7 +48,7 @@ export function CategoryTabs({
               )}
             >
               {category}
-            </button>
+            </motion.button>
           );
         })}
       </div>

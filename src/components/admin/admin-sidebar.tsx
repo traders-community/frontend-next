@@ -24,11 +24,13 @@ import {
   RiMoonLine,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "motion/react";
 import { authService } from "@/services/auth.service";
 import { adminService } from "@/services/admin.service";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminProfileDropdown } from "./admin-profile-dropdown";
 import { cn } from "@/lib/utils";
+import { dropdownMenuVariants, modalBackdropVariants, accordionVariants, EASE } from "@/lib/motion";
 
 interface NavItem {
   label: string;
@@ -355,28 +357,37 @@ export function AdminSidebar() {
               )}
             </div>
 
-            {/* Nested Sub-items (when not collapsed and expanded) */}
-            {hasSubItems && !isCollapsed && blogsExpanded && (
-              <div className="ml-7 pl-3 border-l border-border/80 space-y-1 py-1">
-                {item.subItems!.map((sub) => {
-                  const subActive = pathname === sub.href;
-                  return (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      className={cn(
-                        "block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                        subActive
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
-                      )}
-                    >
-                      {sub.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+            {/* Nested Sub-items (when not collapsed and expanded) with smooth accordion animation */}
+            <AnimatePresence initial={false}>
+              {hasSubItems && !isCollapsed && blogsExpanded && (
+                <motion.div
+                  key="blogs-sub-items"
+                  variants={accordionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="ml-7 pl-3 border-l border-border/80 space-y-1 py-1 overflow-hidden"
+                >
+                  {item.subItems!.map((sub) => {
+                    const subActive = pathname === sub.href;
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className={cn(
+                          "block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                          subActive
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+                        )}
+                      >
+                        {sub.label}
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
@@ -432,7 +443,7 @@ export function AdminSidebar() {
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label="Toggle sidebar collapse"
           >
-            <RiSideBarLine className="h-4 w-4" />
+            <RiSideBarLine className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")} />
           </button>
 
           {/* Mobile Close Button */}
@@ -480,14 +491,20 @@ export function AdminSidebar() {
       {/* Bottom User Profile & Quick Actions Card (Entire card is clickable) */}
       <div className="p-3 border-t border-border/70 relative" ref={userMenuRef} data-user-menu="true">
         {/* Floating Quick Actions Popup */}
-        {userMenuOpen && (
-          <div
-            data-user-menu="true"
-            className={cn(
-              "absolute bottom-full mb-2.5 bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150",
-              isCollapsed ? "left-full ml-2 w-64 -bottom-2" : "left-2 right-2 w-auto"
-            )}
-          >
+        <AnimatePresence>
+          {userMenuOpen && (
+            <motion.div
+              key="sidebar-user-menu"
+              variants={dropdownMenuVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              data-user-menu="true"
+              className={cn(
+                "absolute bottom-full mb-2.5 bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-1.5 z-50",
+                isCollapsed ? "left-full ml-2 w-64 -bottom-2" : "left-2 right-2 w-auto"
+              )}
+            >
             {/* Header info */}
             <div className="px-3 py-2.5">
               <p className="text-xs font-semibold text-foreground truncate">
@@ -557,8 +574,9 @@ export function AdminSidebar() {
               <RiLogoutBoxRLine className="h-4 w-4" />
               <span>Log out</span>
             </button>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
         {/* The Clickable User Card (entire thing is clickable) */}
         <button
@@ -614,14 +632,14 @@ export function AdminSidebar() {
   return (
     <>
       {/* Desktop Persistent Sidebar with Animated Width */}
-      <aside
-        className={cn(
-          "hidden lg:flex flex-col shrink-0 h-screen sticky top-0 transition-all duration-300 ease-in-out z-30",
-          isCollapsed ? "w-[72px]" : "w-64 xl:w-68"
-        )}
+      <motion.aside
+        initial={false}
+        animate={{ width: isCollapsed ? 72 : 260 }}
+        transition={{ duration: 0.3, ease: EASE.outCubic }}
+        className="hidden lg:flex flex-col shrink-0 h-screen sticky top-0 z-30 overflow-hidden"
       >
         {sidebarContent}
-      </aside>
+      </motion.aside>
 
       {/* Mobile Top Navbar with Hamburger Toggle */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-2.5 bg-card/95 backdrop-blur-md border-b border-border/80">
@@ -650,32 +668,35 @@ export function AdminSidebar() {
       </div>
 
       {/* Mobile Drawer Overlay with Smooth Slide In / Out */}
-      <div
-        className={cn(
-          "fixed inset-0 z-50 flex lg:hidden transition-all duration-300 ease-in-out",
-          mobileOpen ? "visible pointer-events-auto" : "invisible pointer-events-none delay-300"
-        )}
-      >
-        {/* Backdrop Fade In / Out */}
-        <div
-          className={cn(
-            "fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out",
-            mobileOpen ? "opacity-100" : "opacity-0"
-          )}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 flex lg:hidden">
+            {/* Backdrop Fade In / Out */}
+            <motion.div
+              key="mobile-drawer-backdrop"
+              variants={modalBackdropVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+              onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
+            />
 
-        {/* Slide-in Drawer Container */}
-        <div
-          className={cn(
-            "relative w-72 max-w-[85vw] h-full shadow-2xl z-50 transition-transform duration-300 ease-in-out transform",
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          {sidebarContent}
-        </div>
-      </div>
+            {/* Slide-in Drawer Container */}
+            <motion.div
+              key="mobile-drawer-content"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.32, ease: EASE.outCubic }}
+              className="relative w-72 max-w-[85vw] h-full shadow-2xl z-50 bg-card text-card-foreground"
+            >
+              {sidebarContent}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "motion/react";
 import { RiTimeLine, RiCalendarLine } from "@remixicon/react";
 import { Blog } from "@/types";
 import { formatDate, getPlainExcerpt, calculateReadingTime } from "@/lib/utils";
+import { EASE } from "@/lib/motion";
 
 interface BlogCardProps {
   blog: Blog;
@@ -19,7 +21,11 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
   const excerpt = getPlainExcerpt(blog.description, 140);
 
   return (
-    <article className="group h-full flex flex-col rounded-2xl border border-border/70 bg-card/90 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/50 hover:-translate-y-1 transition-all duration-300">
+    <motion.article
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.22, ease: EASE.outCubic }}
+      className="group h-full flex flex-col rounded-2xl border border-border/70 bg-card/90 backdrop-blur-sm overflow-hidden shadow-xs hover:shadow-xl hover:shadow-primary/5 hover:border-primary/50 transition-colors duration-200"
+    >
       <Link
         href={`/blog/${blog.slug || blog._id}`}
         scroll={true}
@@ -81,7 +87,7 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
           </p>
         </div>
       </Link>
-    </article>
+    </motion.article>
   );
 }
 

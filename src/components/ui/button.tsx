@@ -1,6 +1,10 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { EASE } from "@/lib/motion";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -45,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:pointer-events-none select-none";
+      "inline-flex items-center justify-center gap-2 font-semibold cursor-pointer disabled:opacity-50 disabled:pointer-events-none select-none transition-colors duration-200";
 
     const combinedClasses = cn(
       baseStyles,
@@ -54,23 +58,40 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className
     );
 
+    const motionProps = !disabled
+      ? {
+          whileHover: { scale: 1.02 },
+          whileTap: { scale: 0.97 },
+          transition: { duration: 0.14, ease: EASE.outCubic },
+        }
+      : {};
+
     if (href) {
       return (
-        <Link href={href} className={combinedClasses}>
-          {children}
-        </Link>
+        <motion.div
+          className="inline-flex"
+          {...motionProps}
+        >
+          <Link
+            href={href}
+            className={combinedClasses}
+          >
+            {children}
+          </Link>
+        </motion.div>
       );
     }
 
     return (
-      <button
+      <motion.button
         ref={ref}
         disabled={disabled}
         className={combinedClasses}
-        {...props}
+        {...motionProps}
+        {...(props as any)}
       >
         {children}
-      </button>
+      </motion.button>
     );
   }
 );

@@ -11,6 +11,7 @@ import {
 } from "@remixicon/react";
 
 import { NewsletterForm } from "@/components/common/newsletter-form";
+import { FadeIn } from "@/components/motion";
 
 export function Footer() {
   return (
@@ -18,7 +19,8 @@ export function Footer() {
       suppressHydrationWarning
       className="w-full bg-transparent text-foreground/80 py-10 sm:py-14 transition-colors relative z-10"
     >
-      <div className="container max-w-7xl mx-auto px-5">
+      <FadeIn direction="up" distance={20} duration={0.48}>
+        <div className="container max-w-7xl mx-auto px-5">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 lg:gap-16 items-stretch">
           {/* Left Column: Brand, Mission & Contact */}
           <div className="flex flex-col justify-between gap-6 h-full">
@@ -122,12 +124,12 @@ export function Footer() {
             {/* Copyright & Credits */}
             <div className="text-xs text-muted-foreground mt-auto pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
               <p>© {new Date().getFullYear()} Trader’s Community. All rights reserved.</p>
-              
             </div>
           </div>
         </div>
       </div>
-    </footer>
+    </FadeIn>
+  </footer>
   );
 }
 

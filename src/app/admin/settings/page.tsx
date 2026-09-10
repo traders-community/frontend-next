@@ -11,6 +11,8 @@ import {
 import { adminService } from "@/services/admin.service";
 import { AdminProfile, SiteSettings } from "@/types";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "motion/react";
+import { EASE } from "@/lib/motion";
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -218,8 +220,16 @@ function SettingsContent() {
         </button>
       </div>
 
-      {/* Profile Form */}
-      {activeTab === "profile" && (
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2, ease: EASE.outCubic }}
+        >
+          {/* Profile Form */}
+          {activeTab === "profile" && (
         <form
           onSubmit={handleSaveProfile}
           className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-6 sm:p-7 space-y-5 shadow-xs"
@@ -404,6 +414,8 @@ function SettingsContent() {
           </div>
         </form>
       )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

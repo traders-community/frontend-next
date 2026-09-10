@@ -13,7 +13,9 @@ import {
   RiSunLine,
   RiMoonLine,
 } from "@remixicon/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "next-themes";
+import { dropdownMenuVariants } from "@/lib/motion";
 
 interface AdminProfileDropdownProps {
   className?: string;
@@ -176,13 +178,19 @@ export function AdminProfileDropdown({
       </button>
 
       {/* Floating Dropdown Menu */}
-      {menuOpen && (
-        <div
-          className={cn(
-            "absolute top-full mt-2 w-56 rounded-2xl bg-card border border-border/80 shadow-xl p-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-150",
-            align === "right" ? "right-0" : "left-0"
-          )}
-        >
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            key="admin-profile-menu"
+            variants={dropdownMenuVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={cn(
+              "absolute top-full mt-2 w-56 rounded-2xl bg-card border border-border/80 shadow-xl p-1.5 z-50",
+              align === "right" ? "right-0" : "left-0"
+            )}
+          >
           {/* User Info Header */}
           <div className="px-3 py-2.5">
             <p className="text-xs font-semibold text-foreground truncate">
@@ -252,8 +260,9 @@ export function AdminProfileDropdown({
             <RiLogoutBoxRLine className="h-4 w-4" />
             <span>Log out</span>
           </button>
-        </div>
+        </motion.div>
       )}
+    </AnimatePresence>
     </div>
   );
 }

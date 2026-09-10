@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { authService } from "@/services/auth.service";
+import { motion, AnimatePresence } from "motion/react";
+import { EASE } from "@/lib/motion";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,8 +48,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10">
-          {children}
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 flex flex-col">
+          <AnimatePresence mode="wait" initial={true}>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: EASE.outCubic }}
+              className="w-full flex-1 flex flex-col"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
         <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-6 border-t border-border/50 text-xs text-muted-foreground/75 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>Traders Community Admin • © {new Date().getFullYear()}</span>

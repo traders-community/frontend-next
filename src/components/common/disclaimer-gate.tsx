@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   RiErrorWarningLine,
   RiArrowRightLine,
@@ -9,6 +10,7 @@ import {
   RiInformationLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
+import { modalBackdropVariants, modalCardVariants } from "@/lib/motion";
 
 const ACK_KEY = "tc_disclaimer_ack_v1";
 const EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -127,18 +129,35 @@ export function DisclaimerGate() {
     window.location.replace("https://www.google.com");
   };
 
-  // Prevent SSR hydration mismatch
-  if (!mounted || !open) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="disclaimer-title"
-      aria-describedby="disclaimer-body"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
-    >
-      <div className="flex w-full max-w-2xl h-[88vh] sm:h-[84vh] max-h-[760px] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-primary/40 bg-card text-foreground shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-150">
+    <AnimatePresence>
+      {mounted && open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disclaimer-title"
+          aria-describedby="disclaimer-body"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 overflow-hidden"
+        >
+          {/* Backdrop: Smooth Fade */}
+          <motion.div
+            key="disclaimer-backdrop"
+            variants={modalBackdropVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="fixed inset-0 bg-black/75 backdrop-blur-md"
+          />
+
+          {/* Modal Card: Smooth Scale/Fade-in-up */}
+          <motion.div
+            key="disclaimer-card"
+            variants={modalCardVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="relative z-10 flex w-full max-w-2xl h-[88vh] sm:h-[84vh] max-h-[760px] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-primary/40 bg-card text-foreground shadow-2xl shadow-black/50"
+          >
         {/* Compact Header */}
         <div className="flex items-center gap-3 border-b border-border/80 bg-surface/60 px-4 py-3 sm:px-6 sm:py-3.5 shrink-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 dark:bg-primary/15 dark:text-primary dark:border-primary/30">
@@ -281,8 +300,10 @@ export function DisclaimerGate() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
+  )}
+</AnimatePresence>
   );
 }
 

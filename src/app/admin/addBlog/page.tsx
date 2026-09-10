@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { AddBlogForm } from "@/components/admin/add-blog-form";
 import { ConfirmationModal } from "@/components/admin/confirmation-modal";
+import { FadeIn } from "@/components/motion";
 
 export default function AdminAddBlogPage() {
   const router = useRouter();
@@ -21,7 +22,8 @@ export default function AdminAddBlogPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in-50 duration-300">
+    <FadeIn duration={0.38} distance={14}>
+      <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
@@ -67,6 +69,7 @@ export default function AdminAddBlogPage() {
         }}
         onCancel={() => setShowConfirmLeave(false)}
       />
-    </div>
+      </div>
+    </FadeIn>
   );
 }

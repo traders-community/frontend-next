@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { RiArrowDownSLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
+import { accordionVariants } from "@/lib/motion";
 
 interface FAQItem {
   id: string;
@@ -59,14 +61,15 @@ export function FaqAccordion() {
           <div
             key={faq.id}
             className={cn(
-              "rounded-2xl border transition-all duration-200 overflow-hidden",
+              "rounded-2xl border transition-colors duration-200 overflow-hidden",
               isOpen
                 ? "border-primary/50 bg-card/95 shadow-md shadow-primary/5"
                 : "border-border/80 bg-card/60 hover:border-border hover:bg-card/80"
             )}
           >
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.99 }}
               onClick={() => toggle(faq.id)}
               aria-expanded={isOpen}
               aria-controls={`${faq.id}-content`}
@@ -85,27 +88,29 @@ export function FaqAccordion() {
               >
                 <RiArrowDownSLine className="h-4 w-4" />
               </div>
-            </button>
+            </motion.button>
 
-            {/* Smooth CSS Grid Height Physics Animation */}
-            <div
-              id={`${faq.id}-content`}
-              role="region"
-              className={cn(
-                "grid transition-all duration-300 ease-in-out",
-                isOpen
-                  ? "grid-rows-[1fr] opacity-100"
-                  : "grid-rows-[0fr] opacity-0"
+            {/* Smooth Motion Accordion Physics Animation */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  id={`${faq.id}-content`}
+                  role="region"
+                  key="faq-content"
+                  variants={accordionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed border-t border-border/50 pt-3">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0">
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed border-t border-border/50 pt-3">
-                    {faq.answer}
-                  </p>
-                </div>
-              </div>
-            </div>
+            </AnimatePresence>
           </div>
         );
       })}

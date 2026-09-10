@@ -10,10 +10,12 @@ import {
   RiCustomerService2Line,
   RiArrowRightUpLine,
 } from "@remixicon/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ContactModal } from "@/components/common/contact-modal";
 import { cn } from "@/lib/utils";
+import { dropdownMenuVariants } from "@/lib/motion";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -139,7 +141,8 @@ export function Navbar() {
           <div className="flex md:hidden items-center gap-1.5">
             <ThemeToggle />
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.92 }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
@@ -150,53 +153,62 @@ export function Navbar() {
               ) : (
                 <RiMenuLine className="h-6 w-6" />
               )}
-            </button>
+            </motion.button>
           </div>
         </nav>
 
-        {/* Mobile Dropdown Panel: Positioned absolutely on top of content (no content push down, no background blur) */}
-        {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 z-50 w-full px-4 pt-2">
-            <div className="max-w-7xl mx-auto rounded-2xl border border-border bg-card p-3 shadow-2xl text-card-foreground transition-all flex flex-col gap-1">
-              {navLinks.map((link) => {
-                const isExternal = link.href.startsWith("http://") || link.href.startsWith("https://");
-                const isActive = !isExternal && pathname === link.href;
+        {/* Mobile Dropdown Panel: Positioned absolutely on top of content with smooth entrance */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              key="navbar-mobile-menu"
+              variants={dropdownMenuVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="md:hidden absolute top-full left-0 right-0 z-50 w-full px-4 pt-2"
+            >
+              <div className="max-w-7xl mx-auto rounded-2xl border border-border bg-card p-3 shadow-2xl text-card-foreground transition-all flex flex-col gap-1">
+                {navLinks.map((link) => {
+                  const isExternal = link.href.startsWith("http://") || link.href.startsWith("https://");
+                  const isActive = !isExternal && pathname === link.href;
 
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    target={isExternal ? "_blank" : undefined}
-                    rel={isExternal ? "noopener noreferrer" : undefined}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between px-3.5 py-2.5 text-base font-medium rounded-xl transition-colors",
-                      isActive
-                        ? "text-primary font-semibold"
-                        : "text-foreground/80 hover:text-primary hover:bg-surface-hover/60"
-                    )}
-                  >
-                    <span>{link.label}</span>
-                    {isExternal && (
-                      <RiArrowRightUpLine className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Link>
-                );
-              })}
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      target={isExternal ? "_blank" : undefined}
+                      rel={isExternal ? "noopener noreferrer" : undefined}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center justify-between px-3.5 py-2.5 text-base font-medium rounded-xl transition-colors",
+                        isActive
+                          ? "text-primary font-semibold"
+                          : "text-foreground/80 hover:text-primary hover:bg-surface-hover/60"
+                      )}
+                    >
+                      <span>{link.label}</span>
+                      {isExternal && (
+                        <RiArrowRightUpLine className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Link>
+                  );
+                })}
 
-              {/* Support as a normal link item on mobile */}
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setContactOpen(true);
-                }}
-                className="text-left px-3.5 py-2.5 text-base font-medium rounded-xl text-foreground/80 hover:text-primary hover:bg-surface-hover/60 transition-colors cursor-pointer"
-              >
-                Support
-              </button>
-            </div>
-          </div>
-        )}
+                {/* Support as a normal link item on mobile */}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setContactOpen(true);
+                  }}
+                  className="text-left px-3.5 py-2.5 text-base font-medium rounded-xl text-foreground/80 hover:text-primary hover:bg-surface-hover/60 transition-colors cursor-pointer"
+                >
+                  Support
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Support / Contact Modal Form */}

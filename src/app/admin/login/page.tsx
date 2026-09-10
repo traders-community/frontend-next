@@ -16,6 +16,8 @@ import {
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authService } from "@/services/auth.service";
+import { motion } from "motion/react";
+import { modalCardVariants } from "@/lib/motion";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -89,9 +91,14 @@ export default function AdminLoginPage() {
         <ThemeToggle />
       </header>
 
-      {/* Main Content Area: Centered Login Card */}
+      {/* Main Content Area: Centered Login Card with pure synchronized fade-in-up */}
       <main className="relative z-10 w-full flex items-center justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-[420px] rounded-3xl border border-border/90 bg-card/85 dark:bg-card/75 backdrop-blur-xl shadow-2xl shadow-black/5 dark:shadow-black/40 p-6 sm:p-9 relative overflow-hidden transition-all duration-200">
+        <motion.div
+          variants={modalCardVariants}
+          initial="initial"
+          animate="animate"
+          className="w-full max-w-[420px] rounded-3xl border border-border/90 bg-card/85 dark:bg-card/75 backdrop-blur-xl shadow-2xl shadow-black/5 dark:shadow-black/40 p-6 sm:p-9 relative overflow-hidden"
+        >
           {/* Subtle top accent gradient */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
 
@@ -213,7 +220,7 @@ export default function AdminLoginPage() {
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </main>
 
       {/* Bottom Subtle Footer Info */}

@@ -12,7 +12,10 @@ import {
   RiRefreshLine,
   RiCheckLine,
 } from "@remixicon/react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { FadeIn } from "@/components/motion";
+import { staggerContainerVariants, staggerItemVariants } from "@/lib/motion";
 
 interface BlogSectionProps {
   initialBlogs?: Blog[];
@@ -64,43 +67,65 @@ export function BlogSection({
     }
   }, [categories]);
 
-  // Client-side auto-refresh on mount (if needed), tab focus, or navigation back to Home
+  // Stale-While-Revalidate: Background sync on mount & tab focus so client navigation & admin updates appear seamlessly
   useEffect(() => {
-    const refreshCategories = () => {
-      categoryService
-        .getPublicCategories(60)
-        .then((res) => {
-          if (res.data?.success && res.data.categories) {
-            const freshCategories = [
-              "All",
-              ...res.data.categories
-                .filter((c) => c.isActive !== false)
-                .map((c) => c.name),
-            ];
-            setActiveCategories((prev) => {
-              if (
-                prev.length === freshCategories.length &&
-                prev.every((val, index) => val === freshCategories[index])
-              ) {
-                return prev;
+    let isMounted = true;
+
+    const syncFreshData = async () => {
+      try {
+        const [freshBlogsRes, freshCatsRes] = await Promise.all([
+          blogService.getBlogs({ page: 1, limit: PAGE_SIZE, category: "All", revalidate: 0 }),
+          categoryService.getPublicCategories(0),
+        ]);
+
+        if (!isMounted) return;
+
+        if (freshCatsRes.data?.success && freshCatsRes.data.categories) {
+          const freshCategories = [
+            "All",
+            ...freshCatsRes.data.categories
+              .filter((c) => c.isActive !== false)
+              .map((c) => c.name),
+          ];
+          setActiveCategories((prev) => {
+            if (
+              prev.length === freshCategories.length &&
+              prev.every((val, index) => val === freshCategories[index])
+            ) {
+              return prev;
+            }
+            return freshCategories;
+          });
+        }
+
+        if (freshBlogsRes.data?.success && freshBlogsRes.data.blogs) {
+          // If the user is on default view (no search / All category), update the grid with fresh data
+          setSelectedCategory((currCat) => {
+            setSearchQuery((currSearch) => {
+              if (currCat === "All" && !currSearch.trim()) {
+                setBlogs(freshBlogsRes.data?.blogs || []);
+                setPage(1);
+                setTotal(freshBlogsRes.data?.total ?? (freshBlogsRes.data?.blogs?.length || 0));
+                setHasMore(Boolean(freshBlogsRes.data?.hasMore));
               }
-              return freshCategories;
+              return currSearch;
             });
-          }
-        })
-        .catch(() => {});
+            return currCat;
+          });
+        }
+      } catch (err) {
+        console.error("Background data refresh failed:", err);
+      }
     };
 
-    // Only fire immediately on mount if server didn't provide categories
-    if (!categories || categories.length <= 1) {
-      refreshCategories();
-    }
+    syncFreshData();
 
-    window.addEventListener("focus", refreshCategories);
+    window.addEventListener("focus", syncFreshData);
     return () => {
-      window.removeEventListener("focus", refreshCategories);
+      isMounted = false;
+      window.removeEventListener("focus", syncFreshData);
     };
-  }, [categories]);
+  }, []);
 
   // Synchronize URL query params without reloading the page
   const updateUrlParams = useCallback((cat: string, query: string) => {
@@ -215,23 +240,23 @@ export function BlogSection({
   return (
     <div suppressHydrationWarning className="w-full flex flex-col items-center">
       {/* Search Bar Container with generous vertical breathing room */}
-      <div suppressHydrationWarning className="w-full max-w-xl mb-10 sm:mb-16">
+      <FadeIn direction="up" distance={18} duration={0.48} className="w-full max-w-xl mb-10 sm:mb-16">
         <SearchBar
           value={searchQuery}
           onChange={handleSearchChange}
           isLoading={isSearching}
           placeholder="Search reports, strategies, or company insights…"
         />
-      </div>
+      </FadeIn>
 
       {/* Category Tabs Container with clean separation */}
-      <div suppressHydrationWarning className="w-full max-w-5xl px-4 mb-10">
+      <FadeIn direction="up" distance={18} duration={0.48} className="w-full max-w-5xl px-4 mb-10">
         <CategoryTabs
           categories={activeCategories}
           selectedCategory={selectedCategory}
           onSelectCategory={handleCategoryChange}
         />
-      </div>
+      </FadeIn>
 
       {/* Articles Grid Container (No flickering, smooth transition) */}
       <div suppressHydrationWarning className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20">
@@ -242,17 +267,20 @@ export function BlogSection({
             <span className="mt-4 text-sm text-muted-foreground font-medium">Loading blog posts...</span>
           </div>
         ) : blogs.length > 0 ? (
-          /* Real Articles Grid with 2 columns on tablet and 3/4 on desktop */
-          <div
-            className={cn(
-              "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 transition-opacity duration-300",
-              isSearching && "opacity-50 pointer-events-none"
-            )}
+          /* Real Articles Grid with 2 columns on tablet and 3/4 on desktop with smooth stagger entrance on scroll */
+          <motion.div
+            variants={staggerContainerVariants}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-60px" }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
           >
             {blogs.map((blog, idx) => (
-              <BlogCard key={blog._id} blog={blog} priority={idx < 4} />
+              <motion.div key={blog._id} variants={staggerItemVariants}>
+                <BlogCard blog={blog} priority={idx < 4} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           /* Clean Open Empty State (No Box, No Border) */
           <div className="flex flex-col items-center justify-center text-center py-20 px-6 max-w-lg mx-auto">

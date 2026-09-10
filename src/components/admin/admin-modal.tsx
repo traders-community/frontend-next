@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import { RiCloseLine, RiExternalLinkLine } from "@remixicon/react";
 import { ConfirmationModal } from "./confirmation-modal";
 import { cn } from "@/lib/utils";
+import { modalBackdropVariants, modalCardVariants } from "@/lib/motion";
 
 export interface AdminModalProps {
   isOpen: boolean;
@@ -77,8 +79,6 @@ export function AdminModal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: "max-w-md",
     md: "max-w-lg",
@@ -91,27 +91,39 @@ export function AdminModal({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="admin-modal-title"
-        onClick={handleRequestClose}
-      >
-        {/* Backdrop Overlay - Clicking outside requests close */}
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in cursor-pointer"
-          aria-hidden="true"
-        />
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-modal-title"
+            onClick={handleRequestClose}
+          >
+            {/* Backdrop Overlay - Clicking outside requests close */}
+            <motion.div
+              key="admin-modal-backdrop"
+              variants={modalBackdropVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+              aria-hidden="true"
+            />
 
-        {/* Modal Window Container */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            "relative w-full max-h-[90vh] flex flex-col bg-card text-card-foreground border border-border/80 rounded-2xl sm:rounded-3xl shadow-2xl z-40 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200",
-            sizeClasses
-          )}
-        >
+            {/* Modal Window Container */}
+            <motion.div
+              key="admin-modal-card"
+              variants={modalCardVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "relative w-full max-h-[90vh] flex flex-col bg-card text-card-foreground border border-border/80 rounded-2xl sm:rounded-3xl shadow-2xl z-40 overflow-hidden",
+                sizeClasses
+              )}
+            >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border/70 shrink-0 bg-card/80 backdrop-blur-sm">
             <div className="min-w-0 pr-4">
@@ -158,8 +170,10 @@ export function AdminModal({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {children}
           </div>
-        </div>
-      </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Confirmation Modal when user closes with unsaved changes */}
       <ConfirmationModal
