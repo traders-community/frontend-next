@@ -1,8 +1,7 @@
 import { Suspense } from "react";
-import { BlogSection } from "@/components/blog/blog-section";
+import { BlogSection, BlogSectionSkeleton } from "@/components/blog/blog-section";
 import { TradingBackground } from "@/components/common/trading-background";
 import { FadeIn } from "@/components/motion";
-import { blogService, categoryService } from "@/services";
 import { constructMetadata } from "@/lib/seo/metadata";
 
 export const metadata = constructMetadata({
@@ -10,72 +9,7 @@ export const metadata = constructMetadata({
   image: "/featured_img.jpg",
 });
 
-// Dynamic server rendering ensures fresh filtering on query parameters and prevents build-time prerender failures
-export const dynamic = "force-dynamic";
-
-interface HomePageProps {
-  searchParams?: Promise<{ category?: string; q?: string }>;
-}
-
-async function getInitialHomeData(filters?: { category?: string; search?: string }) {
-  try {
-    const categoryParam =
-      filters?.category && filters.category.trim().toLowerCase() !== "all"
-        ? filters.category.trim()
-        : undefined;
-
-    const [blogsRes, categoriesRes] = await Promise.all([
-      blogService.getBlogs({
-        page: 1,
-        limit: 9,
-        category: categoryParam,
-        search: filters?.search?.trim() || undefined,
-        revalidate: 0,
-      }),
-      categoryService.getPublicCategories(60),
-    ]);
-
-    const initialBlogs = blogsRes?.data?.blogs || [];
-    const initialTotal = blogsRes?.data?.total || initialBlogs.length;
-    const initialHasMore = Boolean(blogsRes?.data?.hasMore);
-
-    const rawCats = categoriesRes?.data?.categories;
-    const categoryNames = [
-      "All",
-      ...(Array.isArray(rawCats) ? rawCats : [])
-        .filter((c) => c && c.isActive !== false && c.name)
-        .map((c) => c.name),
-    ];
-
-    return {
-      initialBlogs,
-      initialTotal,
-      initialHasMore,
-      categories: categoryNames.length > 1 ? categoryNames : undefined,
-    };
-  } catch (error) {
-    console.error("Initial home data fetch error (will hydrate client-side):", error);
-    return {
-      initialBlogs: [],
-      initialTotal: 0,
-      initialHasMore: false,
-      categories: undefined,
-    };
-  }
-}
-
-export default async function Home({ searchParams }: HomePageProps) {
-  const resolvedParams = searchParams ? await searchParams : {};
-  const rawCat = (resolvedParams as Record<string, string | string[] | undefined>)?.category;
-  const currentCategory = (Array.isArray(rawCat) ? rawCat[0] : rawCat) || "All";
-  const rawQ = (resolvedParams as Record<string, string | string[] | undefined>)?.q;
-  const currentSearch = (Array.isArray(rawQ) ? rawQ[0] : rawQ) || "";
-
-  const { initialBlogs, initialTotal, initialHasMore, categories } = await getInitialHomeData({
-    category: currentCategory,
-    search: currentSearch,
-  });
-
+export default function Home() {
   return (
     <>
       <TradingBackground />
@@ -107,15 +41,8 @@ export default async function Home({ searchParams }: HomePageProps) {
         </header>
 
         {/* Interactive Blog Section wrapped with Suspense */}
-        <Suspense fallback={null}>
-          <BlogSection
-            initialBlogs={initialBlogs}
-            initialTotal={initialTotal}
-            initialHasMore={initialHasMore}
-            categories={categories}
-            initialCategory={currentCategory}
-            initialSearch={currentSearch}
-          />
+        <Suspense fallback={<BlogSectionSkeleton />}>
+          <BlogSection />
         </Suspense>
       </div>
     </>

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Blog } from "@/types";
 import { blogService, categoryService } from "@/services";
 import { SearchBar } from "./search-bar";
-import { CategoryTabs } from "./category-tabs";
+import { CategoryTabs, CategoryTabsSkeleton } from "./category-tabs";
 import { BlogCard } from "./blog-card";
 import {
   RiLoader4Line,
@@ -40,7 +41,7 @@ const PAGE_SIZE = 9;
  * Pixel-matched articles grid skeleton for initial page load.
  * Keeps layout stable and distinct from the category filter round spinner.
  */
-function ArticlesGridSkeleton() {
+export function ArticlesGridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 animate-pulse">
       {Array.from({ length: 8 }).map((_, idx) => (
@@ -80,17 +81,50 @@ function ArticlesGridSkeleton() {
   );
 }
 
+/**
+ * Complete BlogSection skeleton for instant page loading without layout shift.
+ */
+export function BlogSectionSkeleton() {
+  return (
+    <div suppressHydrationWarning className="w-full flex flex-col items-center">
+      {/* Search Bar Skeleton */}
+      <div className="w-full max-w-xl mb-10 sm:mb-16 px-4">
+        <div className="h-12 w-full rounded-full bg-card/60 border border-border/60 animate-pulse" />
+      </div>
+
+      {/* Category Tabs Skeleton */}
+      <div className="w-full max-w-5xl px-4 mb-10">
+        <CategoryTabsSkeleton />
+      </div>
+
+      {/* Articles Grid Skeleton */}
+      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 min-h-[360px]">
+        <ArticlesGridSkeleton />
+      </div>
+    </div>
+  );
+}
+
 export function BlogSection({
   initialBlogs = [],
   initialTotal = 0,
   initialHasMore = false,
-  categories = DEFAULT_CATEGORIES,
+  categories,
   initialCategory = "All",
   initialSearch = "",
 }: BlogSectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
-  const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
-  const [activeCategories, setActiveCategories] = useState<string[]>(categories);
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams?.get("category") || initialCategory;
+  const urlSearch = searchParams?.get("q") || initialSearch;
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
+  const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
+  const [activeCategories, setActiveCategories] = useState<string[]>(
+    categories && categories.length > 0 ? categories : []
+  );
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(
+    !categories || categories.length === 0
+  );
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
@@ -197,6 +231,12 @@ export function BlogSection({
 
   // Fetch active categories on mount to ensure tabs match latest categories in DB
   useEffect(() => {
+    if (categories && categories.length > 0) {
+      setIsCategoriesLoading(false);
+      return;
+    }
+
+    setIsCategoriesLoading(true);
     categoryService
       .getPublicCategories(0)
       .then((res) => {
@@ -204,7 +244,7 @@ export function BlogSection({
           const fresh = [
             "All",
             ...res.data.categories
-              .filter((c) => c.isActive !== false)
+              .filter((c) => c && c.isActive !== false && c.name)
               .map((c) => c.name),
           ];
           const uniqueCats = Array.from(new Set(fresh));
@@ -217,10 +257,17 @@ export function BlogSection({
             }
             return uniqueCats;
           });
+        } else {
+          setActiveCategories(DEFAULT_CATEGORIES);
         }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        setActiveCategories(DEFAULT_CATEGORIES);
+      })
+      .finally(() => {
+        setIsCategoriesLoading(false);
+      });
+  }, [categories]);
 
   const handleCategoryChange = (category: string) => {
     if (category === selectedCategory && !isFiltering) return;
@@ -269,6 +316,7 @@ export function BlogSection({
           categories={activeCategories}
           selectedCategory={selectedCategory}
           onSelectCategory={handleCategoryChange}
+          isLoading={isCategoriesLoading}
         />
       </FadeIn>
 

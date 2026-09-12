@@ -9,15 +9,43 @@ interface CategoryTabsProps {
   categories: string[];
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
+  isLoading?: boolean;
   className?: string;
+}
+
+export function CategoryTabsSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <nav
+      aria-label="Loading categories"
+      className={cn(
+        "w-full overflow-x-auto no-scrollbar py-3 px-2 sm:px-4",
+        className
+      )}
+    >
+      <div className="flex items-center gap-2.5 sm:gap-3.5 flex-nowrap w-max mx-auto px-1 animate-pulse">
+        {[48, 128, 140, 110, 96, 76, 56].map((width, idx) => (
+          <div
+            key={idx}
+            className="shrink-0 min-h-10 rounded-full bg-muted/60 border border-border/40"
+            style={{ width: `${width}px` }}
+          />
+        ))}
+      </div>
+    </nav>
+  );
 }
 
 export function CategoryTabs({
   categories,
   selectedCategory,
   onSelectCategory,
+  isLoading = false,
   className = "",
 }: CategoryTabsProps) {
+  if (isLoading || !categories || categories.length === 0) {
+    return <CategoryTabsSkeleton className={className} />;
+  }
+
   return (
     <nav
       aria-label="Article categories"
