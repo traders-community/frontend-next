@@ -224,10 +224,10 @@ export function AdminSidebar() {
 
   const isBlogRoute = pathname.startsWith("/admin/listBlog") || pathname.startsWith("/admin/addBlog");
   const isNewsletterRoute = pathname.startsWith("/admin/newsletter");
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    Blogs: true,
-    Newsletter: true,
-  });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
+    Blogs: typeof window !== "undefined" ? pathname.startsWith("/admin/listBlog") || pathname.startsWith("/admin/addBlog") : false,
+    Newsletter: typeof window !== "undefined" ? pathname.startsWith("/admin/newsletter") : false,
+  }));
 
   useEffect(() => {
     if (isBlogRoute) {
@@ -420,9 +420,9 @@ export function AdminSidebar() {
   );
 
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between bg-card text-card-foreground border-r border-border/70 select-none">
-      {/* Top Header Area */}
-      <div>
+    <div className="h-full flex flex-col justify-between bg-card text-card-foreground border-r border-border/70 select-none overflow-hidden">
+      {/* Top Header Area (Fixed Header) */}
+      <div className="shrink-0">
         {/* Brand & Toggle Row */}
         <div
           className={cn(
@@ -482,7 +482,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Back to Website Button */}
-        <div className={cn("pb-2", isCollapsed ? "px-2 pt-1" : "px-3.5 pt-1 pb-3")}>
+        <div className={cn("pb-2", isCollapsed ? "px-2 pt-1" : "px-3.5 pt-1 pb-2")}>
           <Link
             href="/"
             className={cn(
@@ -504,17 +504,22 @@ export function AdminSidebar() {
             )}
           </Link>
         </div>
-
-        {/* Navigation Sections */}
-        <div className={cn(isCollapsed ? "px-2 space-y-2" : "px-3 space-y-4")}>
-          {renderNavList(mainNav, "Main")}
-          {renderNavList(contentNav, "Content")}
-          {renderNavList(systemNav, "System")}
-        </div>
       </div>
 
-      {/* Bottom User Profile & Quick Actions Card (Entire card is clickable) */}
-      <div className="p-3 border-t border-border/70 relative" ref={userMenuRef} data-user-menu="true">
+      {/* Navigation Sections (Scrollable Area) */}
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto overflow-x-hidden min-h-0 py-1.5 overscroll-contain",
+          isCollapsed ? "px-2 space-y-2" : "px-3 space-y-3"
+        )}
+      >
+        {renderNavList(mainNav, "Main")}
+        {renderNavList(contentNav, "Content")}
+        {renderNavList(systemNav, "System")}
+      </div>
+
+      {/* Bottom User Profile & Quick Actions Card (Entire card is clickable & permanently pinned) */}
+      <div className="p-3 border-t border-border/70 relative shrink-0" ref={userMenuRef} data-user-menu="true">
         {/* Floating Quick Actions Popup */}
         <AnimatePresence>
           {userMenuOpen && (
@@ -565,24 +570,14 @@ export function AdminSidebar() {
 
             <div className="h-[1px] bg-border/60 my-1" />
 
-            {/* Profile Settings Link */}
-            <button
-              type="button"
-              onClick={() => handleNavigate("/admin/settings?tab=profile")}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors cursor-pointer text-left"
-            >
-              <RiUser3Line className="h-4 w-4 text-muted-foreground" />
-              <span>Profile Settings</span>
-            </button>
-
-            {/* General Settings Link */}
+            {/* Settings Link */}
             <button
               type="button"
               onClick={() => handleNavigate("/admin/settings")}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface-hover transition-colors cursor-pointer text-left"
             >
               <RiSettings4Line className="h-4 w-4 text-muted-foreground" />
-              <span>General Settings</span>
+              <span>Settings</span>
             </button>
 
             <div className="h-[1px] bg-border/60 my-1" />

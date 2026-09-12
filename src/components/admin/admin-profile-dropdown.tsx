@@ -223,24 +223,14 @@ export function AdminProfileDropdown({
 
           <div className="h-[1px] bg-border/60 my-1" />
 
-          {/* Profile Settings */}
-          <button
-            type="button"
-            onClick={() => handleNavigate("/admin/settings?tab=profile")}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface transition-colors cursor-pointer text-left"
-          >
-            <RiUser3Line className="h-4 w-4 text-muted-foreground" />
-            <span>Profile Settings</span>
-          </button>
-
-          {/* General Settings */}
+          {/* Settings */}
           <button
             type="button"
             onClick={() => handleNavigate("/admin/settings")}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-surface transition-colors cursor-pointer text-left"
           >
             <RiSettings4Line className="h-4 w-4 text-muted-foreground" />
-            <span>General Settings</span>
+            <span>Settings</span>
           </button>
 
           <div className="h-[1px] bg-border/60 my-1" />

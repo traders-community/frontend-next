@@ -63,23 +63,27 @@ function SettingsContent() {
   // Read tab from search params (?tab=profile | explore | newsletter | security)
   const tabParam = searchParams.get("tab");
   const initialTab =
-    tabParam === "profile"
-      ? "profile"
+    tabParam === "explore"
+      ? "explore"
       : tabParam === "security"
       ? "security"
       : tabParam === "newsletter"
       ? "newsletter"
-      : "explore";
+      : "profile";
 
   const [activeTab, setActiveTab] = useState<"profile" | "explore" | "newsletter" | "security">(initialTab);
 
   // Sync tab with URL
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "profile" || tab === "security" || tab === "newsletter") {
-      setActiveTab(tab);
-    } else if (tab === "explore" || tab === "general") {
+    if (tab === "explore") {
       setActiveTab("explore");
+    } else if (tab === "security") {
+      setActiveTab("security");
+    } else if (tab === "newsletter") {
+      setActiveTab("newsletter");
+    } else {
+      setActiveTab("profile");
     }
   }, [searchParams]);
 

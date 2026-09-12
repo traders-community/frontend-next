@@ -186,6 +186,15 @@ export const api = {
     });
   },
 
+  patch: <T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions) => {
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    return apiRequest<T>(endpoint, {
+      method: "PATCH",
+      body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
+      ...options,
+    });
+  },
+
   delete: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "DELETE", ...options }),
 
