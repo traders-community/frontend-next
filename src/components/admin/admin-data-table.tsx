@@ -14,7 +14,6 @@ import {
   RiCloseLine,
   RiInboxLine,
 } from "@remixicon/react";
-import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 
 export interface ColumnDef<T> {
@@ -70,6 +69,35 @@ export interface AdminDataTableProps<T> {
   onSortChange?: (key: string) => void;
 }
 
+function getPageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "ellipsis", totalPages];
+  }
+  if (currentPage >= totalPages - 3) {
+    return [
+      1,
+      "ellipsis",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
+  return [
+    1,
+    "ellipsis",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "ellipsis",
+    totalPages,
+  ];
+}
+
 export function AdminDataTable<T>({
   title,
   subtitle,
@@ -96,23 +124,41 @@ export function AdminDataTable<T>({
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // Debounced Search handling
+  // Debounced Search handling with direct timer control
   const [localSearch, setLocalSearch] = useState(searchValue);
-  const debouncedSearch = useDebounce(localSearch, searchDebounceMs);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Synchronize when parent updates searchValue directly (e.g. filter resets)
   useEffect(() => {
     setLocalSearch(searchValue);
   }, [searchValue]);
 
-  // Trigger onSearchChange when debounced value settles
+  // Cleanup debounce timer on unmount
   useEffect(() => {
-    if (debouncedSearch !== searchValue) {
-      onSearchChange?.(debouncedSearch);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalSearch(val);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-  }, [debouncedSearch, onSearchChange, searchValue]);
+
+    debounceTimerRef.current = setTimeout(() => {
+      onSearchChange?.(val);
+    }, searchDebounceMs);
+  };
 
   const handleClearSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     setLocalSearch("");
     onSearchChange?.("");
   };
@@ -143,7 +189,7 @@ export function AdminDataTable<T>({
     <div className="space-y-6 animate-in fade-in-50 duration-300">
       {/* Top Header & Controls Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Title & Subtitle */}
+        {/* Title & Subtitle Full Width */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
             {title}
@@ -155,24 +201,25 @@ export function AdminDataTable<T>({
           )}
         </div>
 
-        {/* Search, Filter & Add Action */}
-        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
+        {/* Search, Filter & Add Action (Search bar with buttons beside it, + icon only on mobile) */}
+        <div className="relative flex items-center gap-2 w-full lg:w-auto">
           {/* Search Bar with Debouncing */}
           {onSearchChange && (
-            <div className="relative flex items-center min-w-[220px] sm:min-w-[260px]">
+            <div className="relative flex items-center flex-1 lg:flex-initial min-w-0 sm:min-w-[240px] lg:min-w-[260px]">
               <RiSearchLine className="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
+                onChange={handleInputChange}
                 placeholder={searchPlaceholder}
                 className="w-full pl-9.5 pr-8 py-2 text-xs sm:text-sm bg-card border border-border/80 rounded-xl sm:rounded-2xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
               />
               {localSearch && (
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={handleClearSearch}
-                  className="absolute right-2.5 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="absolute right-2.5 z-10 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label="Clear search"
                 >
                   <RiCloseLine className="h-3.5 w-3.5" />
@@ -183,7 +230,7 @@ export function AdminDataTable<T>({
 
           {/* Filter Popover Dropdown matching Colab screenshot */}
           {filterContent ? (
-            <div className="relative" ref={filterRef}>
+            <div className="static sm:relative shrink-0" ref={filterRef}>
               <button
                 type="button"
                 onClick={() => setFilterOpen((prev) => !prev)}
@@ -205,7 +252,7 @@ export function AdminDataTable<T>({
 
               {/* Colab-style Filter Popover */}
               {filterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-card text-card-foreground border border-border/80 rounded-2xl sm:rounded-3xl shadow-2xl p-5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
+                <div className="absolute left-0 right-0 sm:left-auto sm:right-0 top-full mt-2 sm:w-80 bg-card text-card-foreground border border-border/80 rounded-2xl sm:rounded-3xl shadow-2xl p-5 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
                   {/* Header */}
                   <div className="flex items-center justify-between pb-3 border-b border-border/60">
                     <h3 className="text-sm font-bold text-foreground">Filters</h3>
@@ -231,7 +278,7 @@ export function AdminDataTable<T>({
               type="button"
               onClick={onFilterClick}
               className={cn(
-                "p-2.5 rounded-xl sm:rounded-2xl border transition-colors cursor-pointer shadow-2xs",
+                "p-2.5 rounded-xl sm:rounded-2xl border transition-colors cursor-pointer shadow-2xs shrink-0",
                 filterActive
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border/80 bg-card text-muted-foreground hover:text-foreground hover:bg-surface-hover"
@@ -243,32 +290,34 @@ export function AdminDataTable<T>({
             </button>
           ) : null}
 
-          {/* Primary Action Button (+ Add) */}
+          {/* Primary Action Button (+ Add) - icon only on mobile, text on sm+ */}
           {actionButton &&
             (actionButton.href ? (
               <Link
                 href={actionButton.href}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl bg-black text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 shadow-xs transition-all"
+                title={actionButton.label}
+                className="inline-flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl bg-black text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 shadow-xs transition-all shrink-0"
               >
                 {actionButton.icon ? (
                   <actionButton.icon className="h-4 w-4" />
                 ) : (
                   <RiAddLine className="h-4 w-4" />
                 )}
-                <span>{actionButton.label}</span>
+                <span className="hidden sm:inline sm:ml-1.5">{actionButton.label}</span>
               </Link>
             ) : (
               <button
                 type="button"
                 onClick={actionButton.onClick}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl bg-black text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 shadow-xs transition-all cursor-pointer"
+                title={actionButton.label}
+                className="inline-flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl bg-black text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 shadow-xs transition-all cursor-pointer shrink-0"
               >
                 {actionButton.icon ? (
                   <actionButton.icon className="h-4 w-4" />
                 ) : (
                   <RiAddLine className="h-4 w-4" />
                 )}
-                <span>{actionButton.label}</span>
+                <span className="hidden sm:inline sm:ml-1.5">{actionButton.label}</span>
               </button>
             ))}
         </div>
@@ -407,71 +456,95 @@ export function AdminDataTable<T>({
           </table>
         </div>
 
-        {/* Footer Pagination Row */}
+        {/* Footer Pagination Row (2-Column Layout matching design) */}
         {pagination && (
           <div className="border-t border-border/70 px-5 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground select-none">
-            {/* Left: Total Records Info */}
-            <div>
-              Showing{" "}
-              <span className="font-semibold text-foreground">
-                {Math.min(
-                  (pagination.currentPage - 1) * pagination.pageSize + 1,
-                  pagination.totalItems
-                )}
-              </span>{" "}
-              to{" "}
-              <span className="font-semibold text-foreground">
-                {Math.min(
-                  pagination.currentPage * pagination.pageSize,
-                  pagination.totalItems
-                )}
-              </span>{" "}
-              of{" "}
-              <span className="font-semibold text-foreground">
-                {pagination.totalItems}
-              </span>
-            </div>
+            {/* Left: Total Records Info & Per Page selector combined */}
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div>
+                Showing{" "}
+                <span className="font-semibold text-foreground">
+                  {data.length}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-foreground">
+                  {pagination.totalItems}
+                </span>
+              </div>
 
-            {/* Center: Per Page Selector */}
-            <div className="flex items-center gap-2">
-              <span>Per page:</span>
-              <div className="flex items-center gap-1 bg-surface/70 p-1 rounded-xl border border-border/60">
-                {pageSizeOptions.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => pagination.onPageSizeChange(size)}
-                    className={cn(
-                      "px-2.5 py-0.5 rounded-lg font-semibold text-xs transition-all cursor-pointer",
-                      pagination.pageSize === size
-                        ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface"
-                    )}
-                  >
-                    {size}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <span>Per page:</span>
+                <div className="flex items-center gap-1 bg-surface/70 p-1 rounded-xl border border-border/60">
+                  {pageSizeOptions.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => pagination.onPageSizeChange(size)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg font-semibold text-xs transition-all cursor-pointer",
+                        pagination.pageSize === size
+                          ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface"
+                      )}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Right: Page Navigation Buttons */}
-            <div className="flex items-center gap-1.5">
+            {/* Right: Multi-Page Navigation Buttons */}
+            <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+              {/* Prev Button */}
               <button
                 type="button"
                 onClick={() =>
                   pagination.onPageChange(Math.max(1, pagination.currentPage - 1))
                 }
                 disabled={pagination.currentPage <= 1}
-                className="p-1.5 rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 aria-label="Previous page"
               >
                 <RiArrowLeftSLine className="h-4 w-4" />
               </button>
 
-              <span className="px-3 py-1 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs shadow-xs">
-                {pagination.currentPage}
-              </span>
+              {/* Page Numbers */}
+              {getPageNumbers(
+                pagination.currentPage,
+                Math.max(1, pagination.totalPages)
+              ).map((page, idx) => {
+                if (page === "ellipsis") {
+                  return (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center text-muted-foreground text-xs select-none"
+                    >
+                      …
+                    </span>
+                  );
+                }
+                const isCurrent = page === pagination.currentPage;
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => pagination.onPageChange(page)}
+                    className={cn(
+                      "w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                      isCurrent
+                        ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
+                        : "border border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground"
+                    )}
+                    aria-label={`Go to page ${page}`}
+                    aria-current={isCurrent ? "page" : undefined}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
+              {/* Next Button */}
               <button
                 type="button"
                 onClick={() =>
@@ -480,7 +553,7 @@ export function AdminDataTable<T>({
                   )
                 }
                 disabled={pagination.currentPage >= pagination.totalPages}
-                className="p-1.5 rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 aria-label="Next page"
               >
                 <RiArrowRightSLine className="h-4 w-4" />

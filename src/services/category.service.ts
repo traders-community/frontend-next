@@ -40,7 +40,7 @@ export const categoryService = {
   /**
    * Creates a new category.
    */
-  async createCategory(data: { name: string; sortOrder?: number; isActive?: boolean }) {
+  async createCategory(data: { name: string; description?: string; sortOrder?: number; isActive?: boolean }) {
     return api.post<{ success: boolean; message: string; category?: Category }>(
       "/admin/categories",
       data
@@ -62,6 +62,16 @@ export const categoryService = {
    */
   async deleteCategory(id: string) {
     return api.delete<{ success: boolean; message: string }>(`/admin/categories/${id}`);
+  },
+
+  /**
+   * Persists drag-and-drop sort order. Accepts an array of { id, sortOrder } pairs.
+   */
+  async reorderCategories(order: { id: string; sortOrder: number }[]) {
+    return api.put<{ success: boolean; message: string }>(
+      "/admin/categories/reorder",
+      { order }
+    );
   },
 };
 
