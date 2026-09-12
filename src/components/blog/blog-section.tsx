@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import { Blog } from "@/types";
 import { blogService, categoryService } from "@/services";
 import { SearchBar } from "./search-bar";
@@ -85,12 +84,8 @@ export function BlogSection({
   initialHasMore = false,
   categories = DEFAULT_CATEGORIES,
 }: BlogSectionProps) {
-  const searchParams = useSearchParams();
-  const initialCategoryParam = searchParams.get("category") || "All";
-  const initialQueryParam = searchParams.get("q") || "";
-
-  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategoryParam);
-  const [searchQuery, setSearchQuery] = useState<string>(initialQueryParam);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeCategories, setActiveCategories] = useState<string[]>(categories);
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [page, setPage] = useState<number>(1);
@@ -99,7 +94,7 @@ export function BlogSection({
 
   // Initial cold loading: true ONLY if initialBlogs is empty on first mount
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(
-    initialBlogs.length === 0 && selectedCategory === "All" && !searchQuery.trim()
+    initialBlogs.length === 0
   );
   // Category/search filtering: round spinner shown when clicking categories or searching
   const [isFiltering, setIsFiltering] = useState<boolean>(false);
@@ -107,6 +102,21 @@ export function BlogSection({
 
   const isFirstMount = useRef<boolean>(true);
   const requestIdRef = useRef<number>(0);
+
+  // Parse URL query params on client mount without invoking useSearchParams() (prevents static prerender errors)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const catParam = params.get("category");
+      const qParam = params.get("q");
+      if (catParam && catParam.trim() && catParam.trim().toLowerCase() !== "all") {
+        setSelectedCategory(catParam.trim());
+      }
+      if (qParam && qParam.trim()) {
+        setSearchQuery(qParam.trim());
+      }
+    }
+  }, []);
 
   // Sync state if server categories prop updates
   useEffect(() => {

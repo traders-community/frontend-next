@@ -20,14 +20,15 @@ async function getInitialHomeData() {
       categoryService.getPublicCategories(60),
     ]);
 
-    const initialBlogs = blogsRes.data?.blogs || [];
-    const initialTotal = blogsRes.data?.total || initialBlogs.length;
-    const initialHasMore = Boolean(blogsRes.data?.hasMore);
+    const initialBlogs = blogsRes?.data?.blogs || [];
+    const initialTotal = blogsRes?.data?.total || initialBlogs.length;
+    const initialHasMore = Boolean(blogsRes?.data?.hasMore);
 
+    const rawCats = categoriesRes?.data?.categories;
     const categoryNames = [
       "All",
-      ...(categoriesRes.data?.categories || [])
-        .filter((c) => c.isActive !== false)
+      ...(Array.isArray(rawCats) ? rawCats : [])
+        .filter((c) => c && c.isActive !== false && c.name)
         .map((c) => c.name),
     ];
 
@@ -46,70 +47,6 @@ async function getInitialHomeData() {
       categories: undefined,
     };
   }
-}
-
-/**
- * High-performance, pixel-matched skeleton fallback.
- * Prevents Cumulative Layout Shift (CLS) and renders immediately on the client
- * while the async backend data streams in.
- */
-function BlogSectionLoadingFallback() {
-  return (
-    <div suppressHydrationWarning className="w-full flex flex-col items-center" aria-busy="true" aria-label="Loading research articles">
-      {/* Category Tabs Skeleton */}
-      <div className="w-full max-w-5xl px-4 mb-10 overflow-hidden animate-pulse">
-        <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 flex-nowrap w-max mx-auto py-3">
-          <div className="h-9 w-16 sm:w-20 rounded-full bg-primary/30" />
-          <div className="h-9 w-28 sm:w-36 rounded-full bg-muted/60 border border-border/40" />
-          <div className="h-9 w-28 sm:w-36 rounded-full bg-muted/60 border border-border/40" />
-          <div className="h-9 w-24 sm:w-32 rounded-full bg-muted/60 border border-border/40 hidden sm:block" />
-          <div className="h-9 w-24 sm:w-28 rounded-full bg-muted/60 border border-border/40 hidden md:block" />
-        </div>
-      </div>
-
-      {/* Responsive Articles Grid Skeleton (Matches real BlogCard grid) */}
-      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 animate-pulse">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="h-full flex flex-col rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden shadow-xs"
-            >
-              {/* Thumbnail Skeleton */}
-              <div className="relative aspect-video w-full bg-muted/80 flex items-start justify-start p-3">
-                <div className="h-5 w-20 rounded-full bg-background/70" />
-              </div>
-
-              {/* Card Body Skeleton */}
-              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  {/* Meta Line (Date & Reading Time) */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-3 w-16 rounded-sm bg-muted/60" />
-                    <div className="h-3 w-3 rounded-full bg-muted/40" />
-                    <div className="h-3 w-20 rounded-sm bg-muted/60" />
-                  </div>
-
-                  {/* Title Skeleton Lines */}
-                  <div className="space-y-2 mb-4">
-                    <div className="h-4.5 w-full rounded-sm bg-muted/80" />
-                    <div className="h-4.5 w-3/4 rounded-sm bg-muted/70" />
-                  </div>
-
-                  {/* Excerpt Skeleton Lines */}
-                  <div className="space-y-1.5 mb-2">
-                    <div className="h-3 w-full rounded-sm bg-muted/50" />
-                    <div className="h-3 w-5/6 rounded-sm bg-muted/50" />
-                    <div className="h-3 w-2/3 rounded-sm bg-muted/40" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default async function Home() {
@@ -145,13 +82,15 @@ export default async function Home() {
           </FadeIn>
         </header>
 
-        {/* Interactive Blog Section */}
-        <BlogSection
-          initialBlogs={initialBlogs}
-          initialTotal={initialTotal}
-          initialHasMore={initialHasMore}
-          categories={categories}
-        />
+        {/* Interactive Blog Section wrapped with Suspense */}
+        <Suspense fallback={null}>
+          <BlogSection
+            initialBlogs={initialBlogs}
+            initialTotal={initialTotal}
+            initialHasMore={initialHasMore}
+            categories={categories}
+          />
+        </Suspense>
       </div>
     </>
   );
