@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Blog } from "@/types";
 import { blogService, categoryService } from "@/services";
 import { SearchBar } from "./search-bar";
-import { CategoryTabs, CategoryTabsSkeleton } from "./category-tabs";
+import { CategoryTabs } from "./category-tabs";
 import { BlogCard } from "./blog-card";
 import {
   RiLoader4Line,
@@ -82,24 +82,37 @@ export function ArticlesGridSkeleton() {
 }
 
 /**
- * Complete BlogSection skeleton for instant page loading without layout shift.
+ * Clean BlogSection placeholder for instant page loading without layout shift or pulsing blocks.
  */
 export function BlogSectionSkeleton() {
   return (
     <div suppressHydrationWarning className="w-full flex flex-col items-center">
-      {/* Search Bar Skeleton */}
+      {/* Search Bar Placeholder */}
       <div className="w-full max-w-xl mb-10 sm:mb-16 px-4">
-        <div className="h-12 w-full rounded-full bg-card/60 border border-border/60 animate-pulse" />
+        <SearchBar
+          value=""
+          onChange={() => {}}
+          isLoading={false}
+          placeholder="Search reports, strategies, or company insights…"
+        />
       </div>
 
-      {/* Category Tabs Skeleton */}
+      {/* Category Tabs */}
       <div className="w-full max-w-5xl px-4 mb-10">
-        <CategoryTabsSkeleton />
+        <CategoryTabs
+          categories={DEFAULT_CATEGORIES}
+          selectedCategory="All"
+          onSelectCategory={() => {}}
+          isLoading={false}
+        />
       </div>
 
-      {/* Articles Grid Skeleton */}
-      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 min-h-[360px]">
-        <ArticlesGridSkeleton />
+      {/* Articles Container with Clean Round Spinner */}
+      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 min-h-[360px] flex flex-col items-center justify-center py-24">
+        <div className="w-9 h-9 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+        <span className="mt-4 text-xs sm:text-sm text-muted-foreground/80 font-medium tracking-wide">
+          Loading articles...
+        </span>
       </div>
     </div>
   );
@@ -120,11 +133,9 @@ export function BlogSection({
   const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
   const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
   const [activeCategories, setActiveCategories] = useState<string[]>(
-    categories && categories.length > 0 ? categories : []
+    categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
   );
-  const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(
-    !categories || categories.length === 0
-  );
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(false);
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
@@ -232,11 +243,9 @@ export function BlogSection({
   // Fetch active categories on mount to ensure tabs match latest categories in DB
   useEffect(() => {
     if (categories && categories.length > 0) {
-      setIsCategoriesLoading(false);
       return;
     }
 
-    setIsCategoriesLoading(true);
     categoryService
       .getPublicCategories(0)
       .then((res) => {
@@ -257,15 +266,10 @@ export function BlogSection({
             }
             return uniqueCats;
           });
-        } else {
-          setActiveCategories(DEFAULT_CATEGORIES);
         }
       })
       .catch(() => {
-        setActiveCategories(DEFAULT_CATEGORIES);
-      })
-      .finally(() => {
-        setIsCategoriesLoading(false);
+        // Retain default categories on error
       });
   }, [categories]);
 
@@ -300,7 +304,7 @@ export function BlogSection({
   return (
     <div suppressHydrationWarning className="w-full flex flex-col items-center">
       {/* Search Bar Container - Static UI, never in skeleton or loading state */}
-      <FadeIn direction="up" distance={18} duration={0.48} className="w-full max-w-xl mb-10 sm:mb-16">
+      <FadeIn direction="up" distance={16} duration={0.48} delay={0.28} className="w-full max-w-xl mb-10 sm:mb-16">
         <SearchBar
           value={searchQuery}
           onChange={handleSearchChange}
@@ -311,7 +315,7 @@ export function BlogSection({
       </FadeIn>
 
       {/* Category Tabs Container with clean separation */}
-      <FadeIn direction="up" distance={18} duration={0.48} className="w-full max-w-5xl px-4 mb-10">
+      <FadeIn direction="up" distance={16} duration={0.48} delay={0.34} className="w-full max-w-5xl px-4 mb-10">
         <CategoryTabs
           categories={activeCategories}
           selectedCategory={selectedCategory}
@@ -323,13 +327,20 @@ export function BlogSection({
       {/* Articles Grid Container */}
       <div suppressHydrationWarning className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 min-h-[360px]">
         {isInitialLoading ? (
-          /* Initial Load: Clean Card Skeletons (NO round load) */
-          <ArticlesGridSkeleton />
+          /* Initial Load: Clean Round Spinner preserving entrance animation feel */
+          <div className="flex flex-col items-center justify-center py-24 min-h-[360px]">
+            <div className="w-9 h-9 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+            <span className="mt-4 text-xs sm:text-sm text-muted-foreground/80 font-medium tracking-wide">
+              Loading articles...
+            </span>
+          </div>
         ) : isFiltering ? (
           /* Category Filter / Search: Clean Round Spinner */
           <div className="flex flex-col items-center justify-center py-24 min-h-[360px]">
-            <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-            <span className="mt-4 text-sm text-muted-foreground font-medium">Loading blog posts...</span>
+            <div className="w-9 h-9 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+            <span className="mt-4 text-xs sm:text-sm text-muted-foreground/80 font-medium tracking-wide">
+              Loading blog posts...
+            </span>
           </div>
         ) : blogs.length > 0 ? (
           /* Real Articles Grid with reliable stagger fade-in */

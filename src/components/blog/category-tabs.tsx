@@ -42,7 +42,7 @@ export function CategoryTabs({
   isLoading = false,
   className = "",
 }: CategoryTabsProps) {
-  if (isLoading || !categories || categories.length === 0) {
+  if ((isLoading && (!categories || categories.length === 0)) || (!categories || categories.length === 0)) {
     return <CategoryTabsSkeleton className={className} />;
   }
 
