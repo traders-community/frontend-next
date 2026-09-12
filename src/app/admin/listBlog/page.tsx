@@ -12,6 +12,7 @@ import {
 } from "@remixicon/react";
 import { blogService } from "@/services/blog.service";
 import { categoryService } from "@/services/category.service";
+import { authService } from "@/services/auth.service";
 import { Blog, Category } from "@/types";
 import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 import { AdminModal } from "@/components/admin/admin-modal";
@@ -271,6 +272,7 @@ export default function AdminListBlogPage() {
           {/* View Preview */}
           <Link
             href={`/blog/${blog.slug || blog._id}`}
+            onClick={() => authService.syncTokenCookie()}
             target="_blank"
             rel="noopener noreferrer"
             title="Preview article"

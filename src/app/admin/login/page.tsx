@@ -26,10 +26,22 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect straight to admin panel
+  const getRedirectUrl = () => {
+    if (typeof window === "undefined") return "/admin";
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        return redirect;
+      }
+    } catch {}
+    return "/admin";
+  };
+
+  // If already logged in, redirect straight to target page or admin panel
   useEffect(() => {
     if (authService.isAuthenticated()) {
-      router.replace("/admin");
+      router.replace(getRedirectUrl());
     }
   }, [router]);
 
@@ -53,8 +65,13 @@ export default function AdminLoginPage() {
         try {
           localStorage.setItem("admin_email", email.trim());
         } catch {}
-        toast.success("Welcome back! Redirecting to dashboard...");
-        router.replace("/admin");
+        const destination = getRedirectUrl();
+        toast.success(
+          destination !== "/admin"
+            ? "Welcome back! Redirecting to preview..."
+            : "Welcome back! Redirecting to dashboard..."
+        );
+        router.replace(destination);
       } else {
         const msg = res.data?.message || res.message || "Invalid email or password.";
         toast.error(msg);

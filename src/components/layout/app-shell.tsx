@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { DisclaimerGate } from "@/components/common/disclaimer-gate";
 import { ScrollToTop } from "@/components/common/scroll-to-top";
+import { authService } from "@/services/auth.service";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -18,6 +19,12 @@ interface AppShellProps {
  */
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Keep admin cookie synchronized with client token for SSR draft preview authorization
+    authService.syncTokenCookie();
+  }, []);
+
   const isAuthOrAdmin =
     pathname?.startsWith("/admin") || pathname === "/login" || pathname?.startsWith("/login");
 

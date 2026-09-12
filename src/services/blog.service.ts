@@ -12,6 +12,7 @@ export interface GetBlogsParams {
 export interface SingleBlogResponse {
   success: boolean;
   blog?: Blog;
+  isPreview?: boolean;
   message?: string;
 }
 
@@ -51,11 +52,17 @@ export const blogService = {
   },
 
   /**
-   * Fetches a single blog by its ID (supports Next.js ISR/SSR revalidation).
+   * Fetches a single blog by its ID/slug.
+   * If token is provided, attaches Bearer token to allow previewing unpublished drafts.
    */
-  async getBlogById(id: string, revalidate?: number | false) {
+  async getBlogById(id: string, revalidate?: number | false, token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
     return api.get<SingleBlogResponse>(`/blog/${id}`, {
       revalidate,
+      headers,
     });
   },
 

@@ -2,6 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { blogService, settingsService } from "@/services";
 import { constructMetadata } from "@/lib/seo/metadata";
 import { ArticleJsonLd } from "@/components/seo/json-ld";
@@ -12,6 +13,7 @@ import { PdfAttachment } from "@/components/blog/pdf-attachment";
 import { AuthorBio } from "@/components/blog/author-bio";
 import { SocialShare } from "@/components/blog/social-share";
 import { BlogComments } from "@/components/blog/blog-comments";
+import { AdminPreviewBanner } from "@/components/blog/admin-preview-banner";
 import { FadeIn } from "@/components/motion";
 
 interface BlogPageProps {
@@ -22,17 +24,36 @@ interface BlogPageProps {
 export const revalidate = 60;
 
 /**
- * Generate dynamic SEO metadata for each blog article
+ * Generate dynamic SEO metadata for each blog article.
+ * Unpublished articles are strictly excluded from search engines via noIndex.
  */
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const res = await blogService.getBlogById(slug, 60);
+  let token: string | undefined;
+  try {
+    const cookieStore = await cookies();
+    token = cookieStore.get("admin_token")?.value || cookieStore.get("token")?.value;
+  } catch {
+    // Static build context
+  }
+
+  const res = await blogService.getBlogById(slug, token ? 0 : 60, token);
   const blog = res.data?.blog;
 
   if (!blog) {
     return constructMetadata({
       title: "Article Not Found",
       description: "The requested research article could not be found on Traders Community.",
+      noIndex: true,
+    });
+  }
+
+  // Unpublished article - strictly block indexing from web crawlers
+  if (!blog.isPublished) {
+    return constructMetadata({
+      title: `[Draft Preview] ${blog.title}`,
+      description: "Unpublished article preview. Accessible to admins only.",
+      noIndex: true,
     });
   }
 
@@ -57,10 +78,17 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
  */
 export default async function BlogDetailPage({ params }: BlogPageProps) {
   const { slug } = await params;
+  let token: string | undefined;
+  try {
+    const cookieStore = await cookies();
+    token = cookieStore.get("admin_token")?.value || cookieStore.get("token")?.value;
+  } catch {
+    // Static build context
+  }
 
-  // Concurrent server-side data fetching with ISR caching
+  // Concurrent server-side data fetching with ISR caching (or no-store for admin preview)
   const [blogRes, profileRes, commentsRes] = await Promise.all([
-    blogService.getBlogById(slug, 60),
+    blogService.getBlogById(slug, token ? false : 60, token),
     settingsService.getPublicProfile(60),
     blogService.getBlogComments(slug),
   ]);
@@ -70,6 +98,12 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
     notFound();
   }
 
+  // If blog is unpublished and viewer is not an authorized admin, trigger standard 404
+  if (!blog.isPublished && !blogRes.data?.isPreview) {
+    notFound();
+  }
+
+  const isDraftPreview = !blog.isPublished;
   const profile = profileRes.data?.profile;
   const initialComments = commentsRes.data?.comments || [];
   const readingTime = calculateReadingTime(blog.description);
@@ -79,29 +113,41 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
 
   return (
     <>
-      {/* Google JSON-LD Structured Data for rich search snippets */}
-      <ArticleJsonLd
-        title={blog.title}
-        description={getPlainExcerpt(blog.description, 160)}
-        url={articleUrl}
-        image={blog.image}
-        datePublished={blog.createdAt}
-        dateModified={blog.updatedAt}
-        authorName={authorName}
-      />
+      {/* Google JSON-LD Structured Data for rich search snippets (suppressed on draft previews) */}
+      {!isDraftPreview && (
+        <ArticleJsonLd
+          title={blog.title}
+          description={getPlainExcerpt(blog.description, 160)}
+          url={articleUrl}
+          image={blog.image}
+          datePublished={blog.createdAt}
+          dateModified={blog.updatedAt}
+          authorName={authorName}
+        />
+      )}
 
       {/* Main Container - Width matches Sticky Navbar (max-w-4xl lg:max-w-5xl px-4 sm:px-6) */}
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+        {/* Admin Preview Mode Banner */}
+        {isDraftPreview && <AdminPreviewBanner blog={blog} />}
+
         {/* Article Header */}
         <FadeIn direction="up" distance={18} duration={0.48}>
           <header className="w-full text-center px-2 mb-6 sm:mb-8">
-            {/* Unified Metadata Row: Category, Date, Reading Time */}
+            {/* Unified Metadata Row: Category, Date/Draft status, Reading Time */}
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-medium text-primary mb-3.5">
               <span className="font-semibold">{blog.category}</span>
               <span className="text-muted-foreground/60">•</span>
-              {formattedDate && (
+              {blog.isPublished ? (
+                formattedDate ? (
+                  <>
+                    <time dateTime={blog.createdAt}>Published on {formattedDate}</time>
+                    <span className="text-muted-foreground/60">•</span>
+                  </>
+                ) : null
+              ) : (
                 <>
-                  <time dateTime={blog.createdAt}>Published on {formattedDate}</time>
+                  <span className="font-semibold text-primary">Draft</span>
                   <span className="text-muted-foreground/60">•</span>
                 </>
               )}
@@ -171,11 +217,13 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
           {/* Author Bio Card */}
           <AuthorBio profile={profile} />
 
-          {/* Comments & Discussion */}
-          <BlogComments
-            blogId={blog._id}
-            initialComments={initialComments}
-          />
+          {/* Comments & Discussion - Hidden completely on draft previews */}
+          {!isDraftPreview && (
+            <BlogComments
+              blogId={blog._id}
+              initialComments={initialComments}
+            />
+          )}
         </div>
       </div>
     </>

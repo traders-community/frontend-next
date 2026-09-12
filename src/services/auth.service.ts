@@ -22,26 +22,45 @@ export const authService = {
   },
 
   /**
-   * Persists auth token in localStorage.
+   * Persists auth token in localStorage and mirrors to cookie for Next.js SSR.
    */
   setToken(token: string) {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem("token", token);
+      document.cookie = `admin_token=${encodeURIComponent(token)}; path=/; SameSite=Lax; max-age=604800`;
     } catch (e) {
-      console.error("Failed to store auth token in localStorage:", e);
+      console.error("Failed to store auth token:", e);
     }
   },
 
   /**
-   * Clears auth token from localStorage.
+   * Clears auth token from localStorage and cookie.
    */
   removeToken() {
     if (typeof window === "undefined") return;
     try {
       localStorage.removeItem("token");
+      document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
     } catch (e) {
-      console.error("Failed to remove auth token from localStorage:", e);
+      console.error("Failed to remove auth token:", e);
+    }
+  },
+
+  /**
+   * Syncs existing localStorage token to cookie if missing (e.g. after refresh/tab open).
+   */
+  syncTokenCookie() {
+    if (typeof window === "undefined") return;
+    try {
+      const token = this.getToken();
+      if (token) {
+        document.cookie = `admin_token=${encodeURIComponent(token)}; path=/; SameSite=Lax; max-age=604800`;
+      } else {
+        document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
+      }
+    } catch {
+      // Storage/cookie restricted
     }
   },
 
