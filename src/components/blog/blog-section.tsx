@@ -13,9 +13,8 @@ import {
   RiCheckLine,
 } from "@remixicon/react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
 import { FadeIn } from "@/components/motion";
-import { staggerContainerVariants, staggerItemVariants } from "@/lib/motion";
+import { EASE } from "@/lib/motion";
 
 interface BlogSectionProps {
   initialBlogs?: Blog[];
@@ -36,6 +35,50 @@ const DEFAULT_CATEGORIES = [
 
 const PAGE_SIZE = 9;
 
+/**
+ * Pixel-matched articles grid skeleton for initial page load.
+ * Keeps layout stable and distinct from the category filter round spinner.
+ */
+function ArticlesGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 animate-pulse">
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div
+          key={idx}
+          className="h-full flex flex-col rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden shadow-xs"
+        >
+          {/* Thumbnail Skeleton */}
+          <div className="relative aspect-video w-full bg-muted/80" />
+
+          {/* Card Body Skeleton */}
+          <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+            <div>
+              {/* Meta Line */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-3 w-16 rounded-sm bg-muted/60" />
+                <div className="h-3 w-3 rounded-full bg-muted/40" />
+                <div className="h-3 w-20 rounded-sm bg-muted/60" />
+              </div>
+
+              {/* Title Skeleton */}
+              <div className="space-y-2 mb-4">
+                <div className="h-4.5 w-full rounded-sm bg-muted/80" />
+                <div className="h-4.5 w-3/4 rounded-sm bg-muted/70" />
+              </div>
+
+              {/* Excerpt Skeleton */}
+              <div className="space-y-1.5 mb-2">
+                <div className="h-3 w-full rounded-sm bg-muted/50" />
+                <div className="h-3 w-5/6 rounded-sm bg-muted/50" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function BlogSection({
   initialBlogs = [],
   initialTotal = 0,
@@ -53,86 +96,58 @@ export function BlogSection({
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [, setTotal] = useState<number>(initialTotal);
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(false);
-  const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  const isInitialMount = useRef<boolean>(true);
+  // Initial cold loading: true ONLY if initialBlogs is empty on first mount
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(
+    initialBlogs.length === 0 && selectedCategory === "All" && !searchQuery.trim()
+  );
+  // Category/search filtering: round spinner shown when clicking categories or searching
+  const [isFiltering, setIsFiltering] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+
+  const isFirstMount = useRef<boolean>(true);
   const requestIdRef = useRef<number>(0);
 
-  // Sync state if server prop updates
+  // Sync state if server categories prop updates
   useEffect(() => {
     if (categories && categories.length > 0) {
       setActiveCategories(categories);
     }
   }, [categories]);
 
-  // Stale-While-Revalidate: Background sync on mount & tab focus so client navigation & admin updates appear seamlessly
+  // Fetch active categories on mount to ensure tabs match latest categories in DB
   useEffect(() => {
-    let isMounted = true;
-
-    const syncFreshData = async () => {
-      try {
-        const [freshBlogsRes, freshCatsRes] = await Promise.all([
-          blogService.getBlogs({ page: 1, limit: PAGE_SIZE, category: "All", revalidate: 0 }),
-          categoryService.getPublicCategories(0),
-        ]);
-
-        if (!isMounted) return;
-
-        if (freshCatsRes.data?.success && freshCatsRes.data.categories) {
-          const freshCategories = [
+    categoryService
+      .getPublicCategories(0)
+      .then((res) => {
+        if (res.data?.success && res.data.categories?.length) {
+          const fresh = [
             "All",
-            ...freshCatsRes.data.categories
+            ...res.data.categories
               .filter((c) => c.isActive !== false)
               .map((c) => c.name),
           ];
+          const uniqueCats = Array.from(new Set(fresh));
           setActiveCategories((prev) => {
             if (
-              prev.length === freshCategories.length &&
-              prev.every((val, index) => val === freshCategories[index])
+              prev.length === uniqueCats.length &&
+              prev.every((v, i) => v === uniqueCats[i])
             ) {
               return prev;
             }
-            return freshCategories;
+            return uniqueCats;
           });
         }
-
-        if (freshBlogsRes.data?.success && freshBlogsRes.data.blogs) {
-          // If the user is on default view (no search / All category), update the grid with fresh data
-          setSelectedCategory((currCat) => {
-            setSearchQuery((currSearch) => {
-              if (currCat === "All" && !currSearch.trim()) {
-                setBlogs(freshBlogsRes.data?.blogs || []);
-                setPage(1);
-                setTotal(freshBlogsRes.data?.total ?? (freshBlogsRes.data?.blogs?.length || 0));
-                setHasMore(Boolean(freshBlogsRes.data?.hasMore));
-              }
-              return currSearch;
-            });
-            return currCat;
-          });
-        }
-      } catch (err) {
-        console.error("Background data refresh failed:", err);
-      }
-    };
-
-    syncFreshData();
-
-    window.addEventListener("focus", syncFreshData);
-    return () => {
-      isMounted = false;
-      window.removeEventListener("focus", syncFreshData);
-    };
+      })
+      .catch(() => {});
   }, []);
 
-  // Synchronize URL query params without reloading the page
+  // Synchronize URL query params cleanly without reloading page
   const updateUrlParams = useCallback((cat: string, query: string) => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    if (cat && cat !== "All") {
-      url.searchParams.set("category", cat);
+    if (cat && cat.trim() && cat.trim().toLowerCase() !== "all") {
+      url.searchParams.set("category", cat.trim());
     } else {
       url.searchParams.delete("category");
     }
@@ -146,80 +161,66 @@ export function BlogSection({
     window.history.replaceState({}, "", url.toString());
   }, []);
 
-  // Fetch blogs handler with race-condition guard
-  const fetchBlogs = useCallback(
-    async (cat: string, search: string, targetPage: number = 1, append: boolean = false) => {
-      const currentRequestId = ++requestIdRef.current;
-
-      if (append) {
-        setLoadingMore(true);
-      } else if (blogs.length === 0) {
-        setIsInitialLoading(true);
-      } else {
-        setIsSearching(true);
-      }
-
-      try {
-        const res = await blogService.getBlogs({
-          page: targetPage,
-          limit: PAGE_SIZE,
-          category: cat,
-          search,
-        });
-
-        // If a newer search or category was triggered while waiting, ignore stale response
-        if (currentRequestId !== requestIdRef.current) return;
-
-        if (res.data?.success) {
-          const fetchedBlogs = res.data.blogs || [];
-          setBlogs((prev) => (append ? [...prev, ...fetchedBlogs] : fetchedBlogs));
-          setPage(res.data.page || targetPage);
-          setHasMore(Boolean(res.data.hasMore));
-          setTotal(res.data.total ?? (append ? blogs.length + fetchedBlogs.length : fetchedBlogs.length));
-        }
-      } catch (err) {
-        if (currentRequestId === requestIdRef.current) {
-          console.error("Error fetching blogs:", err);
-        }
-      } finally {
-        if (currentRequestId === requestIdRef.current) {
-          setIsInitialLoading(false);
-          setLoadingMore(false);
-          setIsSearching(false);
-        }
-      }
-    },
-    [blogs.length]
-  );
-
-  // Handle category or search change
+  // Handle category or search change: fetch filtered blogs directly from backend
   useEffect(() => {
-    // Skip on first mount if initial SSR data is already present
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      if (initialBlogs.length > 0 && selectedCategory === "All" && !searchQuery) {
+    // On first mount: if we already have initialBlogs for "All" without search, skip network call
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      if (initialBlogs.length > 0 && selectedCategory === "All" && !searchQuery.trim()) {
         return;
       }
+      if (initialBlogs.length === 0 && selectedCategory === "All" && !searchQuery.trim()) {
+        setIsInitialLoading(true);
+      } else {
+        setIsFiltering(true);
+      }
+    } else {
+      // User clicked a category or typed search: trigger category filter spinner
+      setIsFiltering(true);
     }
 
     updateUrlParams(selectedCategory, searchQuery);
-    fetchBlogs(selectedCategory, searchQuery, 1, false);
-  }, [selectedCategory, searchQuery, fetchBlogs, initialBlogs.length, updateUrlParams]);
 
-  // If the currently selected category is no longer active, fallback gracefully to "All"
-  useEffect(() => {
-    if (
-      selectedCategory !== "All" &&
-      activeCategories.length > 1 &&
-      !activeCategories.includes(selectedCategory)
-    ) {
-      setSelectedCategory("All");
-      updateUrlParams("All", searchQuery);
-      fetchBlogs("All", searchQuery, 1, false);
-    }
-  }, [activeCategories, selectedCategory, searchQuery, updateUrlParams, fetchBlogs]);
+    const currentRequestId = ++requestIdRef.current;
+
+    const categoryParam =
+      selectedCategory && selectedCategory.toLowerCase() !== "all"
+        ? selectedCategory
+        : undefined;
+
+    blogService
+      .getBlogs({
+        page: 1,
+        limit: PAGE_SIZE,
+        category: categoryParam,
+        search: searchQuery.trim() || undefined,
+        revalidate: 0,
+      })
+      .then((res) => {
+        if (currentRequestId !== requestIdRef.current) return;
+
+        if (res.data?.success) {
+          setBlogs(res.data.blogs || []);
+          setPage(res.data.page || 1);
+          setHasMore(Boolean(res.data.hasMore));
+          setTotal(res.data.total ?? (res.data.blogs?.length || 0));
+        }
+      })
+      .catch((err) => {
+        if (currentRequestId === requestIdRef.current) {
+          console.error("Error fetching blogs for category:", err);
+        }
+      })
+      .finally(() => {
+        if (currentRequestId === requestIdRef.current) {
+          setIsInitialLoading(false);
+          setIsFiltering(false);
+        }
+      });
+  }, [selectedCategory, searchQuery, updateUrlParams]);
 
   const handleCategoryChange = (category: string) => {
+    if (category === selectedCategory && !isFiltering) return;
     setSelectedCategory(category);
   };
 
@@ -227,9 +228,37 @@ export function BlogSection({
     setSearchQuery(query);
   };
 
-  const handleLoadMore = () => {
-    if (loadingMore || !hasMore) return;
-    fetchBlogs(selectedCategory, searchQuery, page + 1, true);
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || isFiltering || isInitialLoading) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const categoryParam =
+        selectedCategory && selectedCategory.toLowerCase() !== "all"
+          ? selectedCategory
+          : undefined;
+
+      const res = await blogService.getBlogs({
+        page: nextPage,
+        limit: PAGE_SIZE,
+        category: categoryParam,
+        search: searchQuery.trim() || undefined,
+        revalidate: 0,
+      });
+
+      if (res.data?.success) {
+        const fetchedBlogs = res.data.blogs || [];
+        setBlogs((prev) => [...prev, ...fetchedBlogs]);
+        setPage(res.data.page || nextPage);
+        setHasMore(Boolean(res.data.hasMore));
+        setTotal(res.data.total ?? (blogs.length + fetchedBlogs.length));
+      }
+    } catch (err) {
+      console.error("Error loading more blogs:", err);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   const handleResetFilters = () => {
@@ -237,14 +266,20 @@ export function BlogSection({
     setSearchQuery("");
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSelectedCategory("All");
+  };
+
   return (
     <div suppressHydrationWarning className="w-full flex flex-col items-center">
-      {/* Search Bar Container with generous vertical breathing room */}
+      {/* Search Bar Container - Static UI, never in skeleton or loading state */}
       <FadeIn direction="up" distance={18} duration={0.48} className="w-full max-w-xl mb-10 sm:mb-16">
         <SearchBar
           value={searchQuery}
           onChange={handleSearchChange}
-          isLoading={isSearching}
+          onClear={handleClearSearch}
+          isLoading={false}
           placeholder="Search reports, strategies, or company insights…"
         />
       </FadeIn>
@@ -258,37 +293,47 @@ export function BlogSection({
         />
       </FadeIn>
 
-      {/* Articles Grid Container (No flickering, smooth transition) */}
-      <div suppressHydrationWarning className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20">
+      {/* Articles Grid Container */}
+      <div suppressHydrationWarning className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 min-h-[360px]">
         {isInitialLoading ? (
-          /* Clean regular spinner loader (No skeleton flicker) */
-          <div className="flex flex-col items-center justify-center py-24">
+          /* Initial Load: Clean Card Skeletons (NO round load) */
+          <ArticlesGridSkeleton />
+        ) : isFiltering ? (
+          /* Category Filter / Search: Clean Round Spinner */
+          <div className="flex flex-col items-center justify-center py-24 min-h-[360px]">
             <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
             <span className="mt-4 text-sm text-muted-foreground font-medium">Loading blog posts...</span>
           </div>
         ) : blogs.length > 0 ? (
-          /* Real Articles Grid with 2 columns on tablet and 3/4 on desktop with smooth stagger entrance on scroll */
-          <motion.div
-            variants={staggerContainerVariants}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-60px" }}
+          /* Real Articles Grid with reliable stagger fade-in */
+          <div
+            key={`${selectedCategory}-${searchQuery}`}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
           >
             {blogs.map((blog, idx) => (
-              <motion.div key={blog._id} variants={staggerItemVariants}>
+              <motion.div
+                key={blog._id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.32,
+                  delay: Math.min(idx * 0.04, 0.28),
+                  ease: EASE.outCubic,
+                }}
+                className="h-full"
+              >
                 <BlogCard blog={blog} priority={idx < 4} />
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         ) : (
           /* Clean Open Empty State (No Box, No Border) */
-          <div className="flex flex-col items-center justify-center text-center py-20 px-6 max-w-lg mx-auto">
+          <div className="flex flex-col items-center justify-center text-center py-20 px-6 max-w-lg mx-auto min-h-[300px]">
             <h3 className="text-xl sm:text-2xl font-medium mb-3 text-primary">
               No blog posts found
             </h3>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-              We couldn&apos;t find any articles that match your search or selected category. Try exploring other topics or reset your filters.
+              We couldn&apos;t find any articles {selectedCategory !== "All" ? `in "${selectedCategory}"` : ""} matching your filters. Try exploring other topics or reset your filters.
             </p>
             <button
               type="button"
@@ -303,7 +348,7 @@ export function BlogSection({
       </div>
 
       {/* Pagination / Load More Section */}
-      {!isInitialLoading && blogs.length > 0 && (
+      {!isInitialLoading && !isFiltering && blogs.length > 0 && (
         <div className="flex flex-col items-center justify-center gap-3 mb-24 sm:mb-32 px-4">
           {hasMore ? (
             <button

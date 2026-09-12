@@ -280,53 +280,77 @@ export function AdminDataTable<T>({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/70 bg-surface/30">
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    scope="col"
-                    className={cn(
-                      "px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground select-none whitespace-nowrap",
-                      col.align === "center" && "text-center",
-                      col.align === "right" && "text-right",
-                      col.className
-                    )}
-                  >
-                    {col.sortable && onSortChange ? (
-                      <button
-                        type="button"
-                        onClick={() => onSortChange(col.key)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer group select-none",
-                          col.align === "center" && "justify-center mx-auto",
-                          col.align === "right" && "justify-end ml-auto",
-                          sortKey === col.key && Boolean(sortDirection)
-                            ? "text-foreground font-bold"
-                            : "text-muted-foreground"
-                        )}
-                        title={`Sort by ${col.label} ${
-                          sortKey === col.key && sortDirection
+                {columns.map((col) => {
+                  const isSorted = sortKey === col.key && Boolean(sortDirection);
+                  const isSortable = Boolean(col.sortable && onSortChange);
+
+                  return (
+                    <th
+                      key={col.key}
+                      scope="col"
+                      aria-sort={
+                        isSortable
+                          ? isSorted
                             ? sortDirection === "asc"
-                              ? "(ascending - click for descending)"
-                              : "(descending - click to clear sort)"
-                            : "(click to sort ascending)"
-                        }`}
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                          : undefined
+                      }
+                      tabIndex={isSortable ? 0 : undefined}
+                      onClick={isSortable ? () => onSortChange!(col.key) : undefined}
+                      onKeyDown={
+                        isSortable
+                          ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSortChange!(col.key);
+                              }
+                            }
+                          : undefined
+                      }
+                      className={cn(
+                        "px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-foreground select-none whitespace-nowrap transition-colors",
+                        col.align === "center" && "text-center",
+                        col.align === "right" && "text-right",
+                        isSortable && "cursor-pointer hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                        col.className
+                      )}
+                      title={
+                        isSortable
+                          ? `Sort by ${col.label} ${
+                              isSorted
+                                ? sortDirection === "asc"
+                                  ? "(ascending - click for descending)"
+                                  : "(descending - click to clear sort)"
+                                : "(click to sort ascending)"
+                            }`
+                          : undefined
+                      }
+                    >
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-1.5",
+                          col.align === "center" && "justify-center mx-auto",
+                          col.align === "right" && "justify-end ml-auto"
+                        )}
                       >
                         <span>{col.label}</span>
-                        {sortKey === col.key && sortDirection ? (
-                          sortDirection === "asc" ? (
-                            <RiArrowUpLine className="h-3.5 w-3.5 text-primary stroke-[2.5] transition-transform animate-in fade-in-50 duration-150" />
+                        {isSortable && (
+                          isSorted ? (
+                            sortDirection === "asc" ? (
+                              <RiArrowUpLine className="h-3.5 w-3.5 text-primary stroke-[2.5] transition-transform animate-in fade-in-50 duration-150" />
+                            ) : (
+                              <RiArrowDownLine className="h-3.5 w-3.5 text-primary stroke-[2.5] transition-transform animate-in fade-in-50 duration-150" />
+                            )
                           ) : (
-                            <RiArrowDownLine className="h-3.5 w-3.5 text-primary stroke-[2.5] transition-transform animate-in fade-in-50 duration-150" />
+                            <RiArrowUpDownLine className="h-3.5 w-3.5 text-foreground/50 hover:text-foreground transition-colors" />
                           )
-                        ) : (
-                          <RiArrowUpDownLine className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
                         )}
-                      </button>
-                    ) : (
-                      <span>{col.label}</span>
-                    )}
-                  </th>
-                ))}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
 

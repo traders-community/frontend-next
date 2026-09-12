@@ -1,10 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 /**
- * Combines multiple class values into a single class string using clsx.
+ * Combines multiple class values into a single class string using clsx and tailwind-merge.
  */
 export function cn(...inputs: ClassValue[]): string {
-  return clsx(inputs);
+  return twMerge(clsx(inputs));
 }
 
 /**

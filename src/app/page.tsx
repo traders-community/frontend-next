@@ -55,17 +55,9 @@ async function getInitialHomeData() {
  */
 function BlogSectionLoadingFallback() {
   return (
-    <div suppressHydrationWarning className="w-full flex flex-col items-center animate-pulse" aria-busy="true" aria-label="Loading research articles">
-      {/* Search Bar Skeleton */}
-      <div className="w-full max-w-xl mb-10 sm:mb-16 px-4 sm:px-0">
-        <div className="mx-auto w-full sm:max-w-lg h-12 sm:h-14 rounded-full border border-primary/20 bg-card/60 backdrop-blur-md flex items-center justify-between px-5">
-          <div className="h-4 w-48 sm:w-64 rounded-md bg-muted/70" />
-          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-primary/20" />
-        </div>
-      </div>
-
+    <div suppressHydrationWarning className="w-full flex flex-col items-center" aria-busy="true" aria-label="Loading research articles">
       {/* Category Tabs Skeleton */}
-      <div className="w-full max-w-5xl px-4 mb-10 overflow-hidden">
+      <div className="w-full max-w-5xl px-4 mb-10 overflow-hidden animate-pulse">
         <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 flex-nowrap w-max mx-auto py-3">
           <div className="h-9 w-16 sm:w-20 rounded-full bg-primary/30" />
           <div className="h-9 w-28 sm:w-36 rounded-full bg-muted/60 border border-border/40" />
@@ -76,7 +68,7 @@ function BlogSectionLoadingFallback() {
       </div>
 
       {/* Responsive Articles Grid Skeleton (Matches real BlogCard grid) */}
-      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20">
+      <div className="w-full max-w-7xl px-5 sm:px-6 mb-16 sm:mb-20 animate-pulse">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
           {Array.from({ length: 8 }).map((_, idx) => (
             <div
@@ -120,32 +112,16 @@ function BlogSectionLoadingFallback() {
   );
 }
 
-/**
- * Streamed asynchronous container that fetches fresh initial data.
- * Handled within the Suspense boundary so the page layout and hero header
- * render instantly for visitors and search engines.
- */
-async function StreamedBlogSection() {
+export default async function Home() {
   const { initialBlogs, initialTotal, initialHasMore, categories } = await getInitialHomeData();
 
-  return (
-    <BlogSection
-      initialBlogs={initialBlogs}
-      initialTotal={initialTotal}
-      initialHasMore={initialHasMore}
-      categories={categories}
-    />
-  );
-}
-
-export default function Home() {
   return (
     <>
       <TradingBackground />
       <div suppressHydrationWarning className="w-full min-h-screen flex flex-col items-center pt-10 sm:pt-18 pb-20 sm:pb-28">
         {/* Hero Header with generous vertical spacing */}
         <header className="max-w-3xl mx-auto text-center px-4 pb-8 sm:pb-12">
-          <FadeIn direction="down" distance={12} duration={0.45} delay={0.06}>
+          <FadeIn direction="up" distance={12} duration={0.45} delay={0.06}>
             {/* Pill Badge above Title */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-xs sm:text-sm font-medium text-foreground mb-4 sm:mb-5 shadow-xs">
               <span>Learn</span>
@@ -169,10 +145,13 @@ export default function Home() {
           </FadeIn>
         </header>
 
-        {/* Streamed Interactive Blog Section wrapped with Suspense */}
-        <Suspense fallback={<BlogSectionLoadingFallback />}>
-          <StreamedBlogSection />
-        </Suspense>
+        {/* Interactive Blog Section */}
+        <BlogSection
+          initialBlogs={initialBlogs}
+          initialTotal={initialTotal}
+          initialHasMore={initialHasMore}
+          categories={categories}
+        />
       </div>
     </>
   );

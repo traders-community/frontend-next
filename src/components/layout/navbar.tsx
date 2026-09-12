@@ -51,14 +51,14 @@ export function Navbar() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 w-full transition-all duration-300 ease-in-out",
+          "sticky top-0 z-40 w-full header-sticky-transition",
           isScrolled ? "pt-3 sm:pt-4 px-4 sm:px-6" : "pt-4 pb-2 px-4 sm:px-6"
         )}
       >
         <nav
           aria-label="Main Navigation"
           className={cn(
-            "transition-all duration-300 ease-in-out flex items-center justify-between mx-auto",
+            "animate-navbar-entrance navbar-sticky-transition flex items-center justify-between mx-auto",
             isScrolled
               ? "max-w-4xl lg:max-w-5xl rounded-full bg-white/60 dark:bg-card/85 backdrop-blur-xl border border-white/80 dark:border-border/80 shadow-lg shadow-black/5 dark:shadow-black/30 ring-1 ring-black/5 dark:ring-white/5 px-5 py-2.5 sm:px-6"
               : "w-full max-w-7xl bg-transparent border-transparent py-2 px-1 sm:px-2"

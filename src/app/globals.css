@@ -129,7 +129,56 @@ section,
   will-change: transform;
 }
 
+/* Smooth, synchronized entrance animation for top navigation (opacity and slide happen simultaneously from first paint) */
+@keyframes navbar-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-navbar-entrance {
+  animation: navbar-entrance 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Dedicated transition for sticky navbar mode (explicitly excludes transform and opacity to prevent conflicts) */
+.navbar-sticky-transition {
+  transition-property: max-width, padding, background-color, border-color, box-shadow, border-radius, backdrop-filter, -webkit-backdrop-filter;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.header-sticky-transition {
+  transition-property: padding;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Minimal entrance animation for trading background waves */
+@keyframes bg-waves-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-bg-waves-entrance {
+  animation: bg-waves-entrance 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .animate-navbar-entrance,
+  .animate-bg-waves-entrance {
+    animation: none;
+  }
   .animate-wave-slow,
   .animate-wave-medium,
   .animate-wave-fast {

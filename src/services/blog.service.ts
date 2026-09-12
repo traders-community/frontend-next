@@ -36,8 +36,8 @@ export const blogService = {
       limit,
     };
 
-    if (category && category !== "All") {
-      queryParams.category = category;
+    if (category && category.trim() && category.trim().toLowerCase() !== "all") {
+      queryParams.category = category.trim();
     }
 
     if (search && search.trim()) {

@@ -8,12 +8,15 @@ export interface RequestOptions extends RequestInit {
   tags?: string[];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiClientResponse<T = unknown> {
   data: T;
   status: number;
   success: boolean;
   message?: string;
 }
+
+// Backward-compatibility alias
+export type ApiResponse<T = unknown> = ApiClientResponse<T>;
 
 /**
  * Builds a clean query string from an object of parameters.
@@ -55,10 +58,10 @@ function resolveUrl(endpoint: string, queryString: string): string {
  * Centralized Fetch Wrapper with Request & Response Interceptors.
  * Compatible with Next.js SSR / ISR and Client Components.
  */
-async function apiRequest<T = any>(
+async function apiRequest<T = unknown>(
   endpoint: string,
   options: RequestOptions = {}
-): Promise<ApiResponse<T>> {
+): Promise<ApiClientResponse<T>> {
   const { params, revalidate, tags, headers, ...rest } = options;
   const queryString = buildQueryString(params);
   const url = resolveUrl(endpoint, queryString);
@@ -71,12 +74,14 @@ async function apiRequest<T = any>(
     defaultHeaders["Content-Type"] = "application/json";
   }
 
-  // Attach auth token if present in browser storage
+  // Attach auth token if present in browser storage (with standard Bearer prefix)
   if (typeof window !== "undefined") {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        defaultHeaders["Authorization"] = token;
+        defaultHeaders["Authorization"] = token.startsWith("Bearer ")
+          ? token
+          : `Bearer ${token}`;
       }
     } catch {
       // Storage access may be restricted in some iframe / sandboxed environments
@@ -84,7 +89,7 @@ async function apiRequest<T = any>(
   }
 
   // Clean custom headers if sending FormData so browser automatically assigns boundary
-  const customHeaders = { ...(headers as Record<string, string> || {}) };
+  const customHeaders = { ...((headers as Record<string, string>) || {}) };
   if (isFormData) {
     delete customHeaders["Content-Type"];
     delete customHeaders["content-type"];
@@ -107,6 +112,9 @@ async function apiRequest<T = any>(
       ...(revalidate !== undefined ? { revalidate } : {}),
       ...(tags !== undefined ? { tags } : {}),
     };
+  } else if (typeof window !== "undefined") {
+    // Client-side browser requests default to no-store to avoid stale HTTP cache
+    fetchConfig.cache = "no-store";
   }
 
   // --- EXECUTE REQUEST & RESPONSE INTERCEPTOR ---
@@ -114,11 +122,30 @@ async function apiRequest<T = any>(
     const res = await fetch(url, fetchConfig);
     const data = await res.json().catch(() => ({}));
 
+    // 401 Session Expiry Interceptor
+    if (res.status === 401 && typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("token");
+        if (!window.location.pathname.includes("/login")) {
+          import("react-toastify").then(({ toast }) => {
+            toast.error("Session expired. Please log in again.", {
+              toastId: "session-expired",
+            });
+          });
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 600);
+        }
+      } catch {
+        // Storage access may be restricted
+      }
+    }
+
     // Standardized response envelope
     return {
       data: data as T,
       status: res.status,
-      success: res.ok && (data?.success !== false),
+      success: res.ok && data?.success !== false,
       message: data?.message,
     };
   } catch (error: any) {
@@ -136,28 +163,28 @@ async function apiRequest<T = any>(
  * Standardized HTTP Client with typed helper methods.
  */
 export const api = {
-  get: <T = any>(endpoint: string, options?: RequestOptions) =>
+  get: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "GET", ...options }),
 
-  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => {
+  post: <T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions) => {
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     return apiRequest<T>(endpoint, {
       method: "POST",
-      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+      body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
       ...options,
     });
   },
 
-  put: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => {
+  put: <T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions) => {
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     return apiRequest<T>(endpoint, {
       method: "PUT",
-      body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+      body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
       ...options,
     });
   },
 
-  delete: <T = any>(endpoint: string, options?: RequestOptions) =>
+  delete: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "DELETE", ...options }),
 
   baseURL: RAW_API_BASE_URL,

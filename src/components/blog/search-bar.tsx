@@ -7,6 +7,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
   onSubmit?: () => void;
   placeholder?: string;
   className?: string;
@@ -16,6 +17,7 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChange,
+  onClear,
   onSubmit,
   placeholder = "Search reports, strategies, or company insights…",
   className = "",
@@ -24,6 +26,7 @@ export function SearchBar({
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedValue = useDebounce(localValue, 300);
+  const isClearingRef = useRef(false);
 
   useEffect(() => {
     setLocalValue(value);
@@ -37,8 +40,13 @@ export function SearchBar({
   };
 
   const handleClear = () => {
+    isClearingRef.current = true;
     setLocalValue("");
-    onChange("");
+    if (onClear) {
+      onClear();
+    } else {
+      onChange("");
+    }
     if (inputRef.current) {
       inputRef.current.value = "";
       inputRef.current.focus();
@@ -46,11 +54,18 @@ export function SearchBar({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isClearingRef.current = false;
     setLocalValue(e.target.value);
   };
 
-  // Synchronize debounced value
+  // Synchronize debounced value without reverting clear operations
   useEffect(() => {
+    if (isClearingRef.current) {
+      if (debouncedValue === "") {
+        isClearingRef.current = false;
+      }
+      return;
+    }
     if (debouncedValue !== value) {
       onChange(debouncedValue.trim());
     }

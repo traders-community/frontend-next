@@ -130,8 +130,10 @@ export function TradingBackground() {
         </defs>
       </svg>
 
-      {/* Waves Container positioned at bottom of viewport: reduced by 50px on mobile */}
-      <div className="absolute bottom-0 left-0 right-0 h-[calc(72vh-50px)] sm:h-[62vh] md:h-[68vh] overflow-hidden pointer-events-none">
+      {/* Waves Container positioned at bottom of viewport: minimal & suitable entrance animation */}
+      <div
+        className="animate-bg-waves-entrance absolute bottom-0 left-0 right-0 h-[calc(72vh-50px)] sm:h-[62vh] md:h-[68vh] overflow-hidden pointer-events-none"
+      >
         {layers.map((layer, idx) => (
           <div
             key={idx}
