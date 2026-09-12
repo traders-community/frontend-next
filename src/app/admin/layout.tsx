@@ -21,6 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace("/admin/login");
     } else {
       setIsAuthenticated(true);
+      authService.syncTokenCookie();
     }
   }, [isLoginPage, router]);
 

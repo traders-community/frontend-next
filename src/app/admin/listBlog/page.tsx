@@ -270,16 +270,21 @@ export default function AdminListBlogPage() {
       render: (blog) => (
         <div className="flex items-center justify-end gap-1.5">
           {/* View Preview */}
-          <Link
-            href={`/blog/${blog.slug || blog._id}`}
-            onClick={() => authService.syncTokenCookie()}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Preview article"
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors"
+          <button
+            type="button"
+            onClick={() => {
+              authService.syncTokenCookie();
+              const token = authService.getToken();
+              const targetUrl = !blog.isPublished && token
+                ? `/blog/${blog.slug || blog._id}?previewToken=${encodeURIComponent(token)}`
+                : `/blog/${blog.slug || blog._id}`;
+              window.open(targetUrl, "_blank", "noopener,noreferrer");
+            }}
+            title={blog.isPublished ? "View article" : "Preview draft article"}
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors cursor-pointer"
           >
             <RiEyeLine className="h-4 w-4" />
-          </Link>
+          </button>
 
           {/* Edit */}
           <button

@@ -82,9 +82,14 @@ export const blogService = {
 
   /**
    * Fetches approved comments for a specific blog post.
+   * Optionally forwards admin token when previewing unpublished drafts.
    */
-  async getBlogComments(blogId: string) {
-    return api.post<CommentsResponse>("/blog/comments", { blogId });
+  async getBlogComments(blogId: string, token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+    return api.post<CommentsResponse>("/blog/comments", { blogId }, { headers });
   },
 
   /**

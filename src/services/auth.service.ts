@@ -28,7 +28,9 @@ export const authService = {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem("token", token);
-      document.cookie = `admin_token=${encodeURIComponent(token)}; path=/; SameSite=Lax; max-age=604800`;
+      const encoded = encodeURIComponent(token);
+      document.cookie = `admin_token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
+      document.cookie = `token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
     } catch (e) {
       console.error("Failed to store auth token:", e);
     }
@@ -42,6 +44,7 @@ export const authService = {
     try {
       localStorage.removeItem("token");
       document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
     } catch (e) {
       console.error("Failed to remove auth token:", e);
     }
@@ -55,9 +58,12 @@ export const authService = {
     try {
       const token = this.getToken();
       if (token) {
-        document.cookie = `admin_token=${encodeURIComponent(token)}; path=/; SameSite=Lax; max-age=604800`;
+        const encoded = encodeURIComponent(token);
+        document.cookie = `admin_token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
+        document.cookie = `token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
       } else {
         document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
       }
     } catch {
       // Storage/cookie restricted
