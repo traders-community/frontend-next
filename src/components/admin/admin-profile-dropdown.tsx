@@ -164,17 +164,14 @@ export function AdminProfileDropdown({
             : "border-border/80 hover:border-primary/50"
         )}
       >
-        {avatar ? (
-          <img
-            src={avatar}
-            alt={profileName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-primary/15 text-primary font-bold text-xs flex items-center justify-center hover:bg-primary/20 transition-colors">
-            {(profileName || "A").charAt(0).toUpperCase()}
-          </div>
-        )}
+        <img
+          src={avatar || "/icon.png"}
+          alt={profileName}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/icon.png";
+          }}
+        />
       </button>
 
       {/* Floating Dropdown Menu */}

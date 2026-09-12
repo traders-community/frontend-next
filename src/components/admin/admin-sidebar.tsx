@@ -594,16 +594,15 @@ export function AdminSidebar() {
           aria-haspopup="true"
         >
           {/* Avatar Circle */}
-          <div className="h-9 w-9 rounded-full overflow-hidden shrink-0 border border-border/80 flex items-center justify-center bg-primary/15 text-primary font-bold text-xs shadow-2xs">
-            {avatar ? (
-              <img
-                src={avatar}
-                alt={profileName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span>{(profileName || "S").charAt(0).toUpperCase()}</span>
-            )}
+          <div className="h-9 w-9 rounded-full overflow-hidden shrink-0 border border-border/80 flex items-center justify-center bg-card shadow-2xs">
+            <img
+              src={avatar || "/icon.png"}
+              alt={profileName}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/icon.png";
+              }}
+            />
           </div>
 
           {/* User Details & 3 Dots (when expanded) */}

@@ -6,17 +6,41 @@ import {
   RiPhoneLine,
   RiGlobalLine,
   RiUserLine,
+  RiTwitterXLine,
+  RiLinkedinBoxLine,
+  RiYoutubeLine,
+  RiTelegramLine,
+  RiInstagramLine,
+  RiGithubLine,
+  RiDiscordLine,
+  RiFacebookBoxLine,
+  RiWhatsappLine,
 } from "@remixicon/react";
 
 interface AuthorBioProps {
   profile?: AdminProfile | null;
 }
 
+// Maps known platforms to icons, or returns null for custom text badges
+function getPlatformIcon(platform: string) {
+  const p = (platform || "").toLowerCase().trim();
+  if (p.includes("twitter") || p.includes("x.com") || p === "x") return RiTwitterXLine;
+  if (p.includes("linkedin")) return RiLinkedinBoxLine;
+  if (p.includes("youtube")) return RiYoutubeLine;
+  if (p.includes("telegram")) return RiTelegramLine;
+  if (p.includes("instagram") || p === "insta") return RiInstagramLine;
+  if (p.includes("github")) return RiGithubLine;
+  if (p.includes("discord")) return RiDiscordLine;
+  if (p.includes("facebook")) return RiFacebookBoxLine;
+  if (p.includes("whatsapp")) return RiWhatsappLine;
+  if (p.includes("web") || p.includes("site") || p.includes("blog")) return RiGlobalLine;
+  return null;
+}
+
 export function AuthorBio({ profile }: AuthorBioProps) {
   const displayName = profile?.displayName || "Yash Adhiya";
   const bio =
-    profile?.bio ||
-    "Research analyst and educator passionate about Indian equities, market structure, and disciplined risk management.";
+    profile?.bio;
 
   return (
     <section
@@ -26,20 +50,19 @@ export function AuthorBio({ profile }: AuthorBioProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6">
         {/* Avatar */}
         <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full border-2 border-primary/40 bg-muted">
-          {profile?.avatar ? (
-            <Image
-              src={profile.avatar}
-              alt={`${displayName} avatar`}
-              fill
-              className="object-cover"
-              sizes="80px"
-              unoptimized={profile.avatar.startsWith("http://localhost") || profile.avatar.startsWith("data:")}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-primary">
-              <RiUserLine className="w-8 h-8 sm:w-10 sm:h-10" />
-            </div>
-          )}
+          <Image
+            src={profile?.avatar || "/icon.png"}
+            alt={`${displayName} avatar`}
+            fill
+            className="object-cover"
+            sizes="80px"
+            unoptimized={
+              Boolean(
+                profile?.avatar?.startsWith("http://localhost") ||
+                profile?.avatar?.startsWith("data:")
+              )
+            }
+          />
         </div>
 
         {/* Content */}
@@ -92,18 +115,36 @@ export function AuthorBio({ profile }: AuthorBioProps) {
               </a>
             )}
 
-            {(profile?.socialLinks || []).map((social) => (
-              <a
-                key={`${social.platform}-${social.url}`}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Visit author on ${social.platform}`}
-                className="inline-flex min-h-9 items-center rounded-lg border border-border/80 bg-background/60 px-3 text-xs font-medium text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors"
-              >
-                {social.platform}
-              </a>
-            ))}
+            {(profile?.socialLinks || []).map((social) => {
+              const Icon = getPlatformIcon(social.platform);
+              if (Icon) {
+                return (
+                  <a
+                    key={`${social.platform}-${social.url}`}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Visit author on ${social.platform}`}
+                    title={social.platform}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-background/60 text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              }
+              return (
+                <a
+                  key={`${social.platform}-${social.url}`}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Visit author on ${social.platform}`}
+                  className="inline-flex min-h-9 items-center rounded-lg border border-border/80 bg-background/60 px-3 text-xs font-medium text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                  {social.platform}
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

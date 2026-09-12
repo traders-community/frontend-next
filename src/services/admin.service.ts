@@ -36,9 +36,9 @@ export const adminService = {
   },
 
   /**
-   * Updates admin profile information.
+   * Updates admin profile information (supports FormData for avatar image uploads or JSON payload).
    */
-  async updateProfile(data: Partial<AdminProfile>) {
+  async updateProfile(data: FormData | Partial<AdminProfile>) {
     return api.put<AdminProfileResponse>("/admin/profile", data);
   },
 
