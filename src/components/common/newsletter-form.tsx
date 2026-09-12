@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import { RiSendPlaneLine, RiCheckLine } from "@remixicon/react";
 import { toast } from "react-toastify";
+import { newsletterService } from "@/services/newsletter.service";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
 
-  const handleSubscribe = async (e: React.SubmitEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
     if (!cleanEmail) return;
@@ -17,14 +18,22 @@ export function NewsletterForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate network request (or link to backend newsletter endpoint)
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      setSubscribed(true);
-      toast.success("Thank you for subscribing! You will receive our latest Nifty 500 reports.");
-      setEmail("");
-    } catch {
-      toast.error("Failed to subscribe. Please try again.");
+      const res = await newsletterService.subscribe({ email: cleanEmail });
+      if (res.data?.success) {
+        setSubscribed(true);
+        toast.success(
+          res.data.message ||
+            "Thank you for subscribing! You will receive our latest Nifty 500 reports."
+        );
+        setEmail("");
+      } else {
+        toast.error(res.data?.message || "Failed to subscribe. Please try again.");
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+      toast.error(
+        err.response?.data?.message || err.message || "Failed to subscribe. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -28,6 +28,28 @@ export function formatDate(dateInput?: string | number | Date): string {
 }
 
 /**
+ * Formats an ISO date string or timestamp into readable date and time format.
+ * Example: "13 Sep 2026, 02:30 AM"
+ */
+export function formatDateTime(dateInput?: string | number | Date): string {
+  if (!dateInput) return "—";
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "—";
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  } catch {
+    return "—";
+  }
+}
+
+/**
  * Extracts a plain text excerpt from HTML/Markdown string without HTML tags.
  */
 export function getPlainExcerpt(html: string = "", maxLength: number = 150): string {

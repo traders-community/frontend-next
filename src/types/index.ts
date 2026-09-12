@@ -46,8 +46,95 @@ export interface SiteSettings {
   showExplorePage?: boolean;
   graphyUrl?: string;
   exploreOffTarget?: "courses" | "graphy";
+  autoNewsletterOnPublish?: boolean;
+  newsletterSenderName?: string;
+  newsletterBatchSize?: number;
+  newsletterBatchDelayMs?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface Subscriber {
+  _id: string;
+  email: string;
+  name?: string;
+  isActive: boolean;
+  source?: string;
+  unsubscribeToken?: string;
+  unsubscribedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CampaignType = "blog_publish" | "custom" | "welcome";
+export type CampaignStatus = "draft" | "processing" | "completed" | "failed";
+
+export interface ClickedSubscriberInfo {
+  subscriber?: {
+    _id: string;
+    email: string;
+    name?: string;
+  };
+  targetUrl?: string;
+  clickedAt: string;
+}
+
+export interface NewsletterCampaign {
+  _id: string;
+  title: string;
+  subject: string;
+  type: CampaignType;
+  blog?: {
+    _id: string;
+    title: string;
+    slug?: string;
+    category?: string;
+    image?: string;
+    createdAt?: string;
+  };
+  status: CampaignStatus;
+  totalSubscribers: number;
+  sentCount: number;
+  failedCount: number;
+  pendingCount: number;
+  clicksCount: number;
+  uniqueClicksCount: number;
+  clickedSubscribers?: ClickedSubscriberInfo[];
+  errorMessage?: string;
+  sentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsletterStats {
+  totalSubscribers: number;
+  activeSubscribers: number;
+  unsubscribedCount: number;
+  totalCampaigns: number;
+  totalEmailsSent: number;
+  totalClicks: number;
+  totalUniqueClicks: number;
+  avgClickRate: number;
+}
+
+export interface SubscriberListResponse {
+  success: boolean;
+  subscribers: Subscriber[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  message?: string;
+}
+
+export interface CampaignListResponse {
+  success: boolean;
+  campaigns: NewsletterCampaign[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  message?: string;
 }
 
 export interface AdminProfile {

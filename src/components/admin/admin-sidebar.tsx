@@ -22,6 +22,7 @@ import {
   RiSideBarLine,
   RiSunLine,
   RiMoonLine,
+  RiMailSendLine,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
@@ -222,13 +223,27 @@ export function AdminSidebar() {
   }
 
   const isBlogRoute = pathname.startsWith("/admin/listBlog") || pathname.startsWith("/admin/addBlog");
-  const [blogsExpanded, setBlogsExpanded] = useState(true);
+  const isNewsletterRoute = pathname.startsWith("/admin/newsletter");
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    Blogs: true,
+    Newsletter: true,
+  });
 
   useEffect(() => {
     if (isBlogRoute) {
-      setBlogsExpanded(true);
+      setExpandedSections((prev) => ({ ...prev, Blogs: true }));
     }
-  }, [isBlogRoute]);
+    if (isNewsletterRoute) {
+      setExpandedSections((prev) => ({ ...prev, Newsletter: true }));
+    }
+  }, [isBlogRoute, isNewsletterRoute]);
+
+  const toggleSection = (label: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
 
   const mainNav: NavItem[] = [
     { label: "Dashboard", href: "/admin", icon: RiDashboardLine, exact: true },
@@ -246,6 +261,15 @@ export function AdminSidebar() {
     },
     { label: "Categories", href: "/admin/categories", icon: RiPriceTag3Line },
     { label: "Comments", href: "/admin/comments", icon: RiChat1Line },
+    {
+      label: "Newsletter",
+      href: "/admin/newsletter/subscribers",
+      icon: RiMailSendLine,
+      subItems: [
+        { label: "Subscribers", href: "/admin/newsletter/subscribers" },
+        { label: "Sent History", href: "/admin/newsletter/history" },
+      ],
+    },
   ];
 
   const systemNav: NavItem[] = [
@@ -272,6 +296,7 @@ export function AdminSidebar() {
 
       {items.map((item) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
+        const isSectionExpanded = Boolean(expandedSections[item.label]);
         const active = hasSubItems
           ? item.subItems!.some((sub) => pathname === sub.href)
           : isLinkActive(item.href, item.exact);
@@ -289,7 +314,7 @@ export function AdminSidebar() {
                       ? "bg-muted text-foreground font-semibold shadow-2xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
                   )}
-                  onClick={() => setBlogsExpanded((prev) => !prev)}
+                  onClick={() => toggleSection(item.label)}
                 >
                   <Link
                     href={item.href}
@@ -309,12 +334,12 @@ export function AdminSidebar() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setBlogsExpanded((prev) => !prev);
+                      toggleSection(item.label);
                     }}
                     className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer"
                     aria-label="Toggle submenu"
                   >
-                    {blogsExpanded ? (
+                    {isSectionExpanded ? (
                       <RiArrowDownSLine className="h-4 w-4" />
                     ) : (
                       <RiArrowRightSLine className="h-4 w-4" />
@@ -359,9 +384,9 @@ export function AdminSidebar() {
 
             {/* Nested Sub-items (when not collapsed and expanded) with smooth accordion animation */}
             <AnimatePresence initial={false}>
-              {hasSubItems && !isCollapsed && blogsExpanded && (
+              {hasSubItems && !isCollapsed && isSectionExpanded && (
                 <motion.div
-                  key="blogs-sub-items"
+                  key={`${item.label}-sub-items`}
                   variants={accordionVariants}
                   initial="initial"
                   animate="animate"

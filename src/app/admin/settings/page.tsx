@@ -24,8 +24,10 @@ import {
   RiShieldCheckLine,
   RiInformationLine,
   RiCameraLine,
+  RiMailSendLine,
 } from "@remixicon/react";
 import { adminService } from "@/services/admin.service";
+import { newsletterService } from "@/services/newsletter.service";
 import { AdminProfile, SiteSettings } from "@/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -58,28 +60,30 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Read tab from search params (?tab=profile | explore | general | security)
+  // Read tab from search params (?tab=profile | explore | newsletter | security)
   const tabParam = searchParams.get("tab");
   const initialTab =
     tabParam === "profile"
       ? "profile"
       : tabParam === "security"
       ? "security"
+      : tabParam === "newsletter"
+      ? "newsletter"
       : "explore";
 
-  const [activeTab, setActiveTab] = useState<"profile" | "explore" | "security">(initialTab);
+  const [activeTab, setActiveTab] = useState<"profile" | "explore" | "newsletter" | "security">(initialTab);
 
   // Sync tab with URL
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "profile" || tab === "security") {
+    if (tab === "profile" || tab === "security" || tab === "newsletter") {
       setActiveTab(tab);
     } else if (tab === "explore" || tab === "general") {
       setActiveTab("explore");
     }
   }, [searchParams]);
 
-  const handleTabChange = (newTab: "profile" | "explore" | "security") => {
+  const handleTabChange = (newTab: "profile" | "explore" | "newsletter" | "security") => {
     setActiveTab(newTab);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", newTab);
@@ -88,6 +92,10 @@ function SettingsContent() {
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Test Email State
+  const [testEmail, setTestEmail] = useState("");
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   // Profile Form State
   const [profile, setProfile] = useState<AdminProfile>({
@@ -391,6 +399,20 @@ function SettingsContent() {
         >
           <RiCompass3Line className="h-4 w-4" />
           <span>Explore Settings</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("newsletter")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer",
+            activeTab === "newsletter"
+              ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+          )}
+        >
+          <RiMailSendLine className="h-4 w-4" />
+          <span>Newsletter & Mailing</span>
         </button>
 
         <button
@@ -799,6 +821,190 @@ function SettingsContent() {
             </form>
           )}
 
+          {/* TAB 3: NEWSLETTER SETTINGS */}
+          {activeTab === "newsletter" && (
+            <div className="space-y-6">
+              <form onSubmit={handleSaveSettings} className="space-y-6">
+                <div className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-6 sm:p-8 space-y-6 shadow-xs">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-foreground">
+                      Automated Newsletter & Delivery Configuration
+                    </h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                      Configure automatic email broadcast on newly published blogs, batch size, and delivery throttle
+                    </p>
+                  </div>
+
+                  {/* Feature Toggle Card: Auto Newsletter On Blog Publish */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 max-w-xl">
+                      <p className="text-xs sm:text-sm font-bold text-foreground">
+                        Auto Send Email on New Blog Publish
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        When enabled, an automated email announcement with article preview and direct reading link will be dispatched in background batches to all active subscribers upon publishing a new post.
+                      </p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settings.autoNewsletterOnPublish !== false}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            autoNewsletterOnPublish: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
+                    </label>
+                  </div>
+
+                  {/* Sender Name */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                      Sender Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.newsletterSenderName || "Trader's Community"}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          newsletterSenderName: e.target.value,
+                        })
+                      }
+                      placeholder="Trader's Community"
+                      className="w-full px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      The friendly sender name visible to subscribers in their email inboxes.
+                    </p>
+                  </div>
+
+                  {/* Batch Size & Throttle Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        Batch Chunk Size
+                      </label>
+                      <input
+                        type="number"
+                        min={5}
+                        max={100}
+                        value={settings.newsletterBatchSize || 25}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            newsletterBatchSize: parseInt(e.target.value, 10) || 25,
+                          })
+                        }
+                        className="w-full px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Number of emails to send per chunk (default: 25 recipients).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        Batch Delay Throttle (ms)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={10000}
+                        step={250}
+                        value={settings.newsletterBatchDelayMs || 1000}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            newsletterBatchDelayMs: parseInt(e.target.value, 10) || 0,
+                          })
+                        }
+                        className="w-full px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Pause between batches to prevent SMTP server rate limits (default: 1000ms).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Save Newsletter Settings Button */}
+                  <div className="flex items-center justify-end pt-4 border-t border-border/60">
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-black text-white dark:bg-white dark:text-black hover:opacity-90 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isSaving && (
+                        <div className="h-3.5 w-3.5 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
+                      )}
+                      <span>{isSaving ? "Saving..." : "Save Newsletter Settings"}</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* SMTP Connection & Live Test Card */}
+              <div className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-6 sm:p-8 space-y-5 shadow-xs">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    SMTP Connectivity & Test Dispatch
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Send a test email to verify your email server configuration and ensure outgoing delivery works
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder={profile.email || "Enter test recipient email"}
+                    className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                  />
+                  <button
+                    type="button"
+                    disabled={isSendingTest}
+                    onClick={async () => {
+                      const recipient = testEmail.trim() || profile.email;
+                      if (!recipient) {
+                        toast.error("Please enter a recipient email address");
+                        return;
+                      }
+                      try {
+                        setIsSendingTest(true);
+                        const res = await newsletterService.sendTestEmail(recipient);
+                        if (res.data?.success) {
+                          toast.success(res.data.message || "Test email sent!");
+                        } else {
+                          toast.error(res.data?.message || "Failed to send test email");
+                        }
+                      } catch (error: unknown) {
+                        const err = error as { message?: string; response?: { data?: { message?: string } } };
+                        toast.error(err.response?.data?.message || err.message || "Test dispatch error");
+                      } finally {
+                        setIsSendingTest(false);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-foreground transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {isSendingTest ? (
+                      <div className="h-3.5 w-3.5 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <RiMailSendLine className="h-4 w-4 text-primary" />
+                    )}
+                    <span>{isSendingTest ? "Sending..." : "Send Test Email"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: SECURITY & PASSWORD */}
           {activeTab === "security" && (
             <form onSubmit={handleChangePassword} className="space-y-6">
@@ -809,14 +1015,6 @@ function SettingsContent() {
                   </h2>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                     Update the master password used to authenticate into this admin management dashboard
-                  </p>
-                </div>
-
-                {/* Security Advice Notice */}
-                <div className="p-4 rounded-xl border border-border/80 bg-surface/30 flex items-start gap-3 text-xs text-muted-foreground">
-                  <RiShieldCheckLine className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <p>
-                    Ensure your new password contains at least 8 characters. We recommend combining letters, numbers, and special symbols for maximum security.
                   </p>
                 </div>
 
