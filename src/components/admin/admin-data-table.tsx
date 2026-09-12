@@ -9,6 +9,7 @@ import {
   RiArrowUpDownLine,
   RiArrowUpLine,
   RiArrowDownLine,
+  RiArrowDownSLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiCloseLine,
@@ -456,12 +457,12 @@ export function AdminDataTable<T>({
           </table>
         </div>
 
-        {/* Footer Pagination Row (2-Column Layout matching design) */}
+        {/* Footer Pagination Row */}
         {pagination && (
-          <div className="border-t border-border/70 px-5 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground select-none">
-            {/* Left: Total Records Info & Per Page selector combined */}
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-              <div>
+          <div className="border-t border-border/70 px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-muted-foreground select-none">
+            {/* Left/Top Row: Records count + Per-Page selector on ONE line on mobile */}
+            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 sm:gap-6">
+              <div className="text-xs">
                 Showing{" "}
                 <span className="font-semibold text-foreground">
                   {data.length}
@@ -472,7 +473,28 @@ export function AdminDataTable<T>({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Mobile Compact Dropdown (Keeps "Showing" and "Per page" in 1 single row) */}
+              <div className="flex sm:hidden items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground">Per page:</span>
+                <div className="relative flex items-center">
+                  <select
+                    value={pagination.pageSize}
+                    onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
+                    aria-label="Items per page"
+                    className="appearance-none bg-surface border border-border/80 text-foreground text-xs font-semibold rounded-lg pl-2.5 pr-7 py-1 focus:outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer shadow-2xs"
+                  >
+                    {pageSizeOptions.map((size) => (
+                      <option key={size} value={size} className="bg-card text-foreground">
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <RiArrowDownSLine className="w-3.5 h-3.5 text-muted-foreground absolute right-2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Desktop Segmented Buttons */}
+              <div className="hidden sm:flex items-center gap-2">
                 <span>Per page:</span>
                 <div className="flex items-center gap-1 bg-surface/70 p-1 rounded-xl border border-border/60">
                   {pageSizeOptions.map((size) => (
@@ -494,8 +516,8 @@ export function AdminDataTable<T>({
               </div>
             </div>
 
-            {/* Right: Multi-Page Navigation Buttons */}
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+            {/* Right/Bottom: Multi-Page Navigation Buttons */}
+            <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-1 sm:gap-1.5 flex-wrap pt-1 sm:pt-0">
               {/* Prev Button */}
               <button
                 type="button"
@@ -503,7 +525,7 @@ export function AdminDataTable<T>({
                   pagination.onPageChange(Math.max(1, pagination.currentPage - 1))
                 }
                 disabled={pagination.currentPage <= 1}
-                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
                 aria-label="Previous page"
               >
                 <RiArrowLeftSLine className="h-4 w-4" />
@@ -534,7 +556,7 @@ export function AdminDataTable<T>({
                       "w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer",
                       isCurrent
                         ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
-                        : "border border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground"
+                        : "border border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground shadow-2xs"
                     )}
                     aria-label={`Go to page ${page}`}
                     aria-current={isCurrent ? "page" : undefined}
@@ -553,7 +575,7 @@ export function AdminDataTable<T>({
                   )
                 }
                 disabled={pagination.currentPage >= pagination.totalPages}
-                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
                 aria-label="Next page"
               >
                 <RiArrowRightSLine className="h-4 w-4" />

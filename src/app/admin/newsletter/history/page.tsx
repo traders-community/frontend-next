@@ -331,7 +331,7 @@ export default function AdminNewsletterHistoryPage() {
   return (
     <div className="space-y-6">
       {/* Top Summary Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Campaigns */}
         <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card shadow-2xs space-y-1">
           <div className="flex items-center justify-between">
@@ -516,14 +516,14 @@ export default function AdminNewsletterHistoryPage() {
         <AdminModal
           isOpen={Boolean(selectedCampaign)}
           onClose={() => setSelectedCampaign(null)}
-          title="Campaign Breakdown & Analytics"
+          title="Campaign Report"
           subtitle={selectedCampaign.title}
           size="2xl"
         >
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Top Status & Date */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl border border-border/80 bg-surface/30">
-              <div className="flex items-center gap-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-border/80 bg-surface/30">
+              <div className="flex items-center gap-2 flex-wrap">
                 {renderStatusBadge(selectedCampaign.status)}
                 {renderTypeBadge(selectedCampaign.type)}
               </div>
@@ -538,7 +538,7 @@ export default function AdminNewsletterHistoryPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
                   Email Subject Line
                 </span>
-                <p className="text-sm font-semibold text-foreground p-3 rounded-xl border border-border/80 bg-card">
+                <p className="text-xs sm:text-sm font-semibold text-foreground p-3 rounded-xl border border-border/80 bg-card break-words">
                   {selectedCampaign.subject}
                 </p>
               </div>
@@ -548,21 +548,21 @@ export default function AdminNewsletterHistoryPage() {
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
                     Linked Research Article
                   </span>
-                  <div className="p-3.5 rounded-xl border border-border/80 bg-card flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
                       {selectedCampaign.blog.image && (
                         <img
                           src={selectedCampaign.blog.image}
                           alt=""
-                          className="h-10 w-14 rounded-lg object-cover border border-border/60 shrink-0"
+                          className="h-12 w-16 sm:h-10 sm:w-14 rounded-lg object-cover border border-border/60 shrink-0"
                         />
                       )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-bold text-foreground line-clamp-2 sm:line-clamp-1">
                           {selectedCampaign.blog.title}
                         </p>
                         {selectedCampaign.blog.category && (
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground block mt-0.5">
                             Category: {selectedCampaign.blog.category}
                           </span>
                         )}
@@ -572,7 +572,7 @@ export default function AdminNewsletterHistoryPage() {
                     <Link
                       href={`/blog/${selectedCampaign.blog.slug || selectedCampaign.blog._id}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-xs font-semibold text-foreground transition-colors shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-xs font-semibold text-foreground transition-colors shrink-0 w-full sm:w-auto text-center"
                     >
                       <span>View Blog</span>
                       <RiExternalLinkLine className="h-3.5 w-3.5" />
@@ -587,28 +587,36 @@ export default function AdminNewsletterHistoryPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                 Delivery & Engagement Numbers
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[11px] text-muted-foreground">Recipients</span>
-                  <p className="text-lg font-bold text-foreground">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground block truncate">
+                    Recipients
+                  </span>
+                  <p className="text-base sm:text-lg font-bold text-foreground">
                     {selectedCampaign.totalSubscribers || 0}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[11px] text-emerald-500">Successfully Sent</span>
-                  <p className="text-lg font-bold text-emerald-500">
+                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-500 block truncate">
+                    Delivered
+                  </span>
+                  <p className="text-base sm:text-lg font-bold text-emerald-500">
                     {selectedCampaign.sentCount || 0}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[11px] text-blue-500">Unique Clickers</span>
-                  <p className="text-lg font-bold text-blue-500">
+                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-blue-500 block truncate">
+                    Unique Clickers
+                  </span>
+                  <p className="text-base sm:text-lg font-bold text-blue-500">
                     {selectedCampaign.uniqueClicksCount || 0}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[11px] text-primary">Click Rate (CTR)</span>
-                  <p className="text-lg font-bold text-primary">
+                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-primary block truncate">
+                    Click Rate
+                  </span>
+                  <p className="text-base sm:text-lg font-bold text-primary">
                     {selectedCampaign.sentCount > 0
                       ? (
                           (selectedCampaign.uniqueClicksCount / selectedCampaign.sentCount) *
@@ -624,16 +632,23 @@ export default function AdminNewsletterHistoryPage() {
             {/* Clicked Subscribers Log with Search & Pagination */}
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Click Engagement Log ({filteredClickLogs.length}{" "}
-                  {filteredClickLogs.length !== (selectedCampaign.clickedSubscribers?.length || 0) &&
-                    `/ ${selectedCampaign.clickedSubscribers?.length || 0}`}
-                  )
-                </span>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                    Click Engagement Log ({filteredClickLogs.length}{" "}
+                    {filteredClickLogs.length !== (selectedCampaign.clickedSubscribers?.length || 0) &&
+                      `/ ${selectedCampaign.clickedSubscribers?.length || 0}`}
+                    )
+                  </span>
+                  {filteredClickLogs.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground sm:hidden block">
+                      Swipe horizontally to view complete details
+                    </span>
+                  )}
+                </div>
 
                 {/* Sub-search for clicked emails if more than 3 logs */}
                 {(selectedCampaign.clickedSubscribers?.length || 0) > 3 && (
-                  <div className="relative flex items-center">
+                  <div className="relative flex items-center w-full sm:w-auto">
                     <RiSearchLine className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
                     <input
                       type="text"
@@ -643,7 +658,7 @@ export default function AdminNewsletterHistoryPage() {
                         setLogPage(1);
                       }}
                       placeholder="Filter clicks..."
-                      className="pl-8 pr-2.5 py-1 text-xs bg-surface border border-border/80 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 w-44"
+                      className="pl-8 pr-2.5 py-1.5 sm:py-1 text-xs bg-surface border border-border/80 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 w-full sm:w-44"
                     />
                   </div>
                 )}
@@ -659,14 +674,14 @@ export default function AdminNewsletterHistoryPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="rounded-xl border border-border/80 overflow-hidden">
-                    <table className="w-full text-left text-xs">
+                  <div className="w-full rounded-xl border border-border/80 overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[460px]">
                       <thead className="bg-surface border-b border-border text-muted-foreground">
                         <tr>
-                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px] whitespace-nowrap">
                             Subscriber Email
                           </th>
-                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px] text-right">
+                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px] text-right whitespace-nowrap">
                             Clicked Date & Time
                           </th>
                         </tr>
@@ -674,15 +689,15 @@ export default function AdminNewsletterHistoryPage() {
                       <tbody className="divide-y divide-border/60 bg-card">
                         {paginatedClickLogs.map((log, i) => (
                           <tr key={i} className="hover:bg-surface-hover/50 transition-colors">
-                            <td className="px-3.5 py-2.5 text-foreground font-medium truncate max-w-[220px]">
-                              {log.subscriber?.email || "Subscriber"}
+                            <td className="px-3.5 py-2.5 text-foreground font-medium whitespace-nowrap">
+                              <span>{log.subscriber?.email || "Subscriber"}</span>
                               {log.subscriber?.name && log.subscriber.name !== "Trader" && (
                                 <span className="text-[11px] text-muted-foreground ml-1.5 font-normal">
                                   ({log.subscriber.name})
                                 </span>
                               )}
                             </td>
-                            <td className="px-3.5 py-2.5 text-muted-foreground text-right whitespace-nowrap text-[11px] font-medium">
+                            <td className="px-3.5 py-2.5 text-muted-foreground text-right whitespace-nowrap text-[10px] sm:text-[11px] font-medium">
                               {formatDateTime(log.clickedAt)}
                             </td>
                           </tr>
@@ -693,7 +708,7 @@ export default function AdminNewsletterHistoryPage() {
 
                   {/* Sub-pagination Footer for Click Logs */}
                   {totalLogPages > 1 && (
-                    <div className="flex items-center justify-between px-1 text-xs text-muted-foreground pt-1">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1 text-xs text-muted-foreground pt-1">
                       <span className="text-[11px]">
                         Showing {(logPage - 1) * LOGS_PER_PAGE + 1}–
                         {Math.min(logPage * LOGS_PER_PAGE, filteredClickLogs.length)} of{" "}

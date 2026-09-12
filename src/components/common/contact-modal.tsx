@@ -6,6 +6,7 @@ import { RiCloseLine, RiCustomerService2Line, RiSendPlaneLine } from "@remixicon
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { modalBackdropVariants, modalCardVariants } from "@/lib/motion";
+import { supportService } from "@/services/support.service";
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -37,19 +38,44 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
+
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      toast.error("Please fill in all required fields (Name, Email, and Message).");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      const res = await supportService.submitTicket({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        topic,
+        message: message.trim(),
+      });
 
-      toast.success("Thank you! Your message has been received. Our support team will connect with you shortly.");
-      setName("");
-      setEmail("");
-      setPhone("");
-      setMessage("");
-      onClose();
-    } catch {
-      toast.error("Failed to send message. Please try again or email care.traderscommunity@gmail.com directly.");
+      if (res.data?.success) {
+        toast.success(
+          res.data.message ||
+            "Thank you! Your message has been received. Our team will connect with you shortly."
+        );
+        setName("");
+        setEmail("");
+        setPhone("");
+        setTopic("General Query");
+        setMessage("");
+        onClose();
+      } else {
+        toast.error(res.data?.message || "Failed to send message. Please try again.");
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to send message. Please try again or email care.traderscommunity@gmail.com directly."
+      );
     } finally {
       setSubmitting(false);
     }

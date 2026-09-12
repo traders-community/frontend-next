@@ -197,3 +197,59 @@ export interface AuthResponse {
   token?: string;
   message?: string;
 }
+
+// ==========================================
+// Support & Contact Inquiry Types
+// ==========================================
+export type SupportTicketStatus = "NEW" | "CONTACTED" | "RESOLVED";
+
+export interface SupportTicket {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  topic: string;
+  message: string;
+  status: SupportTicketStatus;
+  adminNotes?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupportTicketStats {
+  total: number;
+  newCount: number;
+  contactedCount: number;
+  resolvedCount: number;
+}
+
+export interface CreateSupportTicketInput {
+  name: string;
+  email: string;
+  phone?: string;
+  topic?: string;
+  message: string;
+}
+
+export interface UpdateSupportTicketInput {
+  status?: SupportTicketStatus;
+  adminNotes?: string;
+}
+
+export interface SupportTicketListResponse {
+  success: boolean;
+  tickets: SupportTicket[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+  message?: string;
+}
+
+export interface SupportTicketStatsResponse {
+  success: boolean;
+  stats?: SupportTicketStats;
+  message?: string;
+}

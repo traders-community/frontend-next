@@ -125,11 +125,11 @@ export function AdminModal({
               )}
             >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/70 shrink-0 bg-card/80 backdrop-blur-sm">
-            <div className="min-w-0 pr-4">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border/70 shrink-0 bg-card/80 backdrop-blur-sm">
+            <div className="min-w-0 pr-2 sm:pr-4">
               <h2
                 id="admin-modal-title"
-                className="text-lg sm:text-xl font-bold text-foreground truncate"
+                className="text-base sm:text-xl font-bold text-foreground truncate"
               >
                 {title}
               </h2>
@@ -141,15 +141,15 @@ export function AdminModal({
             </div>
 
             {/* Header Right Action Icons */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               {/* External Full Page Link Button */}
               {externalHref && (
                 <Link
                   href={externalHref}
                   title={externalTitle}
-                  className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors"
+                  className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors"
                 >
-                  <RiExternalLinkLine className="h-5 w-5" />
+                  <RiExternalLinkLine className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               )}
 
@@ -159,15 +159,15 @@ export function AdminModal({
                 onClick={handleRequestClose}
                 title="Close modal"
                 aria-label="Close modal"
-                className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors cursor-pointer"
               >
-                <RiCloseLine className="h-5 w-5" />
+                <RiCloseLine className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
           </div>
 
           {/* Modal Scrollable Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6">
             {children}
           </div>
             </motion.div>

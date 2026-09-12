@@ -23,6 +23,7 @@ import {
   RiSunLine,
   RiMoonLine,
   RiMailSendLine,
+  RiCustomerService2Line,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
@@ -270,6 +271,7 @@ export function AdminSidebar() {
         { label: "Sent History", href: "/admin/newsletter/history" },
       ],
     },
+    { label: "Support", href: "/admin/support", icon: RiCustomerService2Line },
   ];
 
   const systemNav: NavItem[] = [
