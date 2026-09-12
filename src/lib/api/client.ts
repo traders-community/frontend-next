@@ -29,7 +29,7 @@ function buildQueryString(params?: Record<string, string | number | boolean | un
       searchParams.append(key, String(value));
     }
   });
-  const qs = searchParams.toString();
+  const qs = searchParams.toString().replace(/\+/g, "%20");
   return qs ? `?${qs}` : "";
 }
 
@@ -70,7 +70,7 @@ async function apiRequest<T = unknown>(
   const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
 
   const defaultHeaders: Record<string, string> = {};
-  if (!isFormData) {
+  if (!isFormData && rest.body) {
     defaultHeaders["Content-Type"] = "application/json";
   }
 
@@ -103,17 +103,19 @@ async function apiRequest<T = unknown>(
     },
   };
 
-  // Next.js ISR & caching config
-  if (revalidate === 0 || revalidate === false) {
-    fetchConfig.cache = "no-store";
-    fetchConfig.next = { revalidate: 0 };
-  } else if (revalidate !== undefined || tags !== undefined) {
-    fetchConfig.next = {
-      ...(revalidate !== undefined ? { revalidate } : {}),
-      ...(tags !== undefined ? { tags } : {}),
-    };
-  } else if (typeof window !== "undefined") {
-    // Client-side browser requests default to no-store to avoid stale HTTP cache
+  // Next.js ISR & caching config (only applicable on server)
+  if (typeof window === "undefined") {
+    if (revalidate === 0 || revalidate === false) {
+      fetchConfig.cache = "no-store";
+      fetchConfig.next = { revalidate: 0 };
+    } else if (revalidate !== undefined || tags !== undefined) {
+      fetchConfig.next = {
+        ...(revalidate !== undefined ? { revalidate } : {}),
+        ...(tags !== undefined ? { tags } : {}),
+      };
+    }
+  } else {
+    // In browser: standard fetch with cache: "no-store"
     fetchConfig.cache = "no-store";
   }
 

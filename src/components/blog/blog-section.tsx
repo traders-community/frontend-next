@@ -20,6 +20,8 @@ interface BlogSectionProps {
   initialTotal?: number;
   initialHasMore?: boolean;
   categories?: string[];
+  initialCategory?: string;
+  initialSearch?: string;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -83,9 +85,11 @@ export function BlogSection({
   initialTotal = 0,
   initialHasMore = false,
   categories = DEFAULT_CATEGORIES,
+  initialCategory = "All",
+  initialSearch = "",
 }: BlogSectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
   const [activeCategories, setActiveCategories] = useState<string[]>(categories);
   const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
   const [page, setPage] = useState<number>(1);
@@ -100,30 +104,96 @@ export function BlogSection({
   const [isFiltering, setIsFiltering] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
-  const isFirstMount = useRef<boolean>(true);
   const requestIdRef = useRef<number>(0);
 
-  // Parse URL query params on client mount without invoking useSearchParams() (prevents static prerender errors)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const catParam = params.get("category");
-      const qParam = params.get("q");
-      if (catParam && catParam.trim() && catParam.trim().toLowerCase() !== "all") {
-        setSelectedCategory(catParam.trim());
-      }
-      if (qParam && qParam.trim()) {
-        setSearchQuery(qParam.trim());
-      }
+  // Synchronize URL query params cleanly without reloading page
+  const updateUrlParams = useCallback((cat: string, query: string) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (cat && cat.trim() && cat.trim().toLowerCase() !== "all") {
+      url.searchParams.set("category", cat.trim());
+    } else {
+      url.searchParams.delete("category");
     }
+
+    if (query.trim()) {
+      url.searchParams.set("q", query.trim());
+    } else {
+      url.searchParams.delete("q");
+    }
+
+    window.history.replaceState({}, "", url.toString());
   }, []);
 
-  // Sync state if server categories prop updates
+  // Primary filtering function: directly requests filtered blogs from the backend
+  const fetchFilteredBlogs = useCallback(
+    async (
+      cat: string,
+      query: string,
+      targetPage: number = 1,
+      append: boolean = false
+    ) => {
+      const currentRequestId = ++requestIdRef.current;
+
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setIsFiltering(true);
+      }
+
+      updateUrlParams(cat, query);
+
+      const categoryParam =
+        cat && cat.trim().toLowerCase() !== "all" ? cat.trim() : undefined;
+      const searchParam = query.trim() || undefined;
+
+      try {
+        const res = await blogService.getBlogs({
+          page: targetPage,
+          limit: PAGE_SIZE,
+          category: categoryParam,
+          search: searchParam,
+          revalidate: 0,
+        });
+
+        if (currentRequestId !== requestIdRef.current) return;
+
+        if (res.data?.success) {
+          const fetchedBlogs = res.data.blogs || [];
+          setBlogs((prev) => (append ? [...prev, ...fetchedBlogs] : fetchedBlogs));
+          setPage(res.data.page || targetPage);
+          setHasMore(Boolean(res.data.hasMore));
+          setTotal((prevTotal) =>
+            res.data.total !== undefined
+              ? res.data.total
+              : append
+              ? prevTotal + fetchedBlogs.length
+              : fetchedBlogs.length
+          );
+        }
+      } catch (err) {
+        if (currentRequestId === requestIdRef.current) {
+          console.error("Error fetching filtered blogs:", err);
+        }
+      } finally {
+        if (currentRequestId === requestIdRef.current) {
+          setIsFiltering(false);
+          setIsInitialLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [updateUrlParams]
+  );
+
+  // Initial mount: if initialBlogs is empty, fetch fresh data
   useEffect(() => {
-    if (categories && categories.length > 0) {
-      setActiveCategories(categories);
+    if (initialBlogs.length === 0) {
+      setIsInitialLoading(true);
+      fetchFilteredBlogs(selectedCategory, searchQuery, 1, false);
     }
-  }, [categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch active categories on mount to ensure tabs match latest categories in DB
   useEffect(() => {
@@ -152,133 +222,32 @@ export function BlogSection({
       .catch(() => {});
   }, []);
 
-  // Synchronize URL query params cleanly without reloading page
-  const updateUrlParams = useCallback((cat: string, query: string) => {
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    if (cat && cat.trim() && cat.trim().toLowerCase() !== "all") {
-      url.searchParams.set("category", cat.trim());
-    } else {
-      url.searchParams.delete("category");
-    }
-
-    if (query.trim()) {
-      url.searchParams.set("q", query.trim());
-    } else {
-      url.searchParams.delete("q");
-    }
-
-    window.history.replaceState({}, "", url.toString());
-  }, []);
-
-  // Handle category or search change: fetch filtered blogs directly from backend
-  useEffect(() => {
-    // On first mount: if we already have initialBlogs for "All" without search, skip network call
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      if (initialBlogs.length > 0 && selectedCategory === "All" && !searchQuery.trim()) {
-        return;
-      }
-      if (initialBlogs.length === 0 && selectedCategory === "All" && !searchQuery.trim()) {
-        setIsInitialLoading(true);
-      } else {
-        setIsFiltering(true);
-      }
-    } else {
-      // User clicked a category or typed search: trigger category filter spinner
-      setIsFiltering(true);
-    }
-
-    updateUrlParams(selectedCategory, searchQuery);
-
-    const currentRequestId = ++requestIdRef.current;
-
-    const categoryParam =
-      selectedCategory && selectedCategory.toLowerCase() !== "all"
-        ? selectedCategory
-        : undefined;
-
-    blogService
-      .getBlogs({
-        page: 1,
-        limit: PAGE_SIZE,
-        category: categoryParam,
-        search: searchQuery.trim() || undefined,
-        revalidate: 0,
-      })
-      .then((res) => {
-        if (currentRequestId !== requestIdRef.current) return;
-
-        if (res.data?.success) {
-          setBlogs(res.data.blogs || []);
-          setPage(res.data.page || 1);
-          setHasMore(Boolean(res.data.hasMore));
-          setTotal(res.data.total ?? (res.data.blogs?.length || 0));
-        }
-      })
-      .catch((err) => {
-        if (currentRequestId === requestIdRef.current) {
-          console.error("Error fetching blogs for category:", err);
-        }
-      })
-      .finally(() => {
-        if (currentRequestId === requestIdRef.current) {
-          setIsInitialLoading(false);
-          setIsFiltering(false);
-        }
-      });
-  }, [selectedCategory, searchQuery, updateUrlParams]);
-
   const handleCategoryChange = (category: string) => {
     if (category === selectedCategory && !isFiltering) return;
     setSelectedCategory(category);
+    fetchFilteredBlogs(category, searchQuery, 1, false);
   };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-  };
-
-  const handleLoadMore = async () => {
-    if (loadingMore || !hasMore || isFiltering || isInitialLoading) return;
-    setLoadingMore(true);
-    const nextPage = page + 1;
-
-    try {
-      const categoryParam =
-        selectedCategory && selectedCategory.toLowerCase() !== "all"
-          ? selectedCategory
-          : undefined;
-
-      const res = await blogService.getBlogs({
-        page: nextPage,
-        limit: PAGE_SIZE,
-        category: categoryParam,
-        search: searchQuery.trim() || undefined,
-        revalidate: 0,
-      });
-
-      if (res.data?.success) {
-        const fetchedBlogs = res.data.blogs || [];
-        setBlogs((prev) => [...prev, ...fetchedBlogs]);
-        setPage(res.data.page || nextPage);
-        setHasMore(Boolean(res.data.hasMore));
-        setTotal(res.data.total ?? (blogs.length + fetchedBlogs.length));
-      }
-    } catch (err) {
-      console.error("Error loading more blogs:", err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const handleResetFilters = () => {
-    setSelectedCategory("All");
-    setSearchQuery("");
+    fetchFilteredBlogs(selectedCategory, query, 1, false);
   };
 
   const handleClearSearch = () => {
     setSearchQuery("");
     setSelectedCategory("All");
+    fetchFilteredBlogs("All", "", 1, false);
+  };
+
+  const handleResetFilters = () => {
+    setSelectedCategory("All");
+    setSearchQuery("");
+    fetchFilteredBlogs("All", "", 1, false);
+  };
+
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore || isFiltering || isInitialLoading) return;
+    fetchFilteredBlogs(selectedCategory, searchQuery, page + 1, true);
   };
 
   return (

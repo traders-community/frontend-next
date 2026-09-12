@@ -10,13 +10,28 @@ export const metadata = constructMetadata({
   image: "/featured_img.jpg",
 });
 
-// Enable Incremental Static Regeneration (ISR) with 60-second edge cache revalidation
-export const revalidate = 60;
+// Dynamic server rendering ensures fresh filtering on query parameters and prevents build-time prerender failures
+export const dynamic = "force-dynamic";
 
-async function getInitialHomeData() {
+interface HomePageProps {
+  searchParams?: Promise<{ category?: string; q?: string }>;
+}
+
+async function getInitialHomeData(filters?: { category?: string; search?: string }) {
   try {
+    const categoryParam =
+      filters?.category && filters.category.trim().toLowerCase() !== "all"
+        ? filters.category.trim()
+        : undefined;
+
     const [blogsRes, categoriesRes] = await Promise.all([
-      blogService.getBlogs({ page: 1, limit: 9, revalidate: 60 }),
+      blogService.getBlogs({
+        page: 1,
+        limit: 9,
+        category: categoryParam,
+        search: filters?.search?.trim() || undefined,
+        revalidate: 0,
+      }),
       categoryService.getPublicCategories(60),
     ]);
 
@@ -49,8 +64,17 @@ async function getInitialHomeData() {
   }
 }
 
-export default async function Home() {
-  const { initialBlogs, initialTotal, initialHasMore, categories } = await getInitialHomeData();
+export default async function Home({ searchParams }: HomePageProps) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const rawCat = (resolvedParams as Record<string, string | string[] | undefined>)?.category;
+  const currentCategory = (Array.isArray(rawCat) ? rawCat[0] : rawCat) || "All";
+  const rawQ = (resolvedParams as Record<string, string | string[] | undefined>)?.q;
+  const currentSearch = (Array.isArray(rawQ) ? rawQ[0] : rawQ) || "";
+
+  const { initialBlogs, initialTotal, initialHasMore, categories } = await getInitialHomeData({
+    category: currentCategory,
+    search: currentSearch,
+  });
 
   return (
     <>
@@ -89,6 +113,8 @@ export default async function Home() {
             initialTotal={initialTotal}
             initialHasMore={initialHasMore}
             categories={categories}
+            initialCategory={currentCategory}
+            initialSearch={currentSearch}
           />
         </Suspense>
       </div>

@@ -31,21 +31,15 @@ export function CategoryTabs({
           const isActive = selectedCategory === category;
 
           return (
-            <motion.div
+            <motion.button
               key={category}
+              type="button"
               role="tab"
-              tabIndex={0}
               aria-selected={isActive}
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.12, ease: EASE.outCubic }}
               onClick={() => onSelectCategory(category)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelectCategory(category);
-                }
-              }}
               className={cn(
                 "shrink-0 min-h-10 px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors duration-150 border select-none cursor-pointer inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                 isActive
@@ -54,7 +48,7 @@ export function CategoryTabs({
               )}
             >
               {category}
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
