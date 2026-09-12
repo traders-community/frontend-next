@@ -636,7 +636,7 @@ export function AdminSidebar() {
         initial={false}
         animate={{ width: isCollapsed ? 72 : 260 }}
         transition={{ duration: 0.3, ease: EASE.outCubic }}
-        className="hidden lg:flex flex-col shrink-0 h-screen sticky top-0 z-30 overflow-hidden"
+        className="hidden lg:flex flex-col shrink-0 h-screen sticky top-0 z-40 overflow-visible"
       >
         {sidebarContent}
       </motion.aside>
