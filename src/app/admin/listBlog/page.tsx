@@ -192,9 +192,16 @@ export default function AdminListBlogPage() {
               </div>
             )}
           </div>
-          {/* Title & Subtitle */}
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-foreground text-sm truncate leading-snug">
+          {/* Title & Subtitle — clickable to open edit modal */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsFormDirty(false);
+              setEditingBlog(blog);
+            }}
+            className="min-w-0 flex-1 text-left group/title cursor-pointer"
+          >
+            <p className="font-semibold text-foreground text-sm truncate leading-snug group-hover/title:text-primary transition-colors">
               {blog.title}
             </p>
             {blog.subTitle && (
@@ -202,7 +209,7 @@ export default function AdminListBlogPage() {
                 {blog.subTitle}
               </p>
             )}
-          </div>
+          </button>
         </div>
       ),
     },

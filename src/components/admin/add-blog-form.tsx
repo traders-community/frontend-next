@@ -322,7 +322,7 @@ export function AddBlogForm({
       <div className="space-y-4">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Post Title <span className="text-red-500">*</span>
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -376,7 +376,7 @@ export function AddBlogForm({
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Subtitle / Summary
+            Subtitle
           </label>
           <input
             type="text"
@@ -408,22 +408,19 @@ export function AddBlogForm({
           </select>
         </div>
 
-        {/* Publish Status Toggle */}
-        <div className="flex flex-col justify-end">
+        {/* Publish Status Dropdown */}
+        <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Publication Status
+            Status
           </label>
-          <label className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border/80 bg-card cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={isPublished}
-              onChange={(e) => setIsPublished(e.target.checked)}
-              className="h-4 w-4 rounded text-primary focus:ring-primary/30 cursor-pointer accent-primary"
-            />
-            <span className="text-sm font-medium text-foreground">
-              {isPublished ? "Published" : "Unpublished"}
-            </span>
-          </label>
+          <select
+            value={isPublished ? "published" : "draft"}
+            onChange={(e) => setIsPublished(e.target.value === "published")}
+            className="w-full px-4 py-2.5 text-sm bg-card border border-border/80 rounded-xl text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all cursor-pointer"
+          >
+            <option value="draft">Unpublished (Draft)</option>
+            <option value="published">Published</option>
+          </select>
         </div>
       </div>
 
@@ -432,7 +429,7 @@ export function AddBlogForm({
         {/* Cover Image */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Cover Thumbnail {!isEdit && <span className="text-red-500">*</span>}
+            Featured Image {!isEdit && <span className="text-red-500">*</span>}
           </label>
 
           <input
@@ -445,12 +442,12 @@ export function AddBlogForm({
 
           {imagePreview ? (
             <PhotoProvider speed={() => 300} maskOpacity={0.85}>
-              <div className="relative aspect-video w-full max-w-sm rounded-2xl overflow-hidden border border-border/80 group bg-muted">
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border/80 group bg-muted">
                 <PhotoView src={imagePreview}>
                   <img
                     src={imagePreview}
                     alt="Cover Preview"
-                    className="h-full w-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                    className="h-full w-full object-contain cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
                   />
                 </PhotoView>
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
@@ -489,11 +486,11 @@ export function AddBlogForm({
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              className="aspect-video w-full max-w-sm rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <RiImageAddLine className="h-8 w-8 text-primary" />
-              <span className="text-xs font-semibold">Upload Cover Image</span>
-              <span className="text-[11px] text-muted-foreground">16:9 Widescreen (PNG, JPG, WebP)</span>
+              <span className="text-xs font-semibold">Upload Featured Image</span>
+              <span className="text-[11px] text-muted-foreground">PNG, JPG, WebP</span>
             </button>
           )}
         </div>
@@ -501,7 +498,7 @@ export function AddBlogForm({
         {/* PDF Attachment */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Optional PDF Guide
+            PDF Attachment (Optional)
           </label>
 
           <input
@@ -513,7 +510,7 @@ export function AddBlogForm({
           />
 
           {pdfFileName && !removePdf ? (
-            <div className="h-40 w-full rounded-2xl border border-border/80 bg-card p-4 flex flex-col items-center justify-center text-center gap-2">
+            <div className="aspect-video w-full rounded-2xl border border-border/80 bg-card p-4 flex flex-col items-center justify-center text-center gap-2">
               <RiFilePdfLine className="h-10 w-10 text-red-500" />
               <p className="text-xs font-semibold text-foreground truncate max-w-[200px]">
                 {pdfFileName}
@@ -521,8 +518,25 @@ export function AddBlogForm({
               <div className="flex items-center gap-2 mt-1">
                 <button
                   type="button"
-                  onClick={() => pdfInputRef.current?.click()}
+                  onClick={() => {
+                    if (pdfFile) {
+                      // Newly selected local file — use blob URL
+                      window.open(URL.createObjectURL(pdfFile), "_blank", "noopener,noreferrer");
+                    } else if (initialData?._id) {
+                      // Existing PDF (URL or buffer) — backend handles both transparently
+                      const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api").replace(/\/+$/, "");
+                      window.open(`${base}/blog/${initialData._id}/pdf`, "_blank", "noopener,noreferrer");
+                    }
+                  }}
                   className="text-xs text-primary font-medium hover:underline cursor-pointer"
+                >
+                  Preview
+                </button>
+                <span className="text-muted-foreground">•</span>
+                <button
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  className="text-xs text-foreground font-medium hover:underline cursor-pointer"
                 >
                   Replace
                 </button>
@@ -544,7 +558,7 @@ export function AddBlogForm({
             <button
               type="button"
               onClick={() => pdfInputRef.current?.click()}
-              className="h-40 w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <RiFilePdfLine className="h-8 w-8 text-red-400" />
               <span className="text-xs font-semibold">Attach PDF Resource</span>
@@ -557,7 +571,7 @@ export function AddBlogForm({
       {/* 4. Rich Article Content with Quill WYSIWYG */}
       <div>
         <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-          Article Content <span className="text-red-500">*</span>
+          Content <span className="text-red-500">*</span>
         </label>
         <QuillEditor
           value={description}

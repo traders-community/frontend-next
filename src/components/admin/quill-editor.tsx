@@ -304,9 +304,9 @@ export function QuillEditor({
         </div>
 
         <div className="text-[11px] text-muted-foreground font-medium hidden sm:block">
-          {activeTab === "editor" && "Rich Text Editor (Quill 2.0)"}
+          {activeTab === "editor" && "Rich Text Editor"}
           {activeTab === "html" && "Raw HTML code"}
-          {activeTab === "preview" && "Rendered Output (Exact Blog Styling)"}
+          {activeTab === "preview" && "Rendered Output"}
         </div>
       </div>
 
@@ -376,10 +376,6 @@ export function QuillEditor({
         <div className="rounded-2xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs min-h-[360px] overflow-y-auto">
           {value.trim() ? (
             <div className="w-full max-w-4xl mx-auto">
-              <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-6 pb-2.5 border-b border-border/60 flex items-center justify-between">
-                <span>Article Output Preview</span>
-                <span className="text-primary font-mono text-[10px] tracking-normal">Exact Blog Styling</span>
-              </div>
               <ArticleRenderer html={sanitizeHtml(value)} />
             </div>
           ) : (
