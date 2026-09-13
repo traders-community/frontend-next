@@ -19,6 +19,11 @@ export interface SingleBlogResponse {
 export interface CommentsResponse {
   success: boolean;
   comments?: Comment[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  hasMore?: boolean;
   message?: string;
 }
 
@@ -81,15 +86,35 @@ export const blogService = {
   },
 
   /**
-   * Fetches approved comments for a specific blog post.
+   * Fetches approved comments for a specific blog post with pagination.
    * Optionally forwards admin token when previewing unpublished drafts.
    */
-  async getBlogComments(blogId: string, token?: string) {
+  async getBlogComments(
+    blogId: string,
+    paramsOrToken?: { page?: number; limit?: number } | string,
+    tokenParam?: string
+  ) {
+    let page = 1;
+    let limit = 10;
+    let token: string | undefined;
+
+    if (typeof paramsOrToken === "string") {
+      token = paramsOrToken;
+    } else if (paramsOrToken && typeof paramsOrToken === "object") {
+      if (paramsOrToken.page) page = paramsOrToken.page;
+      if (paramsOrToken.limit) limit = paramsOrToken.limit;
+      token = tokenParam;
+    }
+
     const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
     }
-    return api.post<CommentsResponse>("/blog/comments", { blogId }, { headers });
+    return api.post<CommentsResponse>(
+      "/blog/comments",
+      { blogId, page, limit },
+      { headers }
+    );
   },
 
   /**

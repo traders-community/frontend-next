@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { RiUserLine, RiSendPlaneLine, RiLoader4Line } from "@remixicon/react";
 import { Comment } from "@/types";
@@ -10,31 +10,102 @@ import { formatDate } from "@/lib/utils";
 interface BlogCommentsProps {
   blogId: string;
   initialComments?: Comment[];
+  initialTotal?: number;
+  initialHasMore?: boolean;
   isDraftPreview?: boolean;
 }
+
+const COMMENTS_PER_PAGE = 10;
 
 export function BlogComments({
   blogId,
   initialComments = [],
+  initialTotal,
+  initialHasMore,
   isDraftPreview = false,
 }: BlogCommentsProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [totalComments, setTotalComments] = useState<number>(
+    initialTotal ?? initialComments.length
+  );
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState<boolean>(
+    initialHasMore ?? (initialTotal ? initialComments.length < initialTotal : false)
+  );
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Form states
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchComments = async () => {
+  // Sentinel ref for infinite scroll observer
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch next page of comments
+  const loadMoreComments = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+
     try {
-      const res = await blogService.getBlogComments(blogId);
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const res = await blogService.getBlogComments(blogId, {
+        page: nextPage,
+        limit: COMMENTS_PER_PAGE,
+      });
+
       if (res.data?.success && res.data.comments) {
-        setComments(res.data.comments);
+        const newComments = res.data.comments;
+        setComments((prev) => {
+          const existingIds = new Set(prev.map((c) => c._id));
+          const uniqueNew = newComments.filter((c) => !existingIds.has(c._id));
+          return [...prev, ...uniqueNew];
+        });
+
+        setPage(nextPage);
+        if (typeof res.data.total === "number") {
+          setTotalComments(res.data.total);
+        }
+        setHasMore(Boolean(res.data.hasMore));
+      } else {
+        setHasMore(false);
       }
     } catch (err) {
-      console.error("Failed to refresh comments:", err);
+      console.error("Failed to load more comments:", err);
+      setHasMore(false);
+    } finally {
+      setIsLoadingMore(false);
     }
-  };
+  }, [blogId, page, hasMore, isLoadingMore]);
 
-  const handleAddComment = async (e: React.SubmitEvent) => {
+  // Set up IntersectionObserver for Infinite Scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore || isDraftPreview) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !isLoadingMore) {
+          loadMoreComments();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "250px", // Trigger slightly before user scrolls to the bottom
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [loadMoreComments, hasMore, isLoadingMore, isDraftPreview]);
+
+  // Refresh first page on new comment submission
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isDraftPreview) {
       toast.info("Commenting is disabled while the article is unpublished.");
@@ -52,12 +123,12 @@ export function BlogComments({
         toast.success(res.data.message || "Comment submitted for review!");
         setName("");
         setContent("");
-        await fetchComments();
       } else {
         toast.error(res.data?.message || "Failed to submit comment.");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Network error. Please try again.");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error?.message || "Network error. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -69,13 +140,13 @@ export function BlogComments({
       <h3 className="text-xl font-bold mb-6 text-foreground flex items-center gap-2">
         <span className="text-primary">Comments</span>
         <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">
-          {comments.length}
+          {totalComments}
         </span>
       </h3>
 
       {/* Comments List */}
       {comments.length > 0 ? (
-        <div className="flex flex-col gap-4 mb-10 w-full">
+        <div className="flex flex-col gap-4 mb-8 w-full">
           {comments.map((comment) => (
             <article
               key={comment._id}
@@ -83,7 +154,7 @@ export function BlogComments({
             >
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/30 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/30 flex items-center justify-center shrink-0">
                     <RiUserLine className="w-4 h-4" />
                   </div>
                   <span className="font-semibold text-sm text-primary">
@@ -91,16 +162,46 @@ export function BlogComments({
                   </span>
                 </div>
 
-                <time className="text-xs text-muted-foreground">
+                <time className="text-xs text-muted-foreground whitespace-nowrap">
                   {formatDate(comment.createdAt)}
                 </time>
               </div>
 
-              <p className="text-sm text-foreground/90 leading-relaxed pl-9 whitespace-pre-wrap">
+              <p className="text-sm text-foreground/90 leading-relaxed pl-9 whitespace-pre-wrap break-words">
                 {comment.content}
               </p>
             </article>
           ))}
+
+          {/* Loading Skeleton / Spinner for Infinite Scroll */}
+          {isLoadingMore && (
+            <div className="p-4 sm:p-5 rounded-xl border border-border/60 bg-card/40 flex items-center justify-center gap-2.5 py-6">
+              <RiLoader4Line className="w-5 h-5 text-primary animate-spin" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Loading more comments...
+              </span>
+            </div>
+          )}
+
+          {/* Infinite Scroll Bottom Sentinel */}
+          {hasMore && !isLoadingMore && (
+            <div ref={sentinelRef} className="h-10 w-full flex items-center justify-center">
+              <button
+                type="button"
+                onClick={loadMoreComments}
+                className="text-xs font-semibold text-primary hover:underline py-2 cursor-pointer"
+              >
+                Load more comments
+              </button>
+            </div>
+          )}
+
+          {/* End of Comments Indicator */}
+          {!hasMore && comments.length >= 10 && (
+            <p className="text-xs text-center text-muted-foreground/80 py-2">
+              You&apos;ve reached the end of comments.
+            </p>
+          )}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground mb-8">

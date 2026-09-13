@@ -101,12 +101,14 @@ export default async function BlogDetailPage({ params, searchParams }: BlogPageP
   const [blogRes, profileRes, commentsRes] = await Promise.all([
     blogService.getBlogById(slug, token ? false : 60, token),
     settingsService.getPublicProfile(60),
-    blogService.getBlogComments(slug, token),
+    blogService.getBlogComments(slug, { page: 1, limit: 10 }, token),
   ]);
 
   const blog = blogRes.data?.blog;
   const profile = profileRes.data?.profile;
   const initialComments = commentsRes.data?.comments || [];
+  const initialTotal = commentsRes.data?.total ?? initialComments.length;
+  const initialHasMore = commentsRes.data?.hasMore ?? false;
 
   // If blog is not found OR if unpublished and not an authorized admin:
   // Immediately call notFound() to render standard 404 page directly.
@@ -142,6 +144,8 @@ export default async function BlogDetailPage({ params, searchParams }: BlogPageP
         blog={blog}
         profile={profile}
         initialComments={initialComments}
+        initialTotal={initialTotal}
+        initialHasMore={initialHasMore}
         isDraftPreview={isDraftPreview}
       />
     </>

@@ -14,6 +14,8 @@ interface BlogDetailViewProps {
   blog: Blog;
   profile?: AdminProfile | null;
   initialComments?: Comment[];
+  initialTotal?: number;
+  initialHasMore?: boolean;
   isDraftPreview?: boolean;
 }
 
@@ -21,6 +23,8 @@ export function BlogDetailView({
   blog,
   profile,
   initialComments = [],
+  initialTotal,
+  initialHasMore,
   isDraftPreview = false,
 }: BlogDetailViewProps) {
   const readingTime = calculateReadingTime(blog.description);
@@ -123,6 +127,8 @@ export function BlogDetailView({
           <BlogComments
             blogId={blog._id}
             initialComments={initialComments}
+            initialTotal={initialTotal}
+            initialHasMore={initialHasMore}
           />
         )}
       </div>
