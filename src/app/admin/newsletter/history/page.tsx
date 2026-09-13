@@ -18,6 +18,7 @@ import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiSearchLine,
+  RiCloseLine,
 } from "@remixicon/react";
 import { newsletterService } from "@/services/newsletter.service";
 import { NewsletterCampaign, NewsletterStats, CampaignType, CampaignStatus } from "@/types";
@@ -47,10 +48,10 @@ export default function AdminNewsletterHistoryPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<NewsletterCampaign | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Click Engagement Log Sub-Pagination & Search State inside Modal
+  // Click Engagement & Delivery Activity Sub-Pagination & Search State inside Modal
   const [logPage, setLogPage] = useState(1);
+  const [logPageSize, setLogPageSize] = useState(5);
   const [logSearch, setLogSearch] = useState("");
-  const LOGS_PER_PAGE = 5;
 
   // Fetch campaigns
   const fetchData = useCallback(async () => {
@@ -92,23 +93,37 @@ export default function AdminNewsletterHistoryPage() {
     fetchData();
   }, [fetchData]);
 
-  // Filtered & Paginated Click Logs inside Modal
-  const filteredClickLogs = useMemo(() => {
+  // Enhanced Click Logs with Batch Assignment & Scalable Filtering
+  const allClickLogsWithBatch = useMemo(() => {
     if (!selectedCampaign?.clickedSubscribers) return [];
+    return selectedCampaign.clickedSubscribers.map((log, index) => ({
+      ...log,
+      batchNumber: Math.floor(index / 25) + 1,
+    }));
+  }, [selectedCampaign]);
+
+  const filteredClickLogs = useMemo(() => {
     const query = logSearch.trim().toLowerCase();
-    if (!query) return selectedCampaign.clickedSubscribers;
-    return selectedCampaign.clickedSubscribers.filter((log) => {
+    if (!query) return allClickLogsWithBatch;
+    return allClickLogsWithBatch.filter((log) => {
       const email = log.subscriber?.email?.toLowerCase() || "";
       const name = log.subscriber?.name?.toLowerCase() || "";
-      return email.includes(query) || name.includes(query);
+      const batchStr = `batch ${log.batchNumber}`.toLowerCase();
+      const batchNum = `${log.batchNumber}`;
+      return (
+        email.includes(query) ||
+        name.includes(query) ||
+        batchStr.includes(query) ||
+        batchNum === query
+      );
     });
-  }, [selectedCampaign, logSearch]);
+  }, [allClickLogsWithBatch, logSearch]);
 
-  const totalLogPages = Math.max(1, Math.ceil(filteredClickLogs.length / LOGS_PER_PAGE));
+  const totalLogPages = Math.max(1, Math.ceil(filteredClickLogs.length / logPageSize));
   const paginatedClickLogs = useMemo(() => {
-    const start = (logPage - 1) * LOGS_PER_PAGE;
-    return filteredClickLogs.slice(start, start + LOGS_PER_PAGE);
-  }, [filteredClickLogs, logPage]);
+    const start = (logPage - 1) * logPageSize;
+    return filteredClickLogs.slice(start, start + logPageSize);
+  }, [filteredClickLogs, logPage, logPageSize]);
 
   // Handle Sort Change: 3 states (asc, desc, null)
   const handleSortChange = (key: string) => {
@@ -149,31 +164,28 @@ export default function AdminNewsletterHistoryPage() {
   const renderStatusBadge = (status: CampaignStatus) => {
     if (status === "completed") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/15">
-          <RiCheckboxCircleLine className="h-3.5 w-3.5" />
-          <span>Completed</span>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+          Completed
         </span>
       );
     }
     if (status === "processing") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-500 dark:bg-amber-500/15">
-          <div className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-          <span>In Progress</span>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          In Progress
         </span>
       );
     }
     if (status === "failed") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 dark:bg-red-500/15">
-          <RiAlertFill className="h-3.5 w-3.5" />
-          <span>Failed</span>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-500 border border-rose-500/20">
+          Failed
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
-        <span>Draft</span>
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border/60">
+        Draft
       </span>
     );
   };
@@ -182,48 +194,106 @@ export default function AdminNewsletterHistoryPage() {
   const renderTypeBadge = (type: CampaignType) => {
     if (type === "blog_publish") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/15 text-primary">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
           <RiArticleLine className="h-3 w-3" />
-          <span>Blog Publish</span>
+          <span>Blog Alert</span>
         </span>
       );
     }
     if (type === "welcome") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-500/15 text-blue-500">
-          <span>Welcome Email</span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span>Welcome</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-500/15 text-purple-500">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
         <span>Broadcast</span>
       </span>
     );
+  };
+
+  // Helper to split date & time for clean 2-line display
+  const renderDateTimeCell = (dateInput?: string | number | Date) => {
+    if (!dateInput) return <span className="text-xs text-muted-foreground">—</span>;
+    try {
+      const d = new Date(dateInput);
+      if (isNaN(d.getTime())) return <span className="text-xs text-muted-foreground">—</span>;
+      const dateStr = new Intl.DateTimeFormat("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(d);
+      const timeStr = new Intl.DateTimeFormat("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).format(d);
+
+      return (
+        <div className="space-y-0.5 whitespace-nowrap">
+          <p className="text-xs font-medium text-foreground">{dateStr}</p>
+          <p className="text-[11px] text-muted-foreground">{timeStr}</p>
+        </div>
+      );
+    } catch {
+      return <span className="text-xs text-muted-foreground">—</span>;
+    }
   };
 
   // Columns definition
   const columns: ColumnDef<NewsletterCampaign>[] = [
     {
       key: "title",
-      label: "Campaign / Subject",
+      label: "Campaign",
       sortable: true,
       render: (item) => (
-        <div className="space-y-1 max-w-xs sm:max-w-md">
-          <div className="flex items-center gap-2">
-            {renderTypeBadge(item.type)}
-            {item.blog?.category && (
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                • {item.blog.category}
-              </span>
+        <div className="flex items-center gap-3 min-w-0 max-w-[280px] sm:max-w-sm md:max-w-md">
+          {/* Thumbnail / Icon */}
+          <div className="w-12 h-9 rounded-lg overflow-hidden bg-surface border border-border/70 shrink-0 flex items-center justify-center">
+            {item.blog?.image ? (
+              <img
+                src={item.blog.image}
+                alt={item.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary">
+                {item.type === "blog_publish" ? (
+                  <RiArticleLine className="h-4 w-4" />
+                ) : (
+                  <RiMailSendLine className="h-4 w-4" />
+                )}
+              </div>
             )}
           </div>
-          <p className="font-semibold text-foreground text-xs sm:text-sm line-clamp-1">
-            {item.title}
-          </p>
-          <p className="text-[11px] text-muted-foreground line-clamp-1">
-            {item.subject}
-          </p>
+
+          {/* Title & Metadata */}
+          <div className="min-w-0 flex-1">
+            <p
+              onClick={() => handleOpenDetails(item)}
+              className="font-semibold text-foreground text-xs sm:text-sm truncate hover:text-primary transition-colors cursor-pointer leading-snug"
+              title={item.title}
+            >
+              {item.title}
+            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5 truncate">
+              <span className="font-medium text-foreground/80">
+                {item.type === "blog_publish"
+                  ? "Blog Alert"
+                  : item.type === "welcome"
+                  ? "Welcome Email"
+                  : "Broadcast"}
+              </span>
+              {item.blog?.category && (
+                <>
+                  <span className="text-muted-foreground/60">•</span>
+                  <span className="text-muted-foreground">{item.blog.category}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       ),
     },
@@ -240,35 +310,35 @@ export default function AdminNewsletterHistoryPage() {
         const total = item.totalSubscribers || 0;
         const sent = item.sentCount || 0;
         const failed = item.failedCount || 0;
-        const pending = item.pendingCount || 0;
         const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
 
         return (
-          <div className="space-y-1.5 min-w-[140px]">
+          <div className="space-y-1.5 min-w-[120px] max-w-[160px]">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-foreground">
-                {sent} <span className="font-normal text-muted-foreground">/ {total}</span>
+              <span className="font-semibold text-foreground">
+                {sent}{" "}
+                <span className="font-normal text-muted-foreground text-[11px]">/ {total}</span>
               </span>
-              <span className="text-[11px] font-semibold text-muted-foreground">{pct}%</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{pct}%</span>
             </div>
-            {/* Progress bar */}
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden flex">
+            {/* Elegant Slim Progress Bar */}
+            <div className="h-1.5 w-full bg-surface border border-border/60 rounded-full overflow-hidden flex">
               <div
-                className="bg-primary h-full transition-all duration-300"
+                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${pct}%` }}
               />
               {failed > 0 && total > 0 && (
                 <div
-                  className="bg-red-500 h-full"
+                  className="bg-rose-500 h-full"
                   style={{ width: `${(failed / total) * 100}%` }}
                 />
               )}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span className="text-emerald-500">{sent} sent</span>
-              {pending > 0 && <span>• {pending} pending</span>}
-              {failed > 0 && <span className="text-red-500">• {failed} failed</span>}
-            </div>
+            {failed > 0 && (
+              <span className="text-[10px] font-medium text-rose-500 block">
+                {failed} failed
+              </span>
+            )}
           </div>
         );
       },
@@ -284,16 +354,21 @@ export default function AdminNewsletterHistoryPage() {
         const ctr = sent > 0 ? ((uniqueClicks / sent) * 100).toFixed(1) : "0.0";
 
         return (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <RiCursorLine className="h-3.5 w-3.5 text-primary" />
-              <span>{uniqueClicks} unique</span>
-              <span className="text-[11px] text-muted-foreground font-normal">({clicks} total)</span>
+              <RiCursorLine className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span>
+                {uniqueClicks} {uniqueClicks === 1 ? "click" : "clicks"}
+              </span>
+              {clicks > uniqueClicks && (
+                <span className="text-[11px] text-muted-foreground font-normal">
+                  ({clicks} total)
+                </span>
+              )}
             </div>
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface border border-border text-foreground">
-              <RiPercentLine className="h-3 w-3 text-primary" />
-              <span>{ctr}% CTR</span>
-            </div>
+            <p className="text-[11px] font-medium text-primary pl-5">
+              {ctr}% CTR
+            </p>
           </div>
         );
       },
@@ -302,11 +377,7 @@ export default function AdminNewsletterHistoryPage() {
       key: "createdAt",
       label: "Sent Date & Time",
       sortable: true,
-      render: (item) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {formatDateTime(item.sentAt || item.createdAt)}
-        </span>
-      ),
+      render: (item) => renderDateTimeCell(item.sentAt || item.createdAt),
     },
     {
       key: "actions",
@@ -317,10 +388,10 @@ export default function AdminNewsletterHistoryPage() {
           <button
             type="button"
             onClick={() => handleOpenDetails(item)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-border/70 bg-card hover:bg-surface-hover text-xs font-semibold text-foreground transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/70 bg-card hover:bg-surface-hover hover:border-border text-xs font-medium text-foreground transition-all cursor-pointer shadow-2xs group"
             title="View campaign breakdown"
           >
-            <RiEyeLine className="h-3.5 w-3.5 text-primary" />
+            <RiEyeLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
             <span>Details</span>
           </button>
         </div>
@@ -516,139 +587,117 @@ export default function AdminNewsletterHistoryPage() {
         <AdminModal
           isOpen={Boolean(selectedCampaign)}
           onClose={() => setSelectedCampaign(null)}
-          title="Campaign Report"
+          title="Campaign Details"
           subtitle={selectedCampaign.title}
           size="2xl"
         >
-          <div className="space-y-5 sm:space-y-6">
-            {/* Top Status & Date */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-border/80 bg-surface/30">
-              <div className="flex items-center gap-2 flex-wrap">
+          <div className="space-y-5">
+            {/* Top Meta Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-border/50">
+              <div className="flex items-center gap-2">
                 {renderStatusBadge(selectedCampaign.status)}
                 {renderTypeBadge(selectedCampaign.type)}
               </div>
               <span className="text-xs text-muted-foreground">
-                Dispatched: {formatDateTime(selectedCampaign.sentAt || selectedCampaign.createdAt)}
+                Dispatched {formatDateTime(selectedCampaign.sentAt || selectedCampaign.createdAt)}
               </span>
             </div>
 
-            {/* Subject Line & Linked Blog */}
-            <div className="space-y-3">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                  Email Subject Line
+            {/* Campaign / Email Info Card */}
+            <div className="p-3.5 sm:p-4 rounded-xl border border-border/70 bg-card/60 space-y-3">
+              {selectedCampaign.blog ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {selectedCampaign.blog.image && (
+                      <img
+                        src={selectedCampaign.blog.image}
+                        alt=""
+                        className="h-11 w-14 rounded-lg object-cover border border-border/60 shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                        {selectedCampaign.blog.title}
+                      </p>
+                      {selectedCampaign.blog.category && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {selectedCampaign.blog.category}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/blog/${selectedCampaign.blog.slug || selectedCampaign.blog._id}`}
+                    target="_blank"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-hover border border-border/70 text-xs font-medium text-foreground transition-colors shrink-0 self-start sm:self-center"
+                  >
+                    <span>View Blog</span>
+                    <RiExternalLinkLine className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Link>
+                </div>
+              ) : null}
+
+              {/* Subject line */}
+              <div className="pt-1 border-t border-border/40">
+                <span className="text-[11px] font-medium text-muted-foreground block mb-0.5">
+                  Subject
                 </span>
-                <p className="text-xs sm:text-sm font-semibold text-foreground p-3 rounded-xl border border-border/80 bg-card break-words">
+                <p className="text-xs sm:text-sm font-medium text-foreground break-words">
                   {selectedCampaign.subject}
                 </p>
               </div>
-
-              {selectedCampaign.blog && (
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                    Linked Research Article
-                  </span>
-                  <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start sm:items-center gap-3 min-w-0">
-                      {selectedCampaign.blog.image && (
-                        <img
-                          src={selectedCampaign.blog.image}
-                          alt=""
-                          className="h-12 w-16 sm:h-10 sm:w-14 rounded-lg object-cover border border-border/60 shrink-0"
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs sm:text-sm font-bold text-foreground line-clamp-2 sm:line-clamp-1">
-                          {selectedCampaign.blog.title}
-                        </p>
-                        {selectedCampaign.blog.category && (
-                          <span className="text-[11px] text-muted-foreground block mt-0.5">
-                            Category: {selectedCampaign.blog.category}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/blog/${selectedCampaign.blog.slug || selectedCampaign.blog._id}`}
-                      target="_blank"
-                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-lg bg-surface hover:bg-surface-hover text-xs font-semibold text-foreground transition-colors shrink-0 w-full sm:w-auto text-center"
-                    >
-                      <span>View Blog</span>
-                      <RiExternalLinkLine className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Performance Breakdown Grid */}
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
-                Delivery & Engagement Numbers
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground block truncate">
-                    Recipients
-                  </span>
-                  <p className="text-base sm:text-lg font-bold text-foreground">
-                    {selectedCampaign.totalSubscribers || 0}
-                  </p>
-                </div>
-                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-500 block truncate">
-                    Delivered
-                  </span>
-                  <p className="text-base sm:text-lg font-bold text-emerald-500">
-                    {selectedCampaign.sentCount || 0}
-                  </p>
-                </div>
-                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[10px] sm:text-[11px] font-semibold text-blue-500 block truncate">
-                    Unique Clickers
-                  </span>
-                  <p className="text-base sm:text-lg font-bold text-blue-500">
-                    {selectedCampaign.uniqueClicksCount || 0}
-                  </p>
-                </div>
-                <div className="p-3 sm:p-3.5 rounded-xl border border-border/80 bg-card text-center space-y-0.5">
-                  <span className="text-[10px] sm:text-[11px] font-semibold text-primary block truncate">
-                    Click Rate
-                  </span>
-                  <p className="text-base sm:text-lg font-bold text-primary">
-                    {selectedCampaign.sentCount > 0
-                      ? (
-                          (selectedCampaign.uniqueClicksCount / selectedCampaign.sentCount) *
-                          100
-                        ).toFixed(1)
-                      : "0.0"}
-                    %
-                  </p>
-                </div>
+            {/* Unified Stats Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 sm:p-4 rounded-xl border border-border/70 bg-surface/30">
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Recipients</span>
+                <p className="text-base sm:text-lg font-bold text-foreground">
+                  {selectedCampaign.totalSubscribers || 0}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Delivered</span>
+                <p className="text-base sm:text-lg font-bold text-emerald-500">
+                  {selectedCampaign.sentCount || 0}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Unique Clicks</span>
+                <p className="text-base sm:text-lg font-bold text-blue-400">
+                  {selectedCampaign.uniqueClicksCount || 0}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Click Rate</span>
+                <p className="text-base sm:text-lg font-bold text-primary">
+                  {selectedCampaign.sentCount > 0
+                    ? (
+                        (selectedCampaign.uniqueClicksCount / selectedCampaign.sentCount) *
+                        100
+                      ).toFixed(1)
+                    : "0.0"}
+                  %
+                </p>
               </div>
             </div>
 
-            {/* Clicked Subscribers Log with Search & Pagination */}
-            <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                    Click Engagement Log ({filteredClickLogs.length}{" "}
-                    {filteredClickLogs.length !== (selectedCampaign.clickedSubscribers?.length || 0) &&
-                      `/ ${selectedCampaign.clickedSubscribers?.length || 0}`}
-                    )
+            {/* Delivery & Engagement Activity Section */}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-foreground">
+                    Engagement & Delivery Activity
                   </span>
-                  {filteredClickLogs.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground sm:hidden block">
-                      Swipe horizontally to view complete details
-                    </span>
-                  )}
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface border border-border/70 text-muted-foreground">
+                    {filteredClickLogs.length}
+                  </span>
                 </div>
 
-                {/* Sub-search for clicked emails if more than 3 logs */}
-                {(selectedCampaign.clickedSubscribers?.length || 0) > 3 && (
-                  <div className="relative flex items-center w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Search Input */}
+                  <div className="relative flex items-center flex-1 sm:w-48">
                     <RiSearchLine className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 pointer-events-none" />
                     <input
                       type="text"
@@ -657,47 +706,98 @@ export default function AdminNewsletterHistoryPage() {
                         setLogSearch(e.target.value);
                         setLogPage(1);
                       }}
-                      placeholder="Filter clicks..."
-                      className="pl-8 pr-2.5 py-1.5 sm:py-1 text-xs bg-surface border border-border/80 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 w-full sm:w-44"
+                      placeholder="Search email, batch..."
+                      className="pl-8 pr-7 py-1 text-xs bg-surface border border-border/70 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 w-full"
                     />
+                    {logSearch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogSearch("");
+                          setLogPage(1);
+                        }}
+                        className="absolute right-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                        title="Clear search"
+                      >
+                        <RiCloseLine className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
-                )}
+
+                  {/* Page Size Selector */}
+                  <select
+                    value={logPageSize}
+                    onChange={(e) => {
+                      setLogPageSize(Number(e.target.value));
+                      setLogPage(1);
+                    }}
+                    className="py-1 px-2 text-[11px] font-medium bg-surface border border-border/70 rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+                    title="Items per page"
+                  >
+                    <option value={5}>5 / page</option>
+                    <option value={10}>10 / page</option>
+                    <option value={25}>25 / page</option>
+                  </select>
+                </div>
               </div>
 
               {filteredClickLogs.length === 0 ? (
-                <div className="py-6 px-4 rounded-xl border border-dashed border-border/80 text-center bg-surface/20">
+                <div className="py-6 px-4 rounded-xl border border-dashed border-border/70 text-center bg-surface/20">
                   <p className="text-xs text-muted-foreground">
                     {logSearch.trim()
-                      ? "No clicks matching your search filter."
-                      : "No tracked clicks recorded for this campaign yet."}
+                      ? `No records found matching "${logSearch}".`
+                      : "No tracked activity recorded for this campaign yet."}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="w-full rounded-xl border border-border/80 overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[460px]">
-                      <thead className="bg-surface border-b border-border text-muted-foreground">
+                <div className="space-y-2.5">
+                  <div className="w-full rounded-xl border border-border/70 overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[480px]">
+                      <thead className="bg-surface/60 border-b border-border/70 text-muted-foreground">
                         <tr>
-                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px] whitespace-nowrap">
-                            Subscriber Email
+                          <th className="px-3.5 py-2 font-semibold text-[10px] uppercase tracking-wider w-24">
+                            Batch #
                           </th>
-                          <th className="px-3.5 py-2.5 font-bold uppercase tracking-wider text-[10px] text-right whitespace-nowrap">
-                            Clicked Date & Time
+                          <th className="px-3.5 py-2 font-semibold text-[10px] uppercase tracking-wider">
+                            Recipient
+                          </th>
+                          <th className="px-3.5 py-2 font-semibold text-[10px] uppercase tracking-wider text-center w-28">
+                            Status
+                          </th>
+                          <th className="px-3.5 py-2 font-semibold text-[10px] uppercase tracking-wider text-right whitespace-nowrap">
+                            Timestamp
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border/60 bg-card">
+                      <tbody className="divide-y divide-border/50 bg-card/40">
                         {paginatedClickLogs.map((log, i) => (
-                          <tr key={i} className="hover:bg-surface-hover/50 transition-colors">
-                            <td className="px-3.5 py-2.5 text-foreground font-medium whitespace-nowrap">
-                              <span>{log.subscriber?.email || "Subscriber"}</span>
+                          <tr key={i} className="hover:bg-surface/40 transition-colors">
+                            {/* Batch Column */}
+                            <td className="px-3.5 py-2.5 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface border border-border/80 text-muted-foreground">
+                                Batch #{log.batchNumber}
+                              </span>
+                            </td>
+
+                            {/* Recipient Column */}
+                            <td className="px-3.5 py-2.5 text-foreground whitespace-nowrap min-w-0">
+                              <span className="font-medium">{log.subscriber?.email || "Subscriber"}</span>
                               {log.subscriber?.name && log.subscriber.name !== "Trader" && (
                                 <span className="text-[11px] text-muted-foreground ml-1.5 font-normal">
                                   ({log.subscriber.name})
                                 </span>
                               )}
                             </td>
-                            <td className="px-3.5 py-2.5 text-muted-foreground text-right whitespace-nowrap text-[10px] sm:text-[11px] font-medium">
+
+                            {/* Status Column */}
+                            <td className="px-3.5 py-2.5 text-center whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                Clicked
+                              </span>
+                            </td>
+
+                            {/* Timestamp Column */}
+                            <td className="px-3.5 py-2.5 text-muted-foreground text-right whitespace-nowrap text-[11px]">
                               {formatDateTime(log.clickedAt)}
                             </td>
                           </tr>
@@ -706,46 +806,75 @@ export default function AdminNewsletterHistoryPage() {
                     </table>
                   </div>
 
-                  {/* Sub-pagination Footer for Click Logs */}
-                  {totalLogPages > 1 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1 text-xs text-muted-foreground pt-1">
-                      <span className="text-[11px]">
-                        Showing {(logPage - 1) * LOGS_PER_PAGE + 1}–
-                        {Math.min(logPage * LOGS_PER_PAGE, filteredClickLogs.length)} of{" "}
-                        {filteredClickLogs.length}
-                      </span>
-                      <div className="flex items-center gap-1.5">
+                  {/* Scalable Pagination Footer */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1 text-xs text-muted-foreground pt-1">
+                    <span className="text-[11px]">
+                      Showing {(logPage - 1) * logPageSize + 1}–
+                      {Math.min(logPage * logPageSize, filteredClickLogs.length)} of{" "}
+                      {filteredClickLogs.length} records
+                    </span>
+
+                    {totalLogPages > 1 && (
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setLogPage((p) => Math.max(1, p - 1))}
                           disabled={logPage === 1}
-                          className="p-1 rounded-lg border border-border bg-card hover:bg-surface text-foreground transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                          className="px-2 py-1 rounded-lg border border-border bg-card hover:bg-surface text-foreground transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed text-[11px]"
                           title="Previous page"
                         >
-                          <RiArrowLeftSLine className="h-3.5 w-3.5" />
+                          <RiArrowLeftSLine className="h-3.5 w-3.5 inline mr-0.5" />
+                          <span>Prev</span>
                         </button>
-                        <span className="text-[11px] font-semibold text-foreground px-1">
-                          {logPage} / {totalLogPages}
-                        </span>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: totalLogPages }, (_, idx) => idx + 1)
+                          .filter(
+                            (p) =>
+                              p === 1 ||
+                              p === totalLogPages ||
+                              (p >= logPage - 1 && p <= logPage + 1)
+                          )
+                          .map((p, idx, arr) => (
+                            <React.Fragment key={p}>
+                              {idx > 0 && arr[idx - 1] !== p - 1 && (
+                                <span className="px-1 text-muted-foreground text-[10px]">...</span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setLogPage(p)}
+                                className={cn(
+                                  "h-7 min-w-7 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                                  logPage === p
+                                    ? "bg-primary text-black"
+                                    : "border border-border bg-card hover:bg-surface text-foreground"
+                                )}
+                              >
+                                {p}
+                              </button>
+                            </React.Fragment>
+                          ))}
+
                         <button
                           type="button"
                           onClick={() => setLogPage((p) => Math.min(totalLogPages, p + 1))}
                           disabled={logPage === totalLogPages}
-                          className="p-1 rounded-lg border border-border bg-card hover:bg-surface text-foreground transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                          className="px-2 py-1 rounded-lg border border-border bg-card hover:bg-surface text-foreground transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed text-[11px]"
                           title="Next page"
                         >
-                          <RiArrowRightSLine className="h-3.5 w-3.5" />
+                          <span>Next</span>
+                          <RiArrowRightSLine className="h-3.5 w-3.5 inline ml-0.5" />
                         </button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
             {selectedCampaign.errorMessage && (
-              <div className="p-3.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 text-xs">
-                <strong>Error details:</strong> {selectedCampaign.errorMessage}
+              <div className="p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 text-xs">
+                <strong>Error:</strong> {selectedCampaign.errorMessage}
               </div>
             )}
           </div>
