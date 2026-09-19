@@ -121,6 +121,10 @@ function SettingsContent() {
   // Settings Form State
   const [settings, setSettings] = useState<SiteSettings>({
     showExplorePage: true,
+    showCoursesCard: true,
+    showGraphyCard: true,
+    showFnoCard: true,
+    showForexCard: true,
     graphyUrl: "",
     exploreOffTarget: "courses",
   });
@@ -724,35 +728,118 @@ function SettingsContent() {
               <div className="rounded-2xl sm:rounded-3xl border border-border/80 bg-card p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-foreground">
-                    Explore Routing & LMS Configuration
+                    Explore Page &amp; Card Visibility Configuration
                   </h2>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                    Configure the public Explore tab visibility, Graphy portal redirection, and fallback behavior
+                    Configure visibility for the 4 Explore portal cards and manage external LMS links. Disabling an internal card blocks direct route access and all nested sub-routes.
                   </p>
                 </div>
 
-                {/* Feature Toggle Card */}
-                <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-0.5 max-w-xl">
-                    <p className="text-xs sm:text-sm font-bold text-foreground">
-                      Show Explore Page on Navigation
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      When enabled, the &apos;Explore&apos; link is rendered on the public header and navigation bar.
-                    </p>
+                {/* 4 Cards Visibility Toggles */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Card Visibility Controls
+                  </h3>
+
+                  {/* Card 1: Community Courses */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 max-w-xl">
+                      <p className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                        <span>Show Community Courses Card</span>
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">/courses</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Controls visibility of Community Courses on Explore. When disabled, direct access to /courses and all sub-routes returns 404.
+                      </p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settings.showCoursesCard !== false}
+                        onChange={(e) =>
+                          setSettings({ ...settings, showCoursesCard: e.target.checked })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
+                    </label>
                   </div>
 
-                  <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(settings.showExplorePage)}
-                      onChange={(e) =>
-                        setSettings({ ...settings, showExplorePage: e.target.checked })
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
-                  </label>
+                  {/* Card 2: Graphy Store */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 max-w-xl">
+                      <p className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                        <span>Show Graphy Store Card</span>
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-surface text-muted-foreground border border-border">External Link</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Controls visibility of the external Graphy LMS storefront card on the Explore page.
+                      </p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settings.showGraphyCard !== false}
+                        onChange={(e) =>
+                          setSettings({ ...settings, showGraphyCard: e.target.checked })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
+                    </label>
+                  </div>
+
+                  {/* Card 3: Futures & Options (F&O) */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 max-w-xl">
+                      <p className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                        <span>Show Futures &amp; Options (F&amp;O) Card</span>
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">/fno</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Controls visibility of the F&amp;O track card on Explore. When disabled, direct access to /fno and all sub-routes returns 404.
+                      </p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settings.showFnoCard !== false}
+                        onChange={(e) =>
+                          setSettings({ ...settings, showFnoCard: e.target.checked })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
+                    </label>
+                  </div>
+
+                  {/* Card 4: Forex Trading */}
+                  <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-surface/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5 max-w-xl">
+                      <p className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                        <span>Show Forex Trading Card</span>
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">/forex</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Controls visibility of the Forex Trading card on Explore. When disabled, direct access to /forex and all sub-routes returns 404.
+                      </p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settings.showForexCard !== false}
+                        onChange={(e) =>
+                          setSettings({ ...settings, showForexCard: e.target.checked })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs"></div>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Graphy LMS URL Input */}
@@ -765,7 +852,7 @@ function SettingsContent() {
                       type="url"
                       value={settings.graphyUrl || ""}
                       onChange={(e) => setSettings({ ...settings, graphyUrl: e.target.value })}
-                      placeholder="https://learn.traderscommunity.com"
+                      placeholder="https://pennywisepuns.graphy.com/s/store"
                       className="w-full px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     />
                     {settings.graphyUrl && (
@@ -781,30 +868,7 @@ function SettingsContent() {
                     )}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1.5">
-                    Direct web address to your Graphy student portal or external curriculum provider.
-                  </p>
-                </div>
-
-                {/* Explore OFF Target Selector */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    When Explore Page is OFF: Fallback Redirect
-                  </label>
-                  <select
-                    value={settings.exploreOffTarget || "courses"}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        exploreOffTarget: e.target.value as "courses" | "graphy",
-                      })
-                    }
-                    className="w-full px-4 py-2.5 text-xs sm:text-sm bg-card border border-border/80 rounded-xl text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all cursor-pointer"
-                  >
-                    <option value="courses">Redirect to Courses (/courses)</option>
-                    <option value="graphy">Redirect directly to Graphy URL</option>
-                  </select>
-                  <p className="text-[11px] text-muted-foreground mt-1.5">
-                    Specifies where users should be routed if they visit the Explore URL while Explore is disabled.
+                    Direct web address to your Graphy student portal or external curriculum provider used in the Graphy Store card.
                   </p>
                 </div>
 

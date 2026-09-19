@@ -4,11 +4,10 @@ import Link from "next/link";
 import { constructMetadata } from "@/lib/seo/metadata";
 import { settingsService } from "@/services";
 import {
-  RiGraduationCapLine,
+  RiExchangeDollarLine,
   RiArticleLine,
-  RiArrowRightUpLine,
-  RiSparklingLine,
   RiCompass3Line,
+  RiArrowRightUpLine,
 } from "@remixicon/react";
 
 // Enable ISR Caching on Vercel Edge with 5-minute background revalidation
@@ -16,13 +15,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = constructMetadata({
-  title: "Courses",
+  title: "Forex Trading",
   description:
-    "Explore upcoming financial education and derivatives market courses from Traders Community.",
-  canonicalUrl: "/courses",
+    "Explore global foreign exchange trading strategies, macroeconomics, and currency market mechanics from Traders Community.",
+  canonicalUrl: "/forex",
 });
 
-export default async function CoursesPage() {
+export default async function ForexPage() {
   let settings;
   try {
     const res = await settingsService.getPublicSettings(0);
@@ -41,17 +40,22 @@ export default async function CoursesPage() {
         <div className="flex flex-col items-center max-w-2xl mx-auto">
           {/* Main Icon */}
           <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary border border-primary/30 shadow-xl shadow-primary/5 mb-6">
-            <RiGraduationCapLine className="h-8 w-8 sm:h-10 sm:w-10" />
+            <RiExchangeDollarLine className="h-8 w-8 sm:h-10 sm:w-10" />
+          </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold w-fit mb-4">
+            <span>Track in Development</span>
           </div>
 
           {/* Heading */}
           <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground tracking-tight leading-tight">
-            Courses are coming soon
+            Forex is coming soon
           </h1>
 
           {/* Description */}
           <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl">
-            We are working hard to bring you the best courses! Meanwhile, check out our blogs for free learning resources and more or visit Graphy Store.
+            We are curating comprehensive curriculums covering currency pairs, macroeconomic indicators, technical analysis, and risk models. Meanwhile, browse our blogs or visit the Graphy Store.
           </p>
 
           {/* CTAs */}
@@ -78,7 +82,7 @@ export default async function CoursesPage() {
               rel="noopener noreferrer"
               className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150 cursor-pointer"
             >
-              <span>Visit Graphy Store</span>
+              <span>Graphy Store</span>
               <RiArrowRightUpLine className="h-4 w-4" />
             </a>
           </div>

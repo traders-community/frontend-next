@@ -17,11 +17,43 @@ import { ContactModal } from "@/components/common/contact-modal";
 import { cn } from "@/lib/utils";
 import { dropdownMenuVariants } from "@/lib/motion";
 
+import { settingsService } from "@/services";
+import { SiteSettings } from "@/types";
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [graphyUrl, setGraphyUrl] = useState("https://pennywisepuns.graphy.com/s/store");
   const pathname = usePathname();
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSettings() {
+      try {
+        const res = await settingsService.getPublicSettings(300);
+        if (isMounted && res.data?.settings?.graphyUrl) {
+          setGraphyUrl(res.data.settings.graphyUrl);
+        }
+      } catch (err) {
+        // graceful fallback to default
+      }
+    }
+    loadSettings();
+
+    const handleSettingsUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<SiteSettings>;
+      if (customEvent.detail?.graphyUrl) {
+        setGraphyUrl(customEvent.detail.graphyUrl);
+      }
+    };
+    window.addEventListener("admin_settings_updated", handleSettingsUpdated);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("admin_settings_updated", handleSettingsUpdated);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,7 +76,7 @@ export function Navbar() {
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
     { label: "Explore", href: "/explore" },
-    { label: "Graphy", href: "https://traderscommunity.graphy.com/" }
+    { label: "Graphy", href: graphyUrl },
   ];
 
   return (

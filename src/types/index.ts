@@ -44,6 +44,10 @@ export interface SiteSettings {
   siteName?: string;
   exploreUrl?: string;
   showExplorePage?: boolean;
+  showCoursesCard?: boolean;
+  showGraphyCard?: boolean;
+  showFnoCard?: boolean;
+  showForexCard?: boolean;
   graphyUrl?: string;
   exploreOffTarget?: "courses" | "graphy";
   autoNewsletterOnPublish?: boolean;
