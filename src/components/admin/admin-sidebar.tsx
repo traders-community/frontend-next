@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -39,6 +40,93 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
+}
+
+/**
+ * Portal-based Tooltip for Collapsed Sidebar
+ * Renders into document.body to guarantee it is NEVER clipped by overflow containers
+ */
+function CollapsedTooltip({
+  label,
+  children,
+  isCollapsed,
+}: {
+  label: string;
+  children: React.ReactNode;
+  isCollapsed: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    if (!isCollapsed) return;
+    if (anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.top + rect.height / 2,
+        left: rect.right + 10,
+      });
+      setIsOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsOpen(false);
+  };
+
+  const handleClick = () => {
+    setIsOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = () => setIsOpen(false);
+    window.addEventListener("scroll", close, { passive: true, capture: true });
+    window.addEventListener("resize", close, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", close, { capture: true });
+      window.removeEventListener("resize", close);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isCollapsed) {
+      setIsOpen(false);
+    }
+  }, [isCollapsed]);
+
+  return (
+    <div
+      ref={anchorRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+      className="relative"
+    >
+      {children}
+
+      {isCollapsed &&
+        isOpen &&
+        coords &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              transform: "translateY(-50%)",
+            }}
+            className="fixed px-3 py-1.5 bg-black text-white dark:bg-neutral-900 dark:text-neutral-100 text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap pointer-events-none z-[9999] flex items-center transition-opacity duration-150"
+          >
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-black dark:border-r-neutral-900" />
+            {label}
+          </div>,
+          document.body
+        )}
+    </div>
+  );
 }
 
 export function AdminSidebar() {
@@ -288,7 +376,7 @@ export function AdminSidebar() {
       {/* Group Title or Separator */}
       {groupTitle && (
         isCollapsed ? (
-          <div className="w-8 h-[1px] bg-border/70 mx-auto my-2.5" />
+          <div className="w-8 h-[1px] bg-border/70 mx-auto my-2" />
         ) : (
           <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 px-3 pt-3 pb-1.5">
             {groupTitle}
@@ -349,38 +437,29 @@ export function AdminSidebar() {
                   </button>
                 </div>
               ) : (
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "relative group flex items-center transition-all duration-150",
-                    isCollapsed
-                      ? "justify-center w-11 h-11 mx-auto rounded-2xl"
-                      : "gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium",
-                    active
-                      ? "bg-muted text-foreground font-semibold shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
-                  )}
-                >
-                  <Icon
+                <CollapsedTooltip label={item.label} isCollapsed={isCollapsed}>
+                  <Link
+                    href={item.href}
                     className={cn(
-                      "h-5 w-5 shrink-0 transition-colors",
-                      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      "relative group flex items-center transition-all duration-150",
+                      isCollapsed
+                        ? "justify-center w-10 h-10 mx-auto rounded-xl"
+                        : "gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium",
+                      active
+                        ? "bg-muted text-foreground font-semibold shadow-2xs"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
                     )}
-                  />
+                  >
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 shrink-0 transition-colors",
+                        active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    />
 
-                  {!isCollapsed && <span className="truncate">{item.label}</span>}
-
-                  {/* ShadCN-Style Left-Pointed Tooltip in Collapsed Mode */}
-                  {isCollapsed && (
-                    <div
-                      role="tooltip"
-                      className="absolute left-full ml-3 px-3 py-1.5 bg-black text-white dark:bg-neutral-900 dark:text-neutral-100 text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50 flex items-center"
-                    >
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-black dark:border-r-neutral-900" />
-                      {item.label}
-                    </div>
-                  )}
-                </Link>
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                </CollapsedTooltip>
               )}
             </div>
 
@@ -422,7 +501,7 @@ export function AdminSidebar() {
   );
 
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between bg-card text-card-foreground border-r border-border/70 select-none overflow-hidden">
+    <div className="h-full max-h-full flex flex-col justify-between bg-card text-card-foreground border-r border-border/70 select-none">
       {/* Top Header Area (Fixed Header) */}
       <div className="shrink-0">
         {/* Brand & Toggle Row */}
@@ -430,7 +509,7 @@ export function AdminSidebar() {
           className={cn(
             "flex items-center transition-all duration-200",
             isCollapsed
-              ? "flex-col gap-3 px-2 pt-4 pb-3"
+              ? "flex-col gap-2 px-2 pt-3 pb-2"
               : "justify-between px-5 pt-5 pb-4"
           )}
         >
@@ -460,18 +539,19 @@ export function AdminSidebar() {
           </Link>
 
           {/* Sidebar Collapse Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className={cn(
-              "hidden lg:flex items-center justify-center p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-transparent hover:border-border/60 transition-colors cursor-pointer",
-              isCollapsed && "w-9 h-9"
-            )}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label="Toggle sidebar collapse"
-          >
-            <RiSideBarLine className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")} />
-          </button>
+          <CollapsedTooltip label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"} isCollapsed={isCollapsed}>
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className={cn(
+                "hidden lg:flex items-center justify-center p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-transparent hover:border-border/60 transition-colors cursor-pointer",
+                isCollapsed && "w-9 h-9 mx-auto"
+              )}
+              aria-label="Toggle sidebar collapse"
+            >
+              <RiSideBarLine className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")} />
+            </button>
+          </CollapsedTooltip>
 
           {/* Mobile Close Button */}
           <button
@@ -484,27 +564,21 @@ export function AdminSidebar() {
         </div>
 
         {/* Back to Website Button */}
-        <div className={cn("pb-2", isCollapsed ? "px-2 pt-1" : "px-3.5 pt-1 pb-2")}>
-          <Link
-            href="/"
-            className={cn(
-              "relative group flex items-center text-xs font-medium text-muted-foreground hover:text-foreground rounded-xl hover:bg-surface border border-transparent hover:border-border/60 transition-all duration-150",
-              isCollapsed
-                ? "justify-center w-11 h-11 mx-auto"
-                : "gap-2 py-2 px-3"
-            )}
-          >
-            <RiArrowLeftLine className="h-4 w-4 text-primary transition-transform duration-150 group-hover:-translate-x-0.5 shrink-0" />
-            {!isCollapsed && <span>Back to Website</span>}
-
-            {/* Tooltip for Back to Website in Collapsed Mode */}
-            {isCollapsed && (
-              <div className="absolute left-full ml-3 px-3 py-1.5 bg-black text-white dark:bg-neutral-900 dark:text-neutral-100 text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50 flex items-center">
-                <div className="absolute right-full top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-black dark:border-r-neutral-900" />
-                Back to Website
-              </div>
-            )}
-          </Link>
+        <div className={cn("pb-2", isCollapsed ? "px-2 pt-0.5" : "px-3.5 pt-1 pb-2")}>
+          <CollapsedTooltip label="Back to Website" isCollapsed={isCollapsed}>
+            <Link
+              href="/"
+              className={cn(
+                "relative group flex items-center text-xs font-medium text-muted-foreground hover:text-foreground rounded-xl hover:bg-surface border border-transparent hover:border-border/60 transition-all duration-150",
+                isCollapsed
+                  ? "justify-center w-10 h-10 mx-auto"
+                  : "gap-2 py-2 px-3"
+              )}
+            >
+              <RiArrowLeftLine className="h-4 w-4 text-primary transition-transform duration-150 group-hover:-translate-x-0.5 shrink-0" />
+              {!isCollapsed && <span>Back to Website</span>}
+            </Link>
+          </CollapsedTooltip>
         </div>
       </div>
 
@@ -512,7 +586,7 @@ export function AdminSidebar() {
       <div
         className={cn(
           "flex-1 overflow-y-auto overflow-x-hidden min-h-0 py-1.5 overscroll-contain",
-          isCollapsed ? "px-2 space-y-2" : "px-3 space-y-3"
+          isCollapsed ? "px-2 space-y-1 no-scrollbar" : "px-3 space-y-3"
         )}
       >
         {renderNavList(mainNav, "Main")}
@@ -521,7 +595,7 @@ export function AdminSidebar() {
       </div>
 
       {/* Bottom User Profile & Quick Actions Card (Entire card is clickable & permanently pinned) */}
-      <div className="p-3 border-t border-border/70 relative shrink-0" ref={userMenuRef} data-user-menu="true">
+      <div className={cn("border-t border-border/70 relative shrink-0", isCollapsed ? "p-2" : "p-3")} ref={userMenuRef} data-user-menu="true">
         {/* Floating Quick Actions Popup */}
         <AnimatePresence>
           {userMenuOpen && (
@@ -533,8 +607,8 @@ export function AdminSidebar() {
               exit="exit"
               data-user-menu="true"
               className={cn(
-                "absolute bottom-full mb-2.5 bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-1.5 z-50",
-                isCollapsed ? "left-full ml-2 w-64 -bottom-2" : "left-2 right-2 w-auto"
+                "absolute bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-1.5 z-50",
+                isCollapsed ? "left-full ml-2 w-64 bottom-0" : "left-2 right-2 bottom-full mb-2.5 w-auto"
               )}
             >
             {/* Header info */}
@@ -601,51 +675,55 @@ export function AdminSidebar() {
       </AnimatePresence>
 
         {/* The Clickable User Card (entire thing is clickable) */}
-        <button
-          type="button"
-          onClick={() => setUserMenuOpen((prev) => !prev)}
-          className={cn(
-            "w-full flex items-center transition-all duration-150 rounded-2xl cursor-pointer text-left focus:outline-none",
-            isCollapsed
-              ? "justify-center w-11 h-11 mx-auto hover:bg-surface-hover border border-transparent hover:border-border/60"
-              : "gap-3 p-2.5 hover:bg-surface-hover border border-transparent hover:border-border/60",
-            userMenuOpen && "bg-surface-hover border-border/80 ring-2 ring-primary/20"
-          )}
-          title={isCollapsed ? `${profileName} - Click for quick actions` : undefined}
-          aria-expanded={userMenuOpen}
-          aria-haspopup="true"
-        >
-          {/* Avatar Circle */}
-          <div className="h-9 w-9 rounded-full overflow-hidden shrink-0 border border-border/80 flex items-center justify-center bg-card shadow-2xs">
-            <img
-              src={avatar || "/icon.png"}
-              alt={profileName}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/icon.png";
-              }}
-            />
-          </div>
+        <CollapsedTooltip label={`${profileName} (Quick Menu)`} isCollapsed={isCollapsed && !userMenuOpen}>
+          <button
+            type="button"
+            onClick={() => setUserMenuOpen((prev) => !prev)}
+            className={cn(
+              "w-full flex items-center transition-all duration-150 rounded-2xl cursor-pointer text-left focus:outline-none",
+              isCollapsed
+                ? "justify-center w-10 h-10 mx-auto hover:bg-surface-hover border border-transparent hover:border-border/60"
+                : "gap-3 p-2.5 hover:bg-surface-hover border border-transparent hover:border-border/60",
+              userMenuOpen && "bg-surface-hover border-border/80 ring-2 ring-primary/20"
+            )}
+            aria-expanded={userMenuOpen}
+            aria-haspopup="true"
+          >
+            {/* Avatar Circle */}
+            <div className={cn(
+              "rounded-full overflow-hidden shrink-0 border border-border/80 flex items-center justify-center bg-card shadow-2xs",
+              isCollapsed ? "h-8 w-8" : "h-9 w-9"
+            )}>
+              <img
+                src={avatar || "/icon.png"}
+                alt={profileName}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/icon.png";
+                }}
+              />
+            </div>
 
-          {/* User Details & 3 Dots (when expanded) */}
-          {!isCollapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-foreground truncate leading-tight">
-                  {profileName}
-                </p>
-                <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
-                  {email || "Administrator"}
-                </p>
-              </div>
+            {/* User Details & 3 Dots (when expanded) */}
+            {!isCollapsed && (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-foreground truncate leading-tight">
+                    {profileName}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+                    {email || "Administrator"}
+                  </p>
+                </div>
 
-              {/* 3 dots icon */}
-              <div className="text-muted-foreground shrink-0 p-1">
-                <RiMoreFill className="h-4 w-4" />
-              </div>
-            </>
-          )}
-        </button>
+                {/* 3 dots icon */}
+                <div className="text-muted-foreground shrink-0 p-1">
+                  <RiMoreFill className="h-4 w-4" />
+                </div>
+              </>
+            )}
+          </button>
+        </CollapsedTooltip>
       </div>
     </div>
   );
@@ -657,7 +735,7 @@ export function AdminSidebar() {
         initial={false}
         animate={{ width: isCollapsed ? 72 : 260 }}
         transition={{ duration: 0.3, ease: EASE.outCubic }}
-        className="hidden lg:flex flex-col shrink-0 h-screen sticky top-0 z-40 overflow-visible"
+        className="hidden lg:flex flex-col shrink-0 h-full sticky top-0 z-40 overflow-visible"
       >
         {sidebarContent}
       </motion.aside>

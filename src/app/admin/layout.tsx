@@ -43,12 +43,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div suppressHydrationWarning className="min-h-screen flex flex-col lg:flex-row bg-background text-foreground">
+    <div suppressHydrationWarning className="min-h-screen lg:h-screen lg:max-h-screen flex flex-col lg:flex-row bg-background text-foreground lg:overflow-hidden">
       {/* Persistent Left Sidebar */}
       <AdminSidebar />
 
       {/* Main Content Pane */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 flex flex-col">
           <AnimatePresence mode="wait" initial={true}>
             <motion.div
