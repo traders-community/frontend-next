@@ -138,6 +138,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={!isExternal}
                   target={isExternal ? "_blank" : undefined}
                   rel={isExternal ? "noopener noreferrer" : undefined}
                   className={cn(
@@ -209,6 +210,7 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      prefetch={!isExternal}
                       target={isExternal ? "_blank" : undefined}
                       rel={isExternal ? "noopener noreferrer" : undefined}
                       onClick={() => setMobileMenuOpen(false)}

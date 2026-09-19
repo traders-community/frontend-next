@@ -10,9 +10,8 @@ import {
   RiArrowRightUpLine,
 } from "@remixicon/react";
 
-// Enable ISR Caching on Vercel Edge with 5-minute background revalidation
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Enable ISR Caching on Vercel Edge with 60-second background revalidation
+export const revalidate = 60;
 
 export const metadata: Metadata = constructMetadata({
   title: "Futures & Options (F&O)",
@@ -24,7 +23,7 @@ export const metadata: Metadata = constructMetadata({
 export default async function FnoPage() {
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(0);
+    const res = await settingsService.getPublicSettings(60);
     settings = res.data?.settings;
   } catch {
     // Graceful fallback

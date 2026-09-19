@@ -2,8 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { settingsService } from "@/services";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function FnoLayout({
   children,
@@ -12,7 +11,7 @@ export default async function FnoLayout({
 }) {
   let settings;
   try {
-    const res = await settingsService.getPublicSettings(0);
+    const res = await settingsService.getPublicSettings(60);
     settings = res.data?.settings;
   } catch (error) {
     console.error("Failed to load settings in FnoLayout:", error);

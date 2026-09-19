@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -16,6 +16,13 @@ interface BlogPageProps {
 
 // Enable ISR Caching on Vercel Edge with 60-second background revalidation
 export const revalidate = 60;
+
+/**
+ * Deduplicated Blog Fetcher (memoized per-request lifecycle via React cache)
+ */
+const getCachedBlog = cache(async (slug: string, token?: string) => {
+  return blogService.getBlogById(slug, token ? 0 : 60, token);
+});
 
 /**
  * Generate dynamic SEO metadata for each blog article.
@@ -36,7 +43,7 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
     }
   }
 
-  const res = await blogService.getBlogById(slug, token ? 0 : 60, token);
+  const res = await getCachedBlog(slug, token);
   const blog = res.data?.blog;
 
   // If blog is not found OR is unpublished without admin authorization:
@@ -99,7 +106,7 @@ export default async function BlogDetailPage({ params, searchParams }: BlogPageP
 
   // Concurrent server-side data fetching with ISR caching (or no-store for admin preview)
   const [blogRes, profileRes, commentsRes] = await Promise.all([
-    blogService.getBlogById(slug, token ? false : 60, token),
+    getCachedBlog(slug, token),
     settingsService.getPublicProfile(60),
     blogService.getBlogComments(slug, { page: 1, limit: 10 }, token),
   ]);

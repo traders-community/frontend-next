@@ -118,6 +118,7 @@ export function ExploreClient({ initialSettings }: ExploreClientProps) {
                 {showCourses && (
                   <Link
                     href="/courses"
+                    prefetch={true}
                     className="group relative flex flex-col p-6 rounded-2xl sm:rounded-3xl border border-primary/40 bg-card/90 backdrop-blur-md shadow-lg shadow-black/5 dark:shadow-black/25 hover:border-primary hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between mb-4">
@@ -182,6 +183,7 @@ export function ExploreClient({ initialSettings }: ExploreClientProps) {
                 {showFno && (
                   <Link
                     href="/fno"
+                    prefetch={true}
                     className="group relative flex flex-col p-6 rounded-2xl sm:rounded-3xl border border-border/80 dark:border-white/10 bg-card/90 backdrop-blur-md shadow-lg shadow-black/5 dark:shadow-black/25 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between mb-4">
@@ -213,6 +215,7 @@ export function ExploreClient({ initialSettings }: ExploreClientProps) {
                 {showForex && (
                   <Link
                     href="/forex"
+                    prefetch={true}
                     className="group relative flex flex-col p-6 rounded-2xl sm:rounded-3xl border border-border/80 dark:border-white/10 bg-card/90 backdrop-blur-md shadow-lg shadow-black/5 dark:shadow-black/25 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between mb-4">

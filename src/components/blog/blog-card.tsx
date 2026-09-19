@@ -30,6 +30,7 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
       <Link
         href={`/blog/${blog.slug || blog._id}`}
         scroll={true}
+        prefetch={true}
         aria-label={`Read article: ${blog.title}`}
         className="flex flex-col h-full"
       >
