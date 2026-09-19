@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { RiTimeLine, RiCalendarLine } from "@remixicon/react";
+import { RiTimeLine, RiCalendarLine, RiFilePdf2Line } from "@remixicon/react";
 import { Blog } from "@/types";
 import { formatDate, getPlainExcerpt, calculateReadingTime } from "@/lib/utils";
 import { EASE } from "@/lib/motion";
@@ -19,6 +19,7 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
   const readingTime = calculateReadingTime(blog.description);
   const formattedDate = formatDate(blog.createdAt);
   const excerpt = getPlainExcerpt(blog.description, 140);
+  const hasPdf = Boolean(blog.pdf && blog.pdf.name);
 
   return (
     <motion.article
@@ -52,17 +53,27 @@ export function BlogCard({ blog, priority = false }: BlogCardProps) {
           )}
 
           {/* Category Badge overlay on image */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 z-10">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-background/90 backdrop-blur-md border border-primary/40 text-primary shadow-sm">
               {blog.category}
             </span>
           </div>
+
+          {/* PDF Attachment Badge overlay on image */}
+          {hasPdf && (
+            <div className="absolute top-3 right-3 z-10" title="Includes PDF Attachment">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-background/90 backdrop-blur-md border border-rose-500/35 text-rose-500 dark:text-rose-400 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                <RiFilePdf2Line className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
+                <span>PDF</span>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Card Body: Only Meta, Title, and Description */}
+        {/* Card Body: Meta, Title, and Description */}
         <div className="p-5 sm:p-6 flex-1 flex flex-col">
           {/* Meta Information (Date & Reading Time) */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2.5">
+          <div className="flex items-center gap-2.5 text-xs text-muted-foreground mb-2.5">
             {formattedDate && (
               <span className="flex items-center gap-1">
                 <RiCalendarLine className="w-3.5 h-3.5 text-primary/70" />
