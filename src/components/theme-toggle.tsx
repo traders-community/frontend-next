@@ -3,17 +3,14 @@
 import * as React from "react";
 import { useTheme } from "next-themes";
 import { RiSunLine, RiMoonLine, RiComputerLine } from "@remixicon/react";
+import { useMounted } from "@/hooks/use-mounted";
 
 /**
  * Compact icon button toggle that flips between light and dark modes
  */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   if (!mounted) {
     return (
@@ -54,11 +51,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
  */
 export function ThemeSegmented({ className = "" }: { className?: string }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const options = [
     { value: "system", label: "System", icon: RiComputerLine },

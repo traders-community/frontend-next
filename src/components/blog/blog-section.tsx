@@ -93,7 +93,7 @@ export function BlogSectionSkeleton() {
           value=""
           onChange={() => {}}
           isLoading={false}
-          placeholder="Search reports, strategies, or company insights…"
+          placeholder="Search for reports, strategies, or company insights…"
         />
       </div>
 
@@ -237,7 +237,6 @@ export function BlogSection({
       setIsInitialLoading(true);
       fetchFilteredBlogs(selectedCategory, searchQuery, 1, false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch active categories on mount to ensure tabs match latest categories in DB
@@ -246,6 +245,7 @@ export function BlogSection({
       return;
     }
 
+    setIsCategoriesLoading(true);
     categoryService
       .getPublicCategories(0)
       .then((res) => {
@@ -270,6 +270,9 @@ export function BlogSection({
       })
       .catch(() => {
         // Retain default categories on error
+      })
+      .finally(() => {
+        setIsCategoriesLoading(false);
       });
   }, [categories]);
 
@@ -310,7 +313,7 @@ export function BlogSection({
           onChange={handleSearchChange}
           onClear={handleClearSearch}
           isLoading={false}
-          placeholder="Search reports, strategies, or company insights…"
+          placeholder="Search for reports, strategies, or company insights…"
         />
       </FadeIn>
 

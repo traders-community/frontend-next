@@ -88,77 +88,103 @@ export function SocialShare({ title, subTitle }: SocialShareProps) {
   };
 
   return (
-    <section aria-label="Social sharing" className="w-full mt-10 pt-6 border-t border-border/60">
-      <p className="text-sm font-semibold mb-3.5 text-primary">
-        Share this article
-      </p>
+    <section aria-label="Social sharing" className="w-full mt-10 pt-6 border-t border-[#cecece] dark:border-border/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div>
+          <p className="text-sm font-semibold mb-3 text-primary">
+            Share this article
+          </p>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        {/* Native share button */}
-        <button
-          type="button"
-          onClick={handleNativeShare}
-          aria-label="Share article"
-          title="Share / Copy Link"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors shadow-sm cursor-pointer"
-        >
-          <RiShareLine className="w-4 h-4" />
-        </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Native share button */}
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              aria-label="Share article"
+              title="Share / Copy Link"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors shadow-sm cursor-pointer"
+            >
+              <RiShareLine className="w-4 h-4" />
+            </button>
 
-        {/* WhatsApp */}
-        <button
-          type="button"
-          onClick={() => openShareDialog("whatsapp")}
-          aria-label="Share on WhatsApp"
-          title="WhatsApp"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors shadow-sm cursor-pointer"
-        >
-          <RiWhatsappLine className="w-4 h-4" />
-        </button>
+            {/* WhatsApp */}
+            <button
+              type="button"
+              onClick={() => openShareDialog("whatsapp")}
+              aria-label="Share on WhatsApp"
+              title="WhatsApp"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors shadow-sm cursor-pointer"
+            >
+              <RiWhatsappLine className="w-4 h-4" />
+            </button>
 
-        {/* Twitter / X */}
-        <button
-          type="button"
-          onClick={() => openShareDialog("twitter")}
-          aria-label="Share on X (Twitter)"
-          title="X / Twitter"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm cursor-pointer"
-        >
-          <RiTwitterXLine className="w-4 h-4" />
-        </button>
+            {/* Twitter / X */}
+            <button
+              type="button"
+              onClick={() => openShareDialog("twitter")}
+              aria-label="Share on X (Twitter)"
+              title="X / Twitter"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm cursor-pointer"
+            >
+              <RiTwitterXLine className="w-4 h-4" />
+            </button>
 
-        {/* LinkedIn */}
-        <button
-          type="button"
-          onClick={() => openShareDialog("linkedin")}
-          aria-label="Share on LinkedIn"
-          title="LinkedIn"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-blue-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors shadow-sm cursor-pointer"
-        >
-          <RiLinkedinBoxLine className="w-4 h-4" />
-        </button>
+            {/* LinkedIn */}
+            <button
+              type="button"
+              onClick={() => openShareDialog("linkedin")}
+              aria-label="Share on LinkedIn"
+              title="LinkedIn"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-blue-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors shadow-sm cursor-pointer"
+            >
+              <RiLinkedinBoxLine className="w-4 h-4" />
+            </button>
 
-        {/* Facebook */}
-        <button
-          type="button"
-          onClick={() => openShareDialog("facebook")}
-          aria-label="Share on Facebook"
-          title="Facebook"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-blue-600 hover:text-blue-600 hover:bg-blue-600/10 transition-colors shadow-sm cursor-pointer"
-        >
-          <RiFacebookBoxLine className="w-4 h-4" />
-        </button>
+            {/* Facebook */}
+            <button
+              type="button"
+              onClick={() => openShareDialog("facebook")}
+              aria-label="Share on Facebook"
+              title="Facebook"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-blue-600 hover:text-blue-600 hover:bg-blue-600/10 transition-colors shadow-sm cursor-pointer"
+            >
+              <RiFacebookBoxLine className="w-4 h-4" />
+            </button>
 
-        {/* Email */}
-        <button
-          type="button"
-          onClick={() => openShareDialog("email")}
-          aria-label="Share via Email"
-          title="Email"
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors shadow-sm cursor-pointer"
-        >
-          <RiMailLine className="w-4 h-4" />
-        </button>
+            {/* Email */}
+            <button
+              type="button"
+              onClick={() => openShareDialog("email")}
+              aria-label="Share via Email"
+              title="Email"
+              className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:border-primary hover:text-primary hover:bg-primary/10 transition-colors shadow-sm cursor-pointer"
+            >
+              <RiMailLine className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Google Preferred Source Badge (Single Placement) */}
+        <div className="pt-3 sm:pt-0 flex flex-col items-start sm:items-end justify-center shrink-0">
+          <a
+            href="https://www.google.com/preferences/source?q=traderscommunity.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Add Traders Community as a preferred source on Google"
+            className="inline-block transition-transform hover:scale-[1.03] active:scale-[0.98] focus:outline-none rounded-xl"
+          >
+            <img
+              src="/google_light.png"
+              alt="Add Traders Community as a preferred source on Google"
+              className="google-badge-light h-[52px] sm:h-[58px] md:h-[62px] w-auto object-contain cursor-pointer drop-shadow-xs hover:drop-shadow-sm transition-all rounded-xl"
+            />
+            <img
+              src="/google_dark.png"
+              alt="Add Traders Community as a preferred source on Google"
+              className="google-badge-dark h-[52px] sm:h-[58px] md:h-[62px] w-auto object-contain cursor-pointer drop-shadow-xs hover:drop-shadow-sm transition-all rounded-xl"
+            />
+          </a>
+        </div>
       </div>
     </section>
   );

@@ -6,10 +6,10 @@ import {
   RiShieldCheckLine,
   RiArrowRightLine,
   RiArrowDownLine,
-  RiCheckLine,
 } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { modalBackdropVariants, modalCardVariants } from "@/lib/motion";
+import { useMounted } from "@/hooks/use-mounted";
 
 const ACK_KEY = "tc_disclaimer_ack_v1";
 const EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -26,7 +26,7 @@ const disclaimerPoints = [
 ];
 
 export function DisclaimerGate() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const [open, setOpen] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -34,31 +34,34 @@ export function DisclaimerGate() {
 
   // Check localStorage safely after mounting on client (with 24h expiration)
   useEffect(() => {
-    setMounted(true);
-    let isAcknowledgedAndValid = false;
+    const timer = setTimeout(() => {
+      let isAcknowledgedAndValid = false;
 
-    try {
-      const stored = localStorage.getItem(ACK_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed && typeof parsed.timestamp === "number") {
-            const elapsed = Date.now() - parsed.timestamp;
-            if (elapsed < EXPIRATION_MS) {
-              isAcknowledgedAndValid = true;
+      try {
+        const stored = localStorage.getItem(ACK_KEY);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed.timestamp === "number") {
+              const elapsed = Date.now() - parsed.timestamp;
+              if (elapsed < EXPIRATION_MS) {
+                isAcknowledgedAndValid = true;
+              }
             }
+          } catch {
+            isAcknowledgedAndValid = false;
           }
-        } catch {
-          isAcknowledgedAndValid = false;
         }
+      } catch {
+        isAcknowledgedAndValid = false;
       }
-    } catch {
-      isAcknowledgedAndValid = false;
-    }
 
-    if (!isAcknowledgedAndValid) {
-      setOpen(true);
-    }
+      if (!isAcknowledgedAndValid) {
+        setOpen(true);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Compulsory scroll check: triggered strictly on user scroll

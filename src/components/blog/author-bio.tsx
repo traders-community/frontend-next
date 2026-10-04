@@ -5,7 +5,6 @@ import {
   RiMailLine,
   RiPhoneLine,
   RiGlobalLine,
-  RiUserLine,
   RiTwitterXLine,
   RiLinkedinBoxLine,
   RiYoutubeLine,

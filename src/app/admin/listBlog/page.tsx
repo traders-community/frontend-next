@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   RiEyeLine,
@@ -23,8 +21,6 @@ import "react-photo-view/dist/react-photo-view.css";
 import { cn } from "@/lib/utils";
 
 export default function AdminListBlogPage() {
-  const router = useRouter();
-
   // Data State
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);

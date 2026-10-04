@@ -14,12 +14,24 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
+const SEARCH_PREFIX = "Search for ";
+
+const DYNAMIC_SEARCH_TERMS = [
+  "reports, strategies, or company insights…",
+  "technical analysis & price action…",
+  "quarterly earnings & financial results…",
+  "ICT concepts, liquidity & order blocks…",
+  "market structure & key levels…",
+  "macro trends & economic outlook…",
+  "CFA Level 1 study guides & summaries…",
+];
+
 export function SearchBar({
   value,
   onChange,
   onClear,
   onSubmit,
-  placeholder = "Search reports, strategies, or company insights…",
+  placeholder,
   className = "",
   isLoading = false,
 }: SearchBarProps) {
@@ -27,6 +39,58 @@ export function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedValue = useDebounce(localValue, 300);
   const isClearingRef = useRef(false);
+
+  // Typewriter animation state: "Search for " is static, dynamic terms animate
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(DYNAMIC_SEARCH_TERMS[0].length);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPaused, setIsPaused] = useState(true); // Start paused on first complete phrase
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState(
+    placeholder || `${SEARCH_PREFIX}${DYNAMIC_SEARCH_TERMS[0]}`
+  );
+
+  useEffect(() => {
+    // If the user has typed text, pause the animation
+    if (localValue) return;
+
+    const currentTerm = DYNAMIC_SEARCH_TERMS[phraseIndex % DYNAMIC_SEARCH_TERMS.length];
+
+    if (isPaused) {
+      const pauseTimer = setTimeout(() => {
+        setIsPaused(false);
+        setIsDeleting(true);
+      }, 2200); // 2.2 second pause to read full query
+      return () => clearTimeout(pauseTimer);
+    }
+
+    if (isDeleting) {
+      if (charIndex > 0) {
+        const deleteTimer = setTimeout(() => {
+          setCharIndex((prev) => prev - 1);
+          setAnimatedPlaceholder(`${SEARCH_PREFIX}${currentTerm.substring(0, charIndex - 1)}`);
+        }, 26); // 26ms smooth backspacing
+        return () => clearTimeout(deleteTimer);
+      } else {
+        // Fully backspaced to static prefix "Search for ", pause briefly before typing next
+        const nextPhraseTimer = setTimeout(() => {
+          setIsDeleting(false);
+          setPhraseIndex((prev) => (prev + 1) % DYNAMIC_SEARCH_TERMS.length);
+        }, 400); // 400ms pause with just "Search for "
+        return () => clearTimeout(nextPhraseTimer);
+      }
+    } else {
+      if (charIndex < currentTerm.length) {
+        const typeTimer = setTimeout(() => {
+          setCharIndex((prev) => prev + 1);
+          setAnimatedPlaceholder(`${SEARCH_PREFIX}${currentTerm.substring(0, charIndex + 1)}`);
+        }, 55); // 55ms natural typing cadence
+        return () => clearTimeout(typeTimer);
+      } else {
+        // Complete term typed, pause before deleting
+        setIsPaused(true);
+      }
+    }
+  }, [charIndex, isDeleting, isPaused, phraseIndex, localValue]);
 
   useEffect(() => {
     setLocalValue(value);
@@ -86,10 +150,10 @@ export function SearchBar({
         <input
           ref={inputRef}
           type="text"
-          placeholder={placeholder}
+          placeholder={animatedPlaceholder}
           value={localValue}
           onChange={handleInputChange}
-          className="w-full min-h-12 pl-5 sm:pl-6 pr-2 py-2 text-sm sm:text-base bg-transparent text-foreground placeholder:text-muted-foreground/60 outline-none"
+          className="w-full min-h-12 pl-5 sm:pl-6 pr-2 py-2 text-sm sm:text-base !bg-transparent text-foreground placeholder:text-muted-foreground/60 outline-none !border-none !shadow-none !ring-0 focus:!ring-0"
           aria-label="Search input"
         />
 

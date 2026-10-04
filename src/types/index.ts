@@ -257,3 +257,210 @@ export interface SupportTicketStatsResponse {
   stats?: SupportTicketStats;
   message?: string;
 }
+
+// ==========================================
+// Product & Variation Types (Store)
+// ==========================================
+export type DurationUnit = "days" | "months" | "years";
+
+export interface ProductVariation {
+  _id: string;
+  id?: string;
+  title: string;
+  durationValue: number;
+  durationUnit: DurationUnit;
+  actualPrice: number;
+  sellingPrice: number;
+  sku: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Product {
+  _id: string;
+  id?: string;
+  title: string;
+  slug: string;
+  shortDescription?: string;
+  longDescription?: string;
+  points: string[];
+  featuredImage: string;
+  telegramChatId?: string;
+  telegramChannelName?: string;
+  variations: ProductVariation[];
+  isActive: boolean;
+  startingPrice?: number;
+  averageRating?: number;
+  reviewCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductStats {
+  totalProducts: number;
+  activeProducts: number;
+  draftProducts: number;
+  totalVariations: number;
+}
+
+export interface ProductListResponse {
+  success: boolean;
+  products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  message?: string;
+}
+
+export interface ProductStatsResponse {
+  success: boolean;
+  stats?: ProductStats;
+  message?: string;
+}
+
+// ==========================================
+// Product Review Types
+// ==========================================
+export type ProductReviewStatus = "pending" | "approved" | "unapproved";
+
+export interface ProductReview {
+  _id: string;
+  id?: string;
+  product:
+    | string
+    | { _id: string; title: string; slug?: string; featuredImage?: string };
+  name: string;
+  email?: string;
+  rating: number;
+  title?: string;
+  comment: string;
+  status: ProductReviewStatus;
+  isApproved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+}
+
+export interface ProductReviewListResponse {
+  success: boolean;
+  reviews: ProductReview[];
+  stats?: ProductReviewStats;
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  hasMore?: boolean;
+  message?: string;
+}
+
+export interface CreateProductReviewInput {
+  name: string;
+  email: string;
+  rating: number;
+  title?: string;
+  comment: string;
+}
+
+export interface CreatePublicOrderInput {
+  productId: string;
+  variationId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  telegramUsername?: string;
+}
+
+// ==========================================
+// Order & Telegram Subscription Types (Store)
+// ==========================================
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+
+export type SubscriptionStatus =
+  | "PENDING_PAYMENT"
+  | "ACTIVE"
+  | "EXPIRED"
+  | "REVOKED"
+  | "CANCELLED";
+
+export interface Order {
+  _id: string;
+  id?: string;
+  orderNumber: string;
+  productId: string | { _id: string; title: string; slug?: string; featuredImage?: string };
+  productTitle: string;
+  variationId: string;
+  variationTitle: string;
+  durationValue: number;
+  durationUnit: DurationUnit;
+  sku: string;
+  amount: number;
+  actualPrice?: number;
+  currency: string;
+
+  // Customer Information
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  isEmailVerified: boolean;
+
+  // Payment Tracking
+  paymentGateway: string;
+  paymentStatus: PaymentStatus;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  paidAt?: string;
+
+  // Telegram Membership
+  telegramChatId?: string;
+  telegramId?: string;
+  telegramUsername?: string;
+  telegramInviteLink?: string;
+  telegramInviteLinkExpiry?: string;
+  telegramJoinedAt?: string;
+
+  // Subscription Lifecycle
+  subscriptionStatus: SubscriptionStatus;
+  startDate?: string;
+  expiryDate?: string;
+
+  // Audit & Notes
+  adminNotes?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderStats {
+  totalOrders: number;
+  totalRevenue: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  pendingPayments: number;
+}
+
+export interface OrderListResponse {
+  success: boolean;
+  orders: Order[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  message?: string;
+}
+
+export interface OrderStatsResponse {
+  success: boolean;
+  stats?: OrderStats;
+  message?: string;
+}

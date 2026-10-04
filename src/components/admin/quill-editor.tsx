@@ -27,16 +27,28 @@ function hasRichHtml(html: string): boolean {
 }
 
 // Declare Quill on window
+interface QuillInstance {
+  root: HTMLElement;
+  clipboard: {
+    dangerouslyPasteHTML: (html: string, source?: string) => void;
+  };
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+}
+
+interface QuillConstructor {
+  new (container: HTMLElement, options: Record<string, unknown>): QuillInstance;
+}
+
 declare global {
   interface Window {
-    Quill: any;
+    Quill: QuillConstructor;
   }
 }
 
 // Global promise singleton to prevent duplicate script loads
-let quillLoadingPromise: Promise<any> | null = null;
+let quillLoadingPromise: Promise<QuillConstructor> | null = null;
 
-function loadQuillScript(): Promise<any> {
+function loadQuillScript(): Promise<QuillConstructor> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Quill can only be loaded in the browser"));
   }
@@ -108,7 +120,7 @@ export function QuillEditor({
   const pendingTabRef = useRef<"editor" | "html" | "preview" | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const quillInstanceRef = useRef<any>(null);
+  const quillInstanceRef = useRef<QuillInstance | null>(null);
   const isInternalChangeRef = useRef(false);
   const hasInitializedRef = useRef(false);
 
@@ -129,6 +141,11 @@ export function QuillEditor({
       .then((Quill) => {
         if (!isMounted || !containerRef.current || quillInstanceRef.current) return;
 
+        // Ensure container is freshly cleared to prevent duplicate editor instances
+        if (containerRef.current) {
+          containerRef.current.innerHTML = "";
+        }
+
         // Create Quill instance with exact React options
         // Heading 1 removed to enforce single H1 per page (the blog title)
         const quill = new Quill(containerRef.current, {
@@ -139,7 +156,7 @@ export function QuillEditor({
               [{ header: [2, 3, 4, false] }],
               ["bold", "italic", "underline", "strike"],
               [{ list: "ordered" }, { list: "bullet" }],
-              ["blockquote", "code-block"],
+              ["blockquote"],
               [{ color: [] }, { background: [] }],
               ["link", "image"],
               ["clean"],
@@ -148,6 +165,12 @@ export function QuillEditor({
         });
 
         quillInstanceRef.current = quill;
+
+        // Ensure tooltip element is firmly hidden on creation
+        const tooltip = containerRef.current.querySelector(".ql-tooltip");
+        if (tooltip) {
+          tooltip.classList.add("ql-hidden");
+        }
 
         // Set initial HTML — skip if content has rich tags Quill can't represent
         // (user was routed to HTML tab, so loading into Quill would corrupt it)
@@ -159,7 +182,7 @@ export function QuillEditor({
         // Listen for user edits only.
         // Checking source === "user" prevents programmatic pastes or tab switches
         // from reformatting/stripping custom tags or transforming bullet lists.
-        quill.on("text-change", (_delta: any, _oldDelta: any, source: string) => {
+        quill.on("text-change", (_delta: unknown, _oldDelta: unknown, source: string) => {
           if (source !== "user") return;
           isInternalChangeRef.current = true;
           const html = quill.root.innerHTML;
@@ -180,6 +203,10 @@ export function QuillEditor({
 
     return () => {
       isMounted = false;
+      quillInstanceRef.current = null;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
     };
   }, []); // Run once on mount
 
@@ -285,7 +312,7 @@ export function QuillEditor({
       )}
       {/* Tab Switcher */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface border border-border/80 shadow-2xs">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-neutral-100 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744] shadow-2xs">
           {(["editor", "html", "preview"] as const).map((tab) => (
             <button
               key={tab}
@@ -295,7 +322,7 @@ export function QuillEditor({
                 "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer",
                 activeTab === tab
                   ? "bg-black text-white dark:bg-white dark:text-black shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-[#131e38]"
               )}
             >
               {tab === "editor" ? "Visual Editor" : tab === "html" ? "HTML Source" : "Live Preview"}
@@ -340,7 +367,7 @@ export function QuillEditor({
             </p>
           </div>
         ) : (
-          <div className="relative rounded-xl overflow-hidden border border-border/80 bg-card shadow-2xs">
+          <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-[#1a2744] bg-neutral-50 dark:bg-[#060b18] shadow-2xs">
             {!isQuillReady && (
               <div className="min-h-[280px] p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
                 <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -360,13 +387,13 @@ export function QuillEditor({
 
       {/* HTML Tab */}
       {activeTab === "html" && (
-        <div className="rounded-xl overflow-hidden border border-border/80 bg-card shadow-2xs">
+        <div className="rounded-2xl overflow-hidden border border-border/80 dark:border-[#1a2744] bg-neutral-50 dark:bg-[#060b18] shadow-2xs">
           <textarea
             value={value}
             onChange={handleHtmlChange}
             rows={16}
             placeholder="<p>Write your raw HTML content here...</p>"
-            className="w-full p-4 font-mono text-xs leading-relaxed bg-surface/40 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
+            className="w-full p-4 font-mono text-xs leading-relaxed bg-neutral-50 dark:bg-[#060b18] text-foreground border-none outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
           />
         </div>
       )}

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { EASE } from "@/lib/motion";
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends React.ComponentPropsWithoutRef<typeof motion.button> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "tertiary";
   size?: "sm" | "md" | "lg" | "icon";
   href?: string;
@@ -17,7 +17,7 @@ export interface ButtonProps
 
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
-    "bg-primary text-secondary hover:bg-primary-hover shadow-sm shadow-primary/20",
+    "bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm shadow-primary/20",
   secondary:
     "bg-secondary text-white hover:bg-secondary-hover shadow-xs",
   outline:
@@ -88,7 +88,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         className={combinedClasses}
         {...motionProps}
-        {...(props as any)}
+        {...props}
       >
         {children}
       </motion.button>

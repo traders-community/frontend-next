@@ -81,7 +81,7 @@ export function calculateReadingTime(content: string = ""): number {
  * Generic debounce utility function for delaying execution of a function
  * until after a certain wait time has elapsed since the last time it was invoked.
  */
-export function debounce<T extends (...args: any[]) => void>(
+export function debounce<T extends (...args: never[]) => void>(
   func: T,
   wait: number = 400
 ): (...args: Parameters<T>) => void {

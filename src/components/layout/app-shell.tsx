@@ -41,7 +41,7 @@ export function AppShell({ children }: AppShellProps) {
       <DisclaimerGate />
       <ScrollToTop />
       <Navbar />
-      <main className="flex-1 relative z-10">{children}</main>
+      <main className="flex-1 relative">{children}</main>
       <Footer />
     </>
   );

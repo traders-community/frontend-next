@@ -2,28 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import { toast } from "react-toastify";
 import {
   RiEyeLine,
-  RiSendPlaneLine,
-  RiPencilLine,
   RiLoader4Line,
 } from "@remixicon/react";
 import { blogService } from "@/services/blog.service";
 import { authService } from "@/services/auth.service";
 import { Blog } from "@/types";
+import { useMounted } from "@/hooks/use-mounted";
 
 interface AdminPreviewBannerProps {
   blog: Blog;
 }
 
 export function AdminPreviewBanner({ blog }: AdminPreviewBannerProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     // If previewToken is in the query parameters, persist it and clean the address bar for privacy
     if (typeof window !== "undefined" && window.location.search.includes("previewToken")) {
       const url = new URL(window.location.href);

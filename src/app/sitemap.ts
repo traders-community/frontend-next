@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/seo.config";
-import { blogService } from "@/services";
+import { blogService, productService } from "@/services";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
@@ -43,8 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const res = await blogService.getBlogs({ limit: 100, revalidate: 3600 });
-    const blogs = res.data?.blogs || [];
+    const [blogsRes, productsRes] = await Promise.all([
+      blogService.getBlogs({ limit: 100, revalidate: 3600 }).catch(() => null),
+      productService.getPublicProducts().catch(() => null),
+    ]);
+
+    const blogs = blogsRes?.data?.blogs || [];
     if (blogs.length > 0) {
       const blogUrls: MetadataRoute.Sitemap = blogs
         .filter((b) => b.isPublished !== false)
@@ -54,7 +58,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "weekly",
           priority: 0.9,
         }));
-      return [...routes, ...blogUrls];
+      routes.push(...blogUrls);
+    }
+
+    const products = productsRes?.data?.products || [];
+    if (products.length > 0) {
+      const productUrls: MetadataRoute.Sitemap = products
+        .filter((p) => p.isActive !== false)
+        .map((p) => ({
+          url: `${siteConfig.url}/product/${p.slug || p._id}`,
+          lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+          changeFrequency: "daily",
+          priority: 0.9,
+        }));
+      routes.push(...productUrls);
     }
   } catch {
     // If backend is not reachable during build, return core routes
@@ -62,3 +79,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return routes;
 }
+

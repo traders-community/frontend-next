@@ -12,7 +12,6 @@ import {
   RiEyeLine,
   RiEyeOffLine,
   RiLoader4Line,
-  RiShieldKeyholeLine,
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authService } from "@/services/auth.service";
@@ -76,8 +75,8 @@ export default function AdminLoginPage() {
         const msg = res.data?.message || res.message || "Invalid email or password.";
         toast.error(msg);
       }
-    } catch (err: any) {
-      const msg = err?.message || "An unexpected error occurred. Please try again.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
       toast.error(msg);
     } finally {
       setIsLoading(false);

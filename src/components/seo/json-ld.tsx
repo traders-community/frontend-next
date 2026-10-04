@@ -2,7 +2,7 @@ import React from "react";
 import { siteConfig } from "@/config/seo.config";
 
 interface JsonLdProps {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export function JsonLd({ data }: JsonLdProps) {

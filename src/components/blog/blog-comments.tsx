@@ -240,7 +240,7 @@ export function BlogComments({
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isSubmitting}
-                className="w-full h-11 px-4 rounded-xl border border-border/80 bg-card/70 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border !border-border/80 !bg-card/70 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:!border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 shadow-2xs"
               />
             </div>
 
@@ -256,7 +256,7 @@ export function BlogComments({
                 required
                 rows={4}
                 disabled={isSubmitting}
-                className="w-full p-4 rounded-xl border border-border/80 bg-card/70 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y disabled:opacity-50"
+                className="w-full p-4 rounded-xl border !border-border/80 !bg-card/70 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:!border-primary focus:ring-1 focus:ring-primary transition-all resize-y disabled:opacity-50 shadow-2xs"
               />
             </div>
 

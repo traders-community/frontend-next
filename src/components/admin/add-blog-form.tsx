@@ -17,6 +17,7 @@ import { categoryService } from "@/services/category.service";
 import { blogService } from "@/services/blog.service";
 import { Blog, Category } from "@/types";
 import { QuillEditor } from "@/components/admin/quill-editor";
+import { AdminSelect } from "@/components/admin/admin-select";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export interface AddBlogFormProps {
@@ -329,7 +330,7 @@ export function AddBlogForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Master the Key Levels in Modern Market Structure"
-            className="w-full px-4 py-2.5 text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            className="w-full px-4 py-2.5 text-sm font-medium bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744] rounded-xl placeholder:text-muted-foreground/40 dark:placeholder:text-muted-foreground/30 text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             required
           />
         </div>
@@ -347,12 +348,12 @@ export function AddBlogForm({
                 onChange={handleSlugChange}
                 placeholder="url-friendly-slug"
                 spellCheck={false}
-                className={`w-full pl-4 pr-9 py-2.5 text-sm bg-card border rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all font-mono ${
+                className={`w-full pl-4 pr-9 py-2.5 text-sm font-mono font-medium bg-neutral-50 dark:bg-[#060b18] border rounded-xl placeholder:text-muted-foreground/40 dark:placeholder:text-muted-foreground/30 text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                   slugStatus === "taken" || slugStatus === "error"
                     ? "border-red-500/60 focus:border-red-500"
                     : slugStatus === "available"
                     ? "border-emerald-500/60 focus:border-emerald-500"
-                    : "border-border/80 focus:border-primary"
+                    : "border-border/80 dark:border-[#1a2744] focus:border-primary"
                 }`}
               />
               {slugStatusIcon() && (
@@ -383,7 +384,7 @@ export function AddBlogForm({
             value={subTitle}
             onChange={(e) => setSubTitle(e.target.value)}
             placeholder="Brief hook or summary for previews and social share cards"
-            className="w-full px-4 py-2.5 text-sm bg-card border border-border/80 rounded-xl placeholder:text-muted-foreground text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            className="w-full px-4 py-2.5 text-sm font-medium bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744] rounded-xl placeholder:text-muted-foreground/40 dark:placeholder:text-muted-foreground/30 text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
       </div>
@@ -394,18 +395,16 @@ export function AddBlogForm({
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
             Category <span className="text-red-500">*</span>
           </label>
-          <select
+          <AdminSelect
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={setCategory}
             disabled={loadingCategories}
-            className="w-full px-4 py-2.5 text-sm bg-card border border-border/80 rounded-xl text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all cursor-pointer"
-          >
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat.name}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+            placeholder={loadingCategories ? "Loading categories..." : "Select a category"}
+            options={categories.map((cat) => ({
+              value: cat.name,
+              label: cat.name,
+            }))}
+          />
         </div>
 
         {/* Publish Status Dropdown */}
@@ -413,14 +412,14 @@ export function AddBlogForm({
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
             Status
           </label>
-          <select
+          <AdminSelect
             value={isPublished ? "published" : "draft"}
-            onChange={(e) => setIsPublished(e.target.value === "published")}
-            className="w-full px-4 py-2.5 text-sm bg-card border border-border/80 rounded-xl text-foreground shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all cursor-pointer"
-          >
-            <option value="draft">Unpublished (Draft)</option>
-            <option value="published">Published</option>
-          </select>
+            onChange={(val) => setIsPublished(val === "published")}
+            options={[
+              { value: "draft", label: "Unpublished (Draft)" },
+              { value: "published", label: "Published" },
+            ]}
+          />
         </div>
       </div>
 
@@ -442,12 +441,12 @@ export function AddBlogForm({
 
           {imagePreview ? (
             <PhotoProvider speed={() => 300} maskOpacity={0.85}>
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border/80 group bg-muted">
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border/80 dark:border-[#1e2c4f] group bg-neutral-50 dark:bg-[#060b18]">
                 <PhotoView src={imagePreview}>
                   <img
                     src={imagePreview}
                     alt="Cover Preview"
-                    className="h-full w-full object-contain cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                    className="h-full w-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
                   />
                 </PhotoView>
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
@@ -486,7 +485,7 @@ export function AddBlogForm({
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border/80 dark:border-[#1e2c4f] hover:border-primary/60 bg-neutral-50 dark:bg-[#060b18] hover:bg-neutral-100/80 dark:hover:bg-[#0a1226] transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <RiImageAddLine className="h-8 w-8 text-primary" />
               <span className="text-xs font-semibold">Upload Featured Image</span>
@@ -510,7 +509,7 @@ export function AddBlogForm({
           />
 
           {pdfFileName && !removePdf ? (
-            <div className="aspect-video w-full rounded-2xl border border-border/80 bg-card p-4 flex flex-col items-center justify-center text-center gap-2">
+            <div className="aspect-video w-full rounded-2xl border border-border/80 dark:border-[#1e2c4f] bg-neutral-50 dark:bg-[#060b18] p-4 flex flex-col items-center justify-center text-center gap-2">
               <RiFilePdfLine className="h-10 w-10 text-red-500" />
               <p className="text-xs font-semibold text-foreground truncate max-w-[200px]">
                 {pdfFileName}
@@ -558,7 +557,7 @@ export function AddBlogForm({
             <button
               type="button"
               onClick={() => pdfInputRef.current?.click()}
-              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/60 bg-surface/40 hover:bg-surface/70 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="aspect-video w-full rounded-2xl border-2 border-dashed border-border/80 dark:border-[#1e2c4f] hover:border-primary/60 bg-neutral-50 dark:bg-[#060b18] hover:bg-neutral-100/80 dark:hover:bg-[#0a1226] transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <RiFilePdfLine className="h-8 w-8 text-red-400" />
               <span className="text-xs font-semibold">Attach PDF Resource</span>

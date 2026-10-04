@@ -25,6 +25,9 @@ import {
   RiMoonLine,
   RiMailSendLine,
   RiCustomerService2Line,
+  RiShoppingBag3Line,
+  RiExchangeDollarLine,
+  RiStarLine,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
@@ -313,19 +316,27 @@ export function AdminSidebar() {
 
   const isBlogRoute = pathname.startsWith("/admin/listBlog") || pathname.startsWith("/admin/addBlog");
   const isNewsletterRoute = pathname.startsWith("/admin/newsletter");
+  const isProductRoute = pathname.startsWith("/admin/products");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => ({
     Blogs: typeof window !== "undefined" ? pathname.startsWith("/admin/listBlog") || pathname.startsWith("/admin/addBlog") : false,
     Newsletter: typeof window !== "undefined" ? pathname.startsWith("/admin/newsletter") : false,
+    Products: typeof window !== "undefined" ? pathname.startsWith("/admin/products") : false,
   }));
 
   useEffect(() => {
-    if (isBlogRoute) {
-      setExpandedSections((prev) => ({ ...prev, Blogs: true }));
-    }
-    if (isNewsletterRoute) {
-      setExpandedSections((prev) => ({ ...prev, Newsletter: true }));
-    }
-  }, [isBlogRoute, isNewsletterRoute]);
+    const rafId = requestAnimationFrame(() => {
+      if (isBlogRoute) {
+        setExpandedSections((prev) => (prev.Blogs ? prev : { ...prev, Blogs: true }));
+      }
+      if (isNewsletterRoute) {
+        setExpandedSections((prev) => (prev.Newsletter ? prev : { ...prev, Newsletter: true }));
+      }
+      if (isProductRoute) {
+        setExpandedSections((prev) => (prev.Products ? prev : { ...prev, Products: true }));
+      }
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [isBlogRoute, isNewsletterRoute, isProductRoute]);
 
   const toggleSection = (label: string) => {
     setExpandedSections((prev) => ({
@@ -360,6 +371,20 @@ export function AdminSidebar() {
       ],
     },
     { label: "Support", href: "/admin/support", icon: RiCustomerService2Line },
+  ];
+
+  const storeNav: NavItem[] = [
+    {
+      label: "Products",
+      href: "/admin/products",
+      icon: RiShoppingBag3Line,
+      subItems: [
+        { label: "All Products", href: "/admin/products" },
+        { label: "Add Product", href: "/admin/products/new" },
+      ],
+    },
+    { label: "Orders", href: "/admin/orders", icon: RiExchangeDollarLine },
+    { label: "Reviews", href: "/admin/reviews", icon: RiStarLine },
   ];
 
   const systemNav: NavItem[] = [
@@ -591,6 +616,7 @@ export function AdminSidebar() {
       >
         {renderNavList(mainNav, "Main")}
         {renderNavList(contentNav, "Content")}
+        {renderNavList(storeNav, "Store")}
         {renderNavList(systemNav, "System")}
       </div>
 

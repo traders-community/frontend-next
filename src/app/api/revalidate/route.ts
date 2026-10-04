@@ -39,9 +39,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { path, tag, type, secret } = body;
     return await handleRevalidation(path, tag, type, secret);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error during cache revalidation";
     return NextResponse.json(
-      { success: false, message: err?.message || "Error during cache revalidation" },
+      { success: false, message },
       { status: 500 }
     );
   }
@@ -56,9 +57,10 @@ export async function GET(request: NextRequest) {
     const secret = searchParams.get("secret");
 
     return await handleRevalidation(path, tag, type, secret);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error during cache revalidation";
     return NextResponse.json(
-      { success: false, message: err?.message || "Error during cache revalidation" },
+      { success: false, message },
       { status: 500 }
     );
   }

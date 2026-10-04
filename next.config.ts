@@ -31,10 +31,17 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
-        hostname: "localhost",
+        hostname: "172.21.190.55",
       },
     ],
   },
+  allowedDevOrigins: [
+    "172.21.190.55",
+    "172.21.190.55:3000",
+    "172.21.190.55:3001",
+    "localhost:3000",
+    "localhost:3001",
+  ],
 };
 
 export default nextConfig;

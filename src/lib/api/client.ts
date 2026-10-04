@@ -33,25 +33,38 @@ function buildQueryString(params?: Record<string, string | number | boolean | un
   return qs ? `?${qs}` : "";
 }
 
+function getBaseUrl(): string {
+  // Server-side (Node / Next SSR) always routes directly to localhost for reliability
+  if (typeof window === "undefined") {
+    return RAW_API_BASE_URL.replace(/172\.21\.190\.55/, "localhost");
+  }
+  // Client-side in browser: if accessing via LAN IP on phone, route to current network host
+  if (window.location.hostname && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return RAW_API_BASE_URL.replace(/localhost|127\.0\.0\.1/, window.location.hostname);
+  }
+  return RAW_API_BASE_URL;
+}
+
 /**
  * Normalizes the endpoint against the base URL:
  * Handles cases where NEXT_PUBLIC_API_URL has "/api" and callers pass either "/api/blog" or "/blog".
  * Prevents accidental double prefixes like "/api/api/...".
  */
 function resolveUrl(endpoint: string, queryString: string): string {
+  const baseUrl = getBaseUrl();
   let cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
   // If base already ends with "/api" and endpoint also starts with "/api/", remove duplicate
-  if (RAW_API_BASE_URL.endsWith("/api") && cleanEndpoint.startsWith("/api/")) {
+  if (baseUrl.endsWith("/api") && cleanEndpoint.startsWith("/api/")) {
     cleanEndpoint = cleanEndpoint.replace(/^\/api/, "");
   }
 
   // If base does not end with "/api" and endpoint does not start with "/api/", add "/api"
-  if (!RAW_API_BASE_URL.endsWith("/api") && !cleanEndpoint.startsWith("/api/")) {
+  if (!baseUrl.endsWith("/api") && !cleanEndpoint.startsWith("/api/")) {
     cleanEndpoint = `/api${cleanEndpoint}`;
   }
 
-  return `${RAW_API_BASE_URL}${cleanEndpoint}${queryString}`;
+  return `${baseUrl}${cleanEndpoint}${queryString}`;
 }
 
 /**
@@ -150,13 +163,14 @@ async function apiRequest<T = unknown>(
       success: res.ok && data?.success !== false,
       message: data?.message,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : "Network error";
     console.error(`API Request Failed [${options.method || "GET"} ${url}]:`, error);
     return {
-      data: { success: false, message: error?.message || "Network error" } as unknown as T,
+      data: { success: false, message: errMessage } as unknown as T,
       status: 500,
       success: false,
-      message: error?.message || "Network error",
+      message: errMessage,
     };
   }
 }

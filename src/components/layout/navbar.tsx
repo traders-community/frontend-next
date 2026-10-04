@@ -35,7 +35,7 @@ export function Navbar() {
         if (isMounted && res.data?.settings?.graphyUrl) {
           setGraphyUrl(res.data.settings.graphyUrl);
         }
-      } catch (err) {
+      } catch {
         // graceful fallback to default
       }
     }
@@ -66,10 +66,18 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu and synchronize scrolled state on route change
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setMobileMenuOpen(false);
-    setIsScrolled(window.scrollY > 25);
+  }
+
+  // Synchronize scrolled state on route change asynchronously
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      setIsScrolled(window.scrollY > 25);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [pathname]);
 
   const navLinks = [

@@ -32,7 +32,7 @@ export function BlogDetailView({
   const authorName = profile?.displayName || "Yash Adhiya";
 
   return (
-    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14 overflow-x-hidden">
       {/* Floating Admin Preview Banner for unpublished drafts */}
       {isDraftPreview && <AdminPreviewBanner blog={blog} />}
 

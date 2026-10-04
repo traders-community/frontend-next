@@ -3,7 +3,6 @@
 import React from "react";
 import { motion, HTMLMotionProps } from "motion/react";
 import {
-  staggerContainerVariants,
   staggerItemVariants,
   pageTransitionVariants,
   EASE,

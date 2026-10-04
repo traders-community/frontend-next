@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import { Blog, Comment, CommentStatus, Category, SiteSettings, AdminProfile } from "@/types";
+import { Blog, Comment, CommentStatus, SiteSettings, AdminProfile } from "@/types";
 
 export interface DashboardData {
   blogs: number;
