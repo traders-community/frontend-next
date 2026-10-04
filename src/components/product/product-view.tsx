@@ -25,6 +25,7 @@ import { BlogCard } from "@/components/blog/blog-card";
 import { ProductReviewsSection } from "./product-reviews-section";
 import { ProductQuickCheckoutModal } from "./product-quick-checkout-modal";
 import { ProductStickyBar } from "./product-sticky-bar";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 interface ProductViewProps {
@@ -114,43 +115,45 @@ export function ProductView({
         {/* ========================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* ---------------- LEFT COLUMN: Sticky Image Container ---------------- */}
-          <div className="w-full lg:sticky lg:top-24 lg:self-start">
-            {/* Product Image Container with Lightbox & 1:1 Square Aspect Ratio */}
-            <PhotoProvider>
-              <div className="group relative w-full aspect-square rounded-3xl overflow-hidden border border-border/80 bg-card shadow-xl shadow-black/5 dark:shadow-black/25">
-                <PhotoView src={product.featuredImage}>
-                  <div className="relative w-full h-full cursor-zoom-in">
-                    <Image
-                      src={product.featuredImage}
-                      alt={product.title}
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+          <FadeIn direction="up" distance={24} duration={0.52} delay={0.06}>
+            <div className="w-full lg:sticky lg:top-24 lg:self-start">
+              {/* Product Image Container with Lightbox & 1:1 Square Aspect Ratio */}
+              <PhotoProvider>
+                <div className="group relative w-full aspect-square rounded-3xl overflow-hidden border border-border/80 bg-card shadow-xl shadow-black/5 dark:shadow-black/25">
+                  <PhotoView src={product.featuredImage}>
+                    <div className="relative w-full h-full cursor-zoom-in">
+                      <Image
+                        src={product.featuredImage}
+                        alt={product.title}
+                        fill
+                        priority
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
 
-                    {/* Zoom Hint Badge */}
-                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/60 text-white backdrop-blur-md text-xs font-medium border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                      <RiZoomInLine className="h-3.5 w-3.5" />
-                      <span>Click to expand</span>
-                    </div>
-
-                    {/* Discount Badge Overlay */}
-                    {discountPercent > 0 && (
-                      <div className="absolute top-4 left-4 z-10">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-primary text-black shadow-md shadow-primary/30">
-                          {discountPercent}% OFF
-                        </span>
+                      {/* Zoom Hint Badge */}
+                      <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/60 text-white backdrop-blur-md text-xs font-medium border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                        <RiZoomInLine className="h-3.5 w-3.5" />
+                        <span>Click to expand</span>
                       </div>
-                    )}
-                  </div>
-                </PhotoView>
-              </div>
-            </PhotoProvider>
-          </div>
+
+                      {/* Discount Badge Overlay */}
+                      {discountPercent > 0 && (
+                        <div className="absolute top-4 left-4 z-10">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-primary text-black shadow-md shadow-primary/30">
+                            {discountPercent}% OFF
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </PhotoView>
+                </div>
+              </PhotoProvider>
+            </div>
+          </FadeIn>
 
           {/* ---------------- RIGHT COLUMN: Product Details & Purchase ---------------- */}
-          <div className="flex flex-col space-y-5">
+          <FadeIn direction="up" distance={20} duration={0.52} delay={0.18} className="flex flex-col space-y-5">
             {/* Top Row: Breadcrumb Navigation */}
             <div>
               <nav
@@ -348,12 +351,13 @@ export function ProductView({
                 </div>
               </div>
             )}
-          </div>
+          </FadeIn>
         </div>
 
         {/* ========================================================= */}
         {/* SECTION 2: TABS SECTION (OVERVIEW & DETAILS / REVIEWS)     */}
         {/* ========================================================= */}
+        <FadeIn direction="up" distance={20} duration={0.48}>
         <section id="product-tabs" className="w-full scroll-mt-24 space-y-6 pt-4 border-t border-border/80">
           {/* Tab Navigation Bar: Original Clean Style */}
           <div className="flex items-center gap-2 border-b border-border/80 pb-3 flex-wrap">
@@ -430,40 +434,45 @@ export function ProductView({
             />
           )}
         </section>
+        </FadeIn>
 
         {/* ========================================================= */}
         {/* SECTION 3: BLOGS GRID (4 LATEST BLOGS)                     */}
         {/* ========================================================= */}
         {latestBlogs.length > 0 && (
           <section className="w-full space-y-8 pt-6 border-t border-border/80">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-heading">
-                  Latest From Our Blog
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  Explore trading strategies, macro breakdowns, and technical tutorials.
-                </p>
-              </div>
+            <FadeIn direction="up" distance={18} duration={0.48}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-heading">
+                    Latest From Our Blog
+                  </h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    Explore trading strategies, macro breakdowns, and technical tutorials.
+                  </p>
+                </div>
 
-              {/* Header Action Button */}
-              <Button
-                variant="outline"
-                size="md"
-                href="/"
-                className="gap-2 self-start sm:self-auto cursor-pointer"
-              >
-                <span>Explore All Articles</span>
-                <RiArrowRightLine className="h-4 w-4" />
-              </Button>
-            </div>
+                {/* Header Action Button */}
+                <Button
+                  variant="outline"
+                  size="md"
+                  href="/"
+                  className="gap-2 self-start sm:self-auto cursor-pointer"
+                >
+                  <span>Explore All Articles</span>
+                  <RiArrowRightLine className="h-4 w-4" />
+                </Button>
+              </div>
+            </FadeIn>
 
             {/* 4-Item Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StaggerContainer staggerDelay={0.1} delayChildren={0.08} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {latestBlogs.slice(0, 4).map((blog) => (
-                <BlogCard key={blog._id || blog.slug} blog={blog} />
+                <StaggerItem key={blog._id || blog.slug}>
+                  <BlogCard blog={blog} />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           </section>
         )}
       </div>
