@@ -24,7 +24,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const [graphyUrl, setGraphyUrl] = useState("https://pennywisepuns.graphy.com/s/store");
+  const [graphyUrl, setGraphyUrl] = useState("https://traderscommunity.graphy.com/");
   const pathname = usePathname();
 
   useEffect(() => {

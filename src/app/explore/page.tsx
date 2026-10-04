@@ -6,7 +6,7 @@ import { ExploreClient } from "@/components/explore/explore-client";
 export const metadata: Metadata = constructMetadata({
   title: "Explore Learning",
   description:
-    "Choose how you want to continue learning with Traders Community - browse community courses, futures & options, forex trading, or explore the external Graphy course catalogue.",
+    "Choose how you want to continue learning with Traders Community - browse community courses or explore the external Graphy course catalogue.",
   canonicalUrl: "/explore",
 });
 

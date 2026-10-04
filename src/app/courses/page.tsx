@@ -2,86 +2,92 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { constructMetadata } from "@/lib/seo/metadata";
-import { settingsService } from "@/services";
+import { productService } from "@/services/product.service";
+import { CourseCard } from "@/components/course/course-card";
 import {
   RiGraduationCapLine,
-  RiArticleLine,
-  RiArrowRightUpLine,
+  RiBookOpenLine,
+  RiShieldCheckLine,
   RiSparklingLine,
   RiCompass3Line,
 } from "@remixicon/react";
 
-// Enable ISR Caching on Vercel Edge with 60-second background revalidation
+// Enable ISR Caching on Edge with 60-second background revalidation
 export const revalidate = 60;
 
 export const metadata: Metadata = constructMetadata({
-  title: "Courses",
+  title: "Community Courses",
   description:
-    "Explore upcoming financial education and derivatives market courses from Traders Community.",
+    "Explore verified community trading courses and mentorship programs with Traders Community.",
   canonicalUrl: "/courses",
 });
 
 export default async function CoursesPage() {
-  let settings;
-  try {
-    const res = await settingsService.getPublicSettings(60);
-    settings = res.data?.settings;
-  } catch {
-    // Graceful fallback
-  }
-
-  const graphyUrl =
-    settings?.graphyUrl || "https://pennywisepuns.graphy.com/s/store";
+  const productsRes = await productService.getPublicProducts().catch(() => null);
+  const products = productsRes?.data?.products || [];
 
   return (
-    <div className="w-full min-h-[calc(100vh-140px)] flex items-center justify-center py-16 sm:py-24">
-      {/* Container aligned with sticky navbar pill width */}
-      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 text-center">
-        <div className="flex flex-col items-center max-w-2xl mx-auto">
-          {/* Main Icon */}
-          <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary border border-primary/30 shadow-xl shadow-primary/5 mb-6">
-            <RiGraduationCapLine className="h-8 w-8 sm:h-10 sm:w-10" />
+    <div className="w-full min-h-[calc(100vh-80px)] py-6 sm:py-10">
+      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6">
+        {/* ---------------- Compact Rich Header ---------------- */}
+        <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8 pt-1 sm:pt-2">
+
+          {/* Pill Badge above Title */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-xs sm:text-sm font-medium text-foreground mb-4 sm:mb-5 shadow-xs">
+            <span>Learn</span>
+            <span className="text-primary font-bold">·</span>
+            <span>Adapt</span>
+            <span className="text-primary font-bold">·</span>
+            <span>Execute</span>
           </div>
 
           {/* Heading */}
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground tracking-tight leading-tight">
-            Courses are coming soon
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+            Master the Markets with Community Courses
           </h1>
 
-          {/* Description */}
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl">
-            We are working hard to bring you the best courses! Meanwhile, check out our blogs for free learning resources and more or visit Graphy Store.
+          {/* Subtitle */}
+          <p className="mt-2.5 text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            Practical, structured curriculum and real-world trading mentorship designed to help you navigate derivatives, risk management, and market analysis with confidence.
           </p>
 
-          {/* CTAs */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-            <Link
-              href="/"
-              className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-semibold text-black hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-primary/20 transition-all duration-150 cursor-pointer"
-            >
-              <RiArticleLine className="h-4 w-4" />
-              <span>Our Blogs</span>
-            </Link>
 
-            <Link
-              href="/explore"
-              className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150 cursor-pointer"
-            >
-              <RiCompass3Line className="h-4 w-4" />
-              <span>Explore Tracks</span>
-            </Link>
-
-            <a
-              href={graphyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150 cursor-pointer"
-            >
-              <span>Visit Graphy Store</span>
-              <RiArrowRightUpLine className="h-4 w-4" />
-            </a>
-          </div>
         </div>
+
+        {/* ---------------- 2-Column Full-Width Product Cards ---------------- */}
+        {products.length > 0 ? (
+          <div className="flex flex-col gap-6 sm:gap-8">
+            {products.map((product, index) => (
+              <CourseCard
+                key={product._id || product.id || index}
+                product={product}
+                priority={index === 0}
+              />
+            ))}
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="p-10 sm:p-16 rounded-3xl border border-border/80 bg-card text-center flex flex-col items-center max-w-xl mx-auto shadow-xs my-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 mb-4">
+              <RiGraduationCapLine className="h-7 w-7" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
+              New Courses Are In Preparation
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-relaxed">
+              Our mentors are finalizing upcoming batches. Check back soon or browse our free market research blogs.
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-full bg-primary text-black hover:bg-primary/90 transition-all cursor-pointer"
+              >
+                <RiBookOpenLine className="h-4 w-4 mr-1.5" />
+                <span>Read Blogs</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
