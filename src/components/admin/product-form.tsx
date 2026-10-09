@@ -12,6 +12,7 @@ import {
   RiLoader4Line,
   RiStarFill,
   RiPriceTag3Line,
+  RiTelegramLine,
 } from "@remixicon/react";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
@@ -104,6 +105,19 @@ export function ProductForm({
     initialData?.longDescription || ""
   );
 
+  // 7. Telegram Integration
+  const [telegramChatId, setTelegramChatId] = useState(
+    initialData?.telegramChatId || ""
+  );
+  const [telegramChannelName, setTelegramChannelName] = useState(
+    initialData?.telegramChannelName || ""
+  );
+
+  const TELEGRAM_PRESETS = [
+    { name: "T.C fx VIP", chatId: "-1002748136855" },
+    { name: "Trader's Community fx.", chatId: "@TCfxmain" },
+  ];
+
   const [isSaving, setIsSaving] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const slugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -119,6 +133,8 @@ export function ProductForm({
       setShortDescription(initialData.shortDescription || "");
       setLongDescription(initialData.longDescription || "");
       setPoints(initialData.points || []);
+      setTelegramChatId(initialData.telegramChatId || "");
+      setTelegramChannelName(initialData.telegramChannelName || "");
       if (initialData.variations && initialData.variations.length > 0) {
         setVariations(
           initialData.variations.map((v) => ({
@@ -432,6 +448,8 @@ export function ProductForm({
         variations: cleanVariations,
         isActive: Boolean(isPublished),
         featuredImage: imagePreview,
+        telegramChatId: telegramChatId.trim(),
+        telegramChannelName: telegramChannelName.trim(),
       };
 
       if (isEdit && slug.trim()) {
@@ -859,6 +877,73 @@ export function ProductForm({
               </span>
             </button>
           )}
+        </div>
+
+        {/* Telegram Channel & Group Integration Card */}
+        <div className="space-y-3.5 p-4 rounded-2xl bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <RiTelegramLine className="h-4 w-4 text-sky-400" />
+                <span>Telegram VIP Channel / Group Integration</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Connect this product to your Telegram VIP Channel so @TC_Access_Bot automatically issues single-use invite links upon payment.
+              </p>
+            </div>
+
+            {/* Quick Channel Presets Dropdown */}
+            <div className="shrink-0">
+              <select
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) return;
+                  const found = TELEGRAM_PRESETS.find((p) => p.chatId === val);
+                  if (found) {
+                    setTelegramChannelName(found.name);
+                    setTelegramChatId(found.chatId);
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-medium bg-card border border-border/80 rounded-lg text-foreground cursor-pointer focus:outline-hidden focus:border-primary"
+                defaultValue=""
+              >
+                <option value="" disabled>⚡ Quick Pick Preset Channel...</option>
+                {TELEGRAM_PRESETS.map((preset) => (
+                  <option key={preset.chatId} value={preset.chatId}>
+                    {preset.name} ({preset.chatId})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Telegram Channel / Group Name
+              </label>
+              <input
+                type="text"
+                value={telegramChannelName}
+                onChange={(e) => setTelegramChannelName(e.target.value)}
+                placeholder="e.g. T.C fx VIP"
+                className={inputBase}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Telegram Chat ID <span className="text-muted-foreground font-normal">(Target Channel ID)</span>
+              </label>
+              <input
+                type="text"
+                value={telegramChatId}
+                onChange={(e) => setTelegramChatId(e.target.value)}
+                placeholder="e.g. -1002748136855"
+                className={inputBase}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Integrated Publication Status Strip — Clean, No Empty Space */}

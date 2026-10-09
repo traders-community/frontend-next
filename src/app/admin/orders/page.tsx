@@ -16,6 +16,7 @@ import {
   RiShieldCheckLine,
   RiInformationLine,
   RiLoader4Line,
+  RiCheckLine,
 } from "@remixicon/react";
 import { orderService } from "@/services/order.service";
 import { Order, OrderStats, PaymentStatus, SubscriptionStatus } from "@/types";
@@ -156,6 +157,32 @@ export default function AdminOrdersPage() {
     } catch (error: unknown) {
       const err = error as { message?: string };
       toast.error(err.message || "Error updating order");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Fast Admin Override: Mark User as Joined Telegram
+  const handleMarkUserJoined = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      setIsUpdating(true);
+      const res = await orderService.updateSubscription(selectedOrder._id, {
+        telegramId: selectedOrder.telegramId || `manual_joined_${Date.now().toString().slice(-6)}`,
+        telegramUsername: selectedOrder.telegramUsername || selectedOrder.firstName,
+      });
+
+      if (res.data?.success && res.data.order) {
+        toast.success("Telegram member join status marked as verified!");
+        setSelectedOrder(res.data.order);
+        fetchData();
+      } else {
+        toast.error(res.data?.message || "Failed to update Telegram status.");
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || "Error updating Telegram status.");
     } finally {
       setIsUpdating(false);
     }
@@ -359,43 +386,21 @@ export default function AdminOrdersPage() {
       key: "telegram",
       label: "TELEGRAM STATUS",
       render: (item) => {
-        if (item.telegramId) {
+        const isJoined = Boolean(item.telegramId || item.telegramJoinedAt);
+        if (isJoined) {
           return (
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-              <RiTelegramLine className="h-4 w-4 shrink-0 text-blue-500" />
-              <div className="min-w-0">
-                <span className="font-mono text-[11px] block truncate">
-                  ID: {item.telegramId}
-                </span>
-                {item.telegramUsername && (
-                  <span className="text-[10px] text-muted-foreground block truncate">
-                    @{item.telegramUsername}
-                  </span>
-                )}
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <RiCheckLine className="h-3.5 w-3.5" />
+              <span>Joined {item.telegramUsername ? `@${item.telegramUsername.replace("@", "")}` : ""}</span>
+            </span>
           );
         }
 
-        if (item.telegramInviteLink) {
-          return (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-medium">
-                Invite Generated
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCopyLink(item.telegramInviteLink)}
-                className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
-                title="Copy Invite Link"
-              >
-                <RiFileCopyLine className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          );
-        }
-
-        return <span className="text-xs text-muted-foreground">Not Joined</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            Pending Join
+          </span>
+        );
       },
     },
     {
@@ -763,21 +768,44 @@ export default function AdminOrdersPage() {
 
             {/* Telegram Membership & Invite Card */}
             <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
-                <RiTelegramLine className="h-4 w-4" />
-                <span>Telegram Membership & Invite</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-500/15 pb-2">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+                  <RiTelegramLine className="h-4 w-4" />
+                  <span>Telegram Membership & Join Status</span>
+                </div>
+                {!selectedOrder.telegramId && !selectedOrder.telegramJoinedAt && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleMarkUserJoined}
+                    disabled={isUpdating}
+                    className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 gap-1 cursor-pointer"
+                  >
+                    <RiCheckLine className="h-3.5 w-3.5" />
+                    <span>Mark User as Joined</span>
+                  </Button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-muted-foreground block">Telegram User ID:</span>
-                  <strong className="text-foreground font-mono">
-                    {selectedOrder.telegramId || "Pending User Join"}
-                  </strong>
+                  <span className="text-muted-foreground block">Telegram Member Status:</span>
+                  {selectedOrder.telegramId || selectedOrder.telegramJoinedAt ? (
+                    <span className="inline-flex items-center gap-1 font-mono text-emerald-500 font-semibold mt-0.5">
+                      <RiCheckLine className="h-3.5 w-3.5" />
+                      {selectedOrder.telegramId || "Joined"} {selectedOrder.telegramUsername ? `(@${selectedOrder.telegramUsername.replace("@", "")})` : ""}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-amber-500 font-semibold mt-0.5">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      Pending User Join
+                    </span>
+                  )}
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Current Expiry:</span>
-                  <strong className="text-foreground font-semibold">
+                  <strong className="text-foreground font-semibold block mt-0.5">
                     {selectedOrder.expiryDate
                       ? formatDateTime(selectedOrder.expiryDate)
                       : "Not started / No expiry"}
@@ -785,11 +813,11 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {selectedOrder.telegramInviteLink && (
+              {selectedOrder.telegramInviteLink && !selectedOrder.telegramId && !selectedOrder.telegramJoinedAt && (
                 <div className="pt-2 border-t border-blue-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <span className="text-[11px] text-muted-foreground block">
-                      Single-Use Invite Link:
+                      Single-Use Invite Link (Auto-expires upon join):
                     </span>
                     <span className="font-mono text-xs text-foreground truncate block">
                       {selectedOrder.telegramInviteLink}
@@ -807,6 +835,10 @@ export default function AdminOrdersPage() {
                   </Button>
                 </div>
               )}
+
+              <p className="text-[11px] text-muted-foreground/80 italic pt-1 border-t border-blue-500/10">
+                ⚡ Note: On local development environments (<code className="font-mono text-[10px]">http://localhost</code>), Telegram cloud webhooks cannot ping localhost. Click <strong>"Mark User as Joined"</strong> to test or manually verify member join status.
+              </p>
             </div>
 
             {/* Subscription Override Controls */}

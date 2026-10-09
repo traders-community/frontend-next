@@ -464,3 +464,100 @@ export interface OrderStatsResponse {
   stats?: OrderStats;
   message?: string;
 }
+
+// ==========================================
+// Checkout, OTP & Razorpay Types
+// ==========================================
+export interface SendOtpResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
+  emailVerificationToken?: string;
+}
+
+export interface CreateRazorpayOrderInput {
+  productId: string;
+  variationId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  telegramUsername?: string;
+  emailVerificationToken: string;
+}
+
+export interface CreateRazorpayOrderResponse {
+  success: boolean;
+  orderNumber: string;
+  razorpayOrderId: string;
+  amount: number;
+  amountInPaise: number;
+  currency: string;
+  keyId: string;
+  productTitle: string;
+  variationTitle: string;
+  message?: string;
+}
+
+export interface VerifyRazorpayPaymentInput {
+  orderNumber: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
+
+export interface VerifyRazorpayPaymentResponse {
+  success: boolean;
+  message: string;
+  orderNumber: string;
+  inviteLink?: string;
+  startDate?: string;
+  expiryDate?: string;
+}
+
+export interface RazorpaySuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+export interface OrderReceipt {
+  orderNumber: string;
+  productId: string | { _id: string; title: string };
+  productTitle: string;
+  variationId: string;
+  variationTitle: string;
+  durationValue: number;
+  durationUnit: DurationUnit;
+  sku: string;
+  amount: number;
+  actualPrice?: number;
+  currency: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  isEmailVerified: boolean;
+  paymentStatus: PaymentStatus;
+  subscriptionStatus: SubscriptionStatus;
+  paidAt?: string;
+  startDate?: string;
+  expiryDate?: string;
+  telegramChatId?: string;
+  telegramInviteLink?: string;
+  telegramInviteLinkExpiry?: string;
+  telegramJoinedAt?: string;
+  telegramUsername?: string;
+  createdAt: string;
+}
+
+export interface OrderReceiptResponse {
+  success: boolean;
+  receipt?: OrderReceipt;
+  message?: string;
+}
+
