@@ -59,7 +59,6 @@ const allowedTags = new Set([
   "SECTION",
   "HEADER",
   "FOOTER",
-  "CENTER",
 ]);
 
 const allowedAttrs = new Set([
@@ -200,17 +199,6 @@ export const sanitizeHtml = (raw = ""): string => {
 
   // If user pasted H1 in content, demote headings 1 level down so blog title remains the sole H1
   demoteHeadingsIfH1Present(doc);
-
-  // Transform legacy <center> tags to centered divs with robust alignment classes
-  doc.body.querySelectorAll("center").forEach((centerNode) => {
-    const div = doc.createElement("div");
-    div.className = "ql-align-center text-center";
-    div.setAttribute("style", "text-align: center;");
-    while (centerNode.firstChild) {
-      div.appendChild(centerNode.firstChild);
-    }
-    centerNode.replaceWith(div);
-  });
 
   doc.body.querySelectorAll("*").forEach((node) => {
     if (!allowedTags.has(node.tagName)) {

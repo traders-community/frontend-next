@@ -708,11 +708,10 @@ section,
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Text & Element Alignment (Quill, ChatGPT, and custom HTML) */
+/* Text & Element Alignment (Quill, LLMs, and standard HTML) */
 .rich-text .ql-align-center,
 .rich-text .text-center,
 .rich-text [align="center"],
-.rich-text center,
 .rich-text *[style*="text-align: center"],
 .rich-text *[style*="text-align:center"] {
   text-align: center !important;
@@ -742,16 +741,9 @@ section,
   text-align: left !important;
 }
 
-.rich-text center {
-  display: block;
-  text-align: center !important;
-  margin: 1.25rem 0;
-}
-
 .rich-text .ql-align-center > p,
 .rich-text .text-center > p,
 .rich-text [align="center"] > p,
-.rich-text center > p,
 .rich-text *[style*="text-align: center"] > p,
 .rich-text *[style*="text-align:center"] > p {
   text-align: inherit;
