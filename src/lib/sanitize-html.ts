@@ -59,6 +59,7 @@ const allowedTags = new Set([
   "SECTION",
   "HEADER",
   "FOOTER",
+  "CENTER",
 ]);
 
 const allowedAttrs = new Set([
@@ -78,6 +79,8 @@ const allowedAttrs = new Set([
   "data-list",
   "class",
   "id",
+  "style",
+  "align",
   "open",
   "datetime",
   "colspan",
@@ -88,6 +91,67 @@ const allowedAttrs = new Set([
   "type",
   "cite",
 ]);
+
+const ALLOWED_CSS_PROPERTIES = new Set([
+  "text-align",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "text-decoration",
+  "color",
+  "background-color",
+  "margin",
+  "margin-left",
+  "margin-right",
+  "margin-top",
+  "margin-bottom",
+  "padding",
+  "padding-left",
+  "padding-right",
+  "padding-top",
+  "padding-bottom",
+  "border",
+  "border-left",
+  "border-right",
+  "border-top",
+  "border-bottom",
+  "border-radius",
+  "border-color",
+  "border-style",
+  "border-width",
+  "max-width",
+  "min-width",
+  "width",
+  "height",
+  "display",
+  "line-height",
+  "letter-spacing",
+]);
+
+function sanitizeStyleAttribute(rawStyle = ""): string {
+  if (!rawStyle || typeof rawStyle !== "string") return "";
+  // Block any dangerous CSS injection vectors
+  if (/javascript:|expression|behavior|url\(/i.test(rawStyle)) return "";
+
+  const declarations = rawStyle.split(";");
+  const cleanDecls: string[] = [];
+
+  for (const decl of declarations) {
+    const trimmed = decl.trim();
+    if (!trimmed) continue;
+    const colonIndex = trimmed.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const prop = trimmed.slice(0, colonIndex).trim().toLowerCase();
+    const val = trimmed.slice(colonIndex + 1).trim();
+
+    if (ALLOWED_CSS_PROPERTIES.has(prop) && !/url\(|javascript:|expression/i.test(val)) {
+      cleanDecls.push(`${prop}: ${val}`);
+    }
+  }
+
+  return cleanDecls.join("; ");
+}
 
 const isSafeUrl = (value = "") =>
   /^(https?:|mailto:|tel:|\/|#|data:image\/)/i.test(value.trim());
@@ -137,6 +201,17 @@ export const sanitizeHtml = (raw = ""): string => {
   // If user pasted H1 in content, demote headings 1 level down so blog title remains the sole H1
   demoteHeadingsIfH1Present(doc);
 
+  // Transform legacy <center> tags to centered divs with robust alignment classes
+  doc.body.querySelectorAll("center").forEach((centerNode) => {
+    const div = doc.createElement("div");
+    div.className = "ql-align-center text-center";
+    div.setAttribute("style", "text-align: center;");
+    while (centerNode.firstChild) {
+      div.appendChild(centerNode.firstChild);
+    }
+    centerNode.replaceWith(div);
+  });
+
   doc.body.querySelectorAll("*").forEach((node) => {
     if (!allowedTags.has(node.tagName)) {
       node.replaceWith(...node.childNodes);
@@ -148,6 +223,39 @@ export const sanitizeHtml = (raw = ""): string => {
       if (name.startsWith("on") || !allowedAttrs.has(name)) {
         node.removeAttribute(attr.name);
         return;
+      }
+
+      // Handle align attribute and normalize to classes
+      if (name === "align") {
+        const val = attr.value.toLowerCase().trim();
+        if (!["left", "center", "right", "justify"].includes(val)) {
+          node.removeAttribute(attr.name);
+        } else {
+          if (val === "center") {
+            node.classList.add("ql-align-center", "text-center");
+          } else if (val === "right") {
+            node.classList.add("ql-align-right", "text-right");
+          } else if (val === "justify") {
+            node.classList.add("ql-align-justify", "text-justify");
+          }
+        }
+      }
+
+      // Sanitize inline style attribute and preserve text-align
+      if (name === "style") {
+        const safeStyle = sanitizeStyleAttribute(attr.value);
+        if (safeStyle) {
+          node.setAttribute("style", safeStyle);
+          if (/text-align\s*:\s*center/i.test(safeStyle)) {
+            node.classList.add("ql-align-center", "text-center");
+          } else if (/text-align\s*:\s*right/i.test(safeStyle)) {
+            node.classList.add("ql-align-right", "text-right");
+          } else if (/text-align\s*:\s*justify/i.test(safeStyle)) {
+            node.classList.add("ql-align-justify", "text-justify");
+          }
+        } else {
+          node.removeAttribute("style");
+        }
       }
 
       if ((name === "href" || name === "src") && !isSafeUrl(attr.value)) {

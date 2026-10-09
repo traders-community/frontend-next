@@ -13,9 +13,7 @@ import {
   RiFileCopyLine,
   RiEyeLine,
   RiDeleteBinLine,
-  RiShieldCheckLine,
   RiInformationLine,
-  RiLoader4Line,
   RiCheckLine,
 } from "@remixicon/react";
 import { orderService } from "@/services/order.service";

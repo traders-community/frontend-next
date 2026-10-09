@@ -32,7 +32,11 @@ interface QuillInstance {
   clipboard: {
     dangerouslyPasteHTML: (html: string, source?: string) => void;
   };
-  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  setText: (text: string, source?: string) => void;
+  on: (
+    event: string,
+    handler: (delta: unknown, oldDelta: unknown, source: string) => void
+  ) => void;
 }
 
 interface QuillConstructor {
@@ -118,6 +122,7 @@ export function QuillEditor({
   // Warning dialog shown when switching to Visual Editor with rich HTML
   const [showRichHtmlWarning, setShowRichHtmlWarning] = useState(false);
   const pendingTabRef = useRef<"editor" | "html" | "preview" | null>(null);
+  const userAllowedRichLossRef = useRef(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const quillInstanceRef = useRef<QuillInstance | null>(null);
@@ -155,6 +160,7 @@ export function QuillEditor({
             toolbar: [
               [{ header: [2, 3, 4, false] }],
               ["bold", "italic", "underline", "strike"],
+              [{ align: [] }],
               [{ list: "ordered" }, { list: "bullet" }],
               ["blockquote"],
               [{ color: [] }, { background: [] }],
@@ -212,6 +218,7 @@ export function QuillEditor({
 
   // If value arrives asynchronously with rich HTML while on editor tab, route safely to HTML tab
   useEffect(() => {
+    if (userAllowedRichLossRef.current) return;
     if (value && hasRichHtml(value) && activeTab === "editor") {
       setActiveTab("html");
     }
@@ -237,7 +244,12 @@ export function QuillEditor({
 
   // Handle switching tabs
   const handleTabChange = (nextTab: "editor" | "html" | "preview") => {
-    if (nextTab === "editor" && activeTab !== "editor" && hasRichHtml(value)) {
+    if (
+      nextTab === "editor" &&
+      activeTab !== "editor" &&
+      hasRichHtml(value) &&
+      !userAllowedRichLossRef.current
+    ) {
       // Warn user that switching to Quill will lose rich formatting
       pendingTabRef.current = nextTab;
       setShowRichHtmlWarning(true);
@@ -253,10 +265,19 @@ export function QuillEditor({
   // Called when user confirms they accept losing rich styling
   const confirmRichHtmlSwitch = () => {
     setShowRichHtmlWarning(false);
+    userAllowedRichLossRef.current = true;
     const next = pendingTabRef.current ?? "editor";
     pendingTabRef.current = null;
-    pasteHtml(value);
-    hasInitializedRef.current = true;
+
+    const quill = quillInstanceRef.current;
+    if (quill) {
+      quill.clipboard.dangerouslyPasteHTML(value || "", "api");
+      const strippedHtml =
+        quill.root.innerHTML === "<p><br></p>" ? "" : quill.root.innerHTML;
+      hasInitializedRef.current = true;
+      onChange(strippedHtml);
+    }
+
     setActiveTab(next);
   };
 
@@ -267,6 +288,7 @@ export function QuillEditor({
 
   const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextHtml = e.target.value;
+    userAllowedRichLossRef.current = false;
     onChange(nextHtml);
   };
 
@@ -339,7 +361,7 @@ export function QuillEditor({
 
       {/* Editor Tab */}
       <div className={cn("w-full transition-all", activeTab === "editor" ? "block" : "hidden")}>
-        {hasRichHtml(value) && (
+        {hasRichHtml(value) && !userAllowedRichLossRef.current && (
           <div className="mb-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
             <span className="text-base leading-none mt-0.5 select-none">⚠️</span>
             <div className="space-y-1 flex-1">

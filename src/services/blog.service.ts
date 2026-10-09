@@ -35,7 +35,7 @@ export const blogService = {
    * Fetches paginated blogs with optional category and search filters.
    */
   async getBlogs(params: GetBlogsParams = {}) {
-    const { page = 1, limit = 9, category, search, revalidate } = params;
+    const { page = 1, limit = 8, category, search, revalidate } = params;
 
     const queryParams: Record<string, string | number> = {
       page,

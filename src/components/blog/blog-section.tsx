@@ -11,6 +11,7 @@ import {
   RiLoader4Line,
   RiRefreshLine,
   RiCheckLine,
+  RiArrowDownLine,
 } from "@remixicon/react";
 import { motion } from "motion/react";
 import { FadeIn } from "@/components/motion";
@@ -35,7 +36,7 @@ const DEFAULT_CATEGORIES = [
   "ICT",
 ];
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 8;
 
 /**
  * Pixel-matched articles grid skeleton for initial page load.
@@ -167,6 +168,7 @@ export function BlogSection({
       url.searchParams.delete("q");
     }
 
+    url.searchParams.delete("page");
     window.history.replaceState({}, "", url.toString());
   }, []);
 
@@ -358,7 +360,7 @@ export function BlogSection({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.32,
-                  delay: Math.min(idx * 0.04, 0.28),
+                  delay: Math.min((idx % PAGE_SIZE) * 0.04, 0.28),
                   ease: EASE.outCubic,
                 }}
                 className="h-full"
@@ -388,7 +390,7 @@ export function BlogSection({
         )}
       </div>
 
-      {/* Pagination / Load More Section */}
+      {/* Load More Button Pagination Section */}
       {!isInitialLoading && !isFiltering && blogs.length > 0 && (
         <div className="flex flex-col items-center justify-center gap-3 mb-24 sm:mb-32 px-4">
           {hasMore ? (
@@ -397,7 +399,7 @@ export function BlogSection({
               disabled={loadingMore}
               onClick={handleLoadMore}
               aria-label="Load more articles"
-              className="min-h-12 px-8 py-3 rounded-full border border-primary/60 bg-card/60 backdrop-blur-sm text-primary font-semibold text-sm hover:bg-primary hover:text-black active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm flex items-center gap-2 cursor-pointer"
+              className="min-h-12 px-8 py-3 rounded-full border border-primary/60 bg-card/60 backdrop-blur-sm text-primary font-semibold text-sm hover:bg-primary hover:text-black active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm flex items-center gap-2 cursor-pointer select-none"
             >
               {loadingMore ? (
                 <>
@@ -405,7 +407,10 @@ export function BlogSection({
                   <span>Loading articles...</span>
                 </>
               ) : (
-                <span>Load More</span>
+                <>
+                  <span>Load More</span>
+                  <RiArrowDownLine className="w-4 h-4" />
+                </>
               )}
             </button>
           ) : (

@@ -1,4 +1,4 @@
-const RAW_API_BASE_URL = (
+const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
 ).replace(/\/+$/, "");
 
@@ -34,15 +34,7 @@ function buildQueryString(params?: Record<string, string | number | boolean | un
 }
 
 function getBaseUrl(): string {
-  // Server-side (Node / Next SSR) always routes directly to localhost for reliability
-  if (typeof window === "undefined") {
-    return RAW_API_BASE_URL.replace(/172\.21\.190\.55/, "localhost");
-  }
-  // Client-side in browser: if accessing via LAN IP on phone, route to current network host
-  if (window.location.hostname && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    return RAW_API_BASE_URL.replace(/localhost|127\.0\.0\.1/, window.location.hostname);
-  }
-  return RAW_API_BASE_URL;
+  return API_BASE_URL;
 }
 
 /**
@@ -212,7 +204,7 @@ export const api = {
   delete: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     apiRequest<T>(endpoint, { method: "DELETE", ...options }),
 
-  baseURL: RAW_API_BASE_URL,
+  baseURL: API_BASE_URL,
 };
 
 export default api;
