@@ -561,3 +561,142 @@ export interface OrderReceiptResponse {
   message?: string;
 }
 
+export type DashboardPeriod = "today" | "7d" | "30d" | "90d" | "12m" | "all";
+
+export interface DashboardKpiMetric {
+  value: number;
+  previous?: number;
+  change?: number;
+  totalActive?: number;
+}
+
+export interface DashboardChartPoint {
+  label: string;
+  value: number;
+}
+
+export interface DashboardMemberGrowthPoint {
+  label: string;
+  newMembers: number;
+  expiredMembers: number;
+}
+
+export interface DashboardRecentOrder {
+  _id: string;
+  orderNumber: string;
+  orderId?: string;
+  firstName?: string;
+  lastName?: string;
+  customerName?: string;
+  email?: string;
+  customerEmail?: string;
+  productTitle: string;
+  variationTitle?: string;
+  planDuration?: string;
+  amount: number;
+  currency?: string;
+  paymentStatus: PaymentStatus | string;
+  subscriptionStatus: SubscriptionStatus | string;
+  phoneNumber?: string;
+  customerPhone?: string;
+  isEmailVerified?: boolean;
+  telegramUsername?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  gatewayOrderId?: string;
+  gatewayPaymentId?: string;
+  startDate?: string;
+  expiryDate?: string;
+  adminNotes?: string;
+  createdAt: string;
+}
+
+export interface DashboardProductDistributionPoint {
+  label: string;
+  count: number;
+  revenue?: number;
+}
+
+export type DashboardPlanDistributionPoint = DashboardProductDistributionPoint;
+
+export interface DashboardRecentBlog {
+  _id: string;
+  title: string;
+  slug?: string;
+  category?: string;
+  image?: string;
+  isPublished: boolean;
+  createdAt: string;
+}
+
+export interface DashboardRecentComment {
+  _id: string;
+  name: string;
+  content: string;
+  status?: string;
+  isApproved: boolean;
+  blog?: {
+    _id: string;
+    title?: string;
+    slug?: string;
+  } | string | null;
+  createdAt: string;
+}
+
+export interface DashboardRecentTicket {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  topic?: string;
+  message: string;
+  status: string;
+  adminNotes?: string;
+  createdAt: string;
+}
+
+export interface DashboardSecondaryStats {
+  publishedBlogs: number;
+  draftBlogs: number;
+  pendingReviews: number;
+  pendingComments: number;
+  openTickets: number;
+}
+
+export interface DashboardKpis {
+  totalRevenue: DashboardKpiMetric;
+  paidMembers: DashboardKpiMetric;
+  newsletterSubscribers: DashboardKpiMetric;
+}
+
+export interface DashboardCharts {
+  revenueTrend: DashboardChartPoint[];
+  memberGrowth: DashboardMemberGrowthPoint[];
+  productDistribution?: DashboardProductDistributionPoint[];
+  planDistribution?: DashboardProductDistributionPoint[];
+}
+
+export interface DashboardResponse {
+  success: boolean;
+  period: DashboardPeriod;
+  dateRange: {
+    from: string;
+    to: string;
+  };
+  kpis: DashboardKpis;
+  charts: DashboardCharts;
+  secondaryStats: DashboardSecondaryStats;
+  recentOrders: DashboardRecentOrder[];
+  recentBlogs?: DashboardRecentBlog[];
+  recentComments?: DashboardRecentComment[];
+  recentTickets?: DashboardRecentTicket[];
+  dashboardData?: {
+    blogs: number;
+    comments: number;
+    drafts: number;
+    recentBlogs: Blog[];
+  };
+  message?: string;
+}
+
+

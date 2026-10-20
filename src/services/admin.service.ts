@@ -1,18 +1,13 @@
 import { api } from "@/lib/api/client";
-import { Blog, Comment, CommentStatus, SiteSettings, AdminProfile } from "@/types";
-
-export interface DashboardData {
-  blogs: number;
-  comments: number;
-  drafts: number;
-  recentBlogs: Blog[];
-}
-
-export interface DashboardResponse {
-  success: boolean;
-  dashboardData?: DashboardData;
-  message?: string;
-}
+import {
+  Blog,
+  Comment,
+  CommentStatus,
+  SiteSettings,
+  AdminProfile,
+  DashboardResponse,
+  DashboardPeriod,
+} from "@/types";
 
 export interface AdminProfileResponse {
   success: boolean;
@@ -22,10 +17,12 @@ export interface AdminProfileResponse {
 
 export const adminService = {
   /**
-   * Fetches summary dashboard metrics and recent blogs.
+   * Fetches summary dashboard metrics, charts, KPIs and recent orders with period filtering.
    */
-  async getDashboard() {
-    return api.get<DashboardResponse>("/admin/dashboard");
+  async getDashboard(period: DashboardPeriod = "30d") {
+    return api.get<DashboardResponse>("/admin/dashboard", {
+      params: { period },
+    });
   },
 
   /**

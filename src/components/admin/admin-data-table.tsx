@@ -12,6 +12,7 @@ import {
   RiArrowDownSLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
+  RiArrowRightLine,
   RiCloseLine,
   RiInboxLine,
 } from "@remixicon/react";
@@ -38,7 +39,13 @@ export interface TablePagination {
 
 export interface AdminDataTableProps<T> {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
+  variant?: "page" | "card";
+  icon?: React.ComponentType<{ className?: string }>;
+  headerRight?: React.ReactNode;
+  onRowClick?: (item: T, index: number) => void;
+  className?: string;
+  tableClassName?: string;
   // Search
   searchPlaceholder?: string;
   searchValue?: string;
@@ -102,6 +109,12 @@ function getPageNumbers(currentPage: number, totalPages: number): (number | "ell
 export function AdminDataTable<T>({
   title,
   subtitle,
+  variant = "page",
+  icon: Icon,
+  headerRight,
+  onRowClick,
+  className,
+  tableClassName,
   searchPlaceholder = "Search...",
   searchValue = "",
   searchDebounceMs = 400,
@@ -185,6 +198,298 @@ export function AdminDataTable<T>({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [filterOpen]);
+
+  // Shared Pagination Renderer
+  const renderPagination = () => {
+    if (!pagination) return null;
+    return (
+      <div className="border-t border-border/70 px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-muted-foreground select-none">
+        {/* Left/Top Row: Records count + Per-Page selector on ONE line on mobile */}
+        <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 sm:gap-6">
+          <div className="text-xs">
+            Showing{" "}
+            <span className="font-semibold text-foreground">
+              {data.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-foreground">
+              {pagination.totalItems}
+            </span>
+          </div>
+
+          {/* Mobile Compact Dropdown */}
+          <div className="flex sm:hidden items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">Per page:</span>
+            <div className="relative flex items-center">
+              <select
+                value={pagination.pageSize}
+                onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
+                aria-label="Items per page"
+                className="appearance-none bg-surface border border-border/80 text-foreground text-xs font-semibold rounded-lg pl-2.5 pr-7 py-1 focus:outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer shadow-2xs"
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size} className="bg-card text-foreground">
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <RiArrowDownSLine className="w-3.5 h-3.5 text-muted-foreground absolute right-2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Desktop Segmented Buttons */}
+          <div className="hidden sm:flex items-center gap-2">
+            <span>Per page:</span>
+            <div className="flex items-center gap-1 bg-surface/70 p-1 rounded-xl border border-border/60">
+              {pageSizeOptions.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => pagination.onPageSizeChange(size)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg font-semibold text-xs transition-all cursor-pointer",
+                    pagination.pageSize === size
+                      ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
+                      : "text-muted-foreground hover:text-foreground hover:bg-surface"
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right/Bottom: Multi-Page Navigation Buttons */}
+        <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-1 sm:gap-1.5 flex-wrap pt-1 sm:pt-0">
+          <button
+            type="button"
+            onClick={() =>
+              pagination.onPageChange(Math.max(1, pagination.currentPage - 1))
+            }
+            disabled={pagination.currentPage <= 1}
+            className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
+            aria-label="Previous page"
+          >
+            <RiArrowLeftSLine className="h-4 w-4" />
+          </button>
+
+          {getPageNumbers(
+            pagination.currentPage,
+            Math.max(1, pagination.totalPages)
+          ).map((page, idx) => {
+            if (page === "ellipsis") {
+              return (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center text-muted-foreground text-xs select-none"
+                >
+                  …
+                </span>
+              );
+            }
+            const isCurrent = page === pagination.currentPage;
+            return (
+              <button
+                key={page}
+                type="button"
+                onClick={() => pagination.onPageChange(page)}
+                className={cn(
+                  "w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                  isCurrent
+                    ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
+                    : "border border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground shadow-2xs"
+                )}
+                aria-label={`Go to page ${page}`}
+                aria-current={isCurrent ? "page" : undefined}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() =>
+              pagination.onPageChange(
+                Math.min(pagination.totalPages, pagination.currentPage + 1)
+              )
+            }
+            disabled={pagination.currentPage >= pagination.totalPages}
+            className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
+            aria-label="Next page"
+          >
+            <RiArrowRightSLine className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  if (variant === "card") {
+    return (
+      <div className={cn("rounded-xl sm:rounded-2xl border border-border/70 bg-card overflow-hidden shadow-xs animate-in fade-in-50 duration-300", className)}>
+        {/* Card Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 sm:p-6 pb-4 border-b border-border/60">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {Icon && <Icon className="size-5 text-muted-foreground shrink-0" />}
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-foreground tracking-tight truncate">
+                {title}
+              </h2>
+              {subtitle && (
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {subtitle}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {headerRight ? (
+              headerRight
+            ) : actionButton ? (
+              actionButton.href ? (
+                <Link
+                  href={actionButton.href}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover hover:underline transition-colors shrink-0"
+                >
+                  <span>{actionButton.label}</span>
+                  <RiArrowRightLine className="size-3.5" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={actionButton.onClick}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover hover:underline transition-colors shrink-0 cursor-pointer"
+                >
+                  <span>{actionButton.label}</span>
+                  <RiArrowRightLine className="size-3.5" />
+                </button>
+              )
+            ) : null}
+          </div>
+        </div>
+
+        {/* Card Table */}
+        <div className="overflow-x-auto">
+          <table className={cn("w-full text-left border-collapse", tableClassName)}>
+            <thead>
+              <tr className="border-b border-border/70 bg-surface/30">
+                {columns.map((col) => {
+                  const isSorted = sortKey === col.key && Boolean(sortDirection);
+                  const isSortable = Boolean(col.sortable && onSortChange);
+
+                  return (
+                    <th
+                      key={col.key}
+                      scope="col"
+                      aria-sort={
+                        isSortable
+                          ? isSorted
+                            ? sortDirection === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                          : undefined
+                      }
+                      tabIndex={isSortable ? 0 : undefined}
+                      onClick={isSortable ? () => onSortChange!(col.key) : undefined}
+                      className={cn(
+                        "px-3 sm:px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground select-none whitespace-nowrap transition-colors",
+                        col.align === "center" && "text-center",
+                        col.align === "right" && "text-right",
+                        isSortable && "cursor-pointer hover:text-primary",
+                        col.className
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-1.5",
+                          col.align === "center" && "justify-center mx-auto",
+                          col.align === "right" && "justify-end ml-auto"
+                        )}
+                      >
+                        <span>{col.label}</span>
+                        {isSortable && (
+                          isSorted ? (
+                            sortDirection === "asc" ? (
+                              <RiArrowUpLine className="h-3.5 w-3.5 text-primary stroke-[2.5]" />
+                            ) : (
+                              <RiArrowDownLine className="h-3.5 w-3.5 text-primary stroke-[2.5]" />
+                            )
+                          ) : (
+                            <RiArrowUpDownLine className="h-3.5 w-3.5 text-foreground/50 hover:text-foreground" />
+                          )
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-border/60 text-xs sm:text-sm">
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-6 py-12 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                      <span className="text-xs font-medium">Loading data...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : data.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-6 py-10 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RiInboxLine className="h-7 w-7 text-muted-foreground/40" />
+                      <p className="text-xs sm:text-sm font-medium">{emptyMessage}</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                data.map((item, index) => (
+                  <tr
+                    key={keyExtractor(item, index)}
+                    onClick={onRowClick ? () => onRowClick(item, index) : undefined}
+                    className={cn(
+                      "hover:bg-surface/50 transition-colors group",
+                      onRowClick && "cursor-pointer"
+                    )}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={cn(
+                          "px-3 sm:px-4 py-3 text-foreground align-middle whitespace-nowrap",
+                          col.align === "center" && "text-center",
+                          col.align === "right" && "text-right",
+                          col.className
+                        )}
+                      >
+                        {col.render
+                          ? col.render(item, index)
+                          : ((item as Record<string, unknown>)[col.key] as React.ReactNode) ?? "—"}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {renderPagination()}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-300">
@@ -433,7 +738,11 @@ export function AdminDataTable<T>({
                 data.map((item, index) => (
                   <tr
                     key={keyExtractor(item, index)}
-                    className="hover:bg-surface/50 transition-colors group"
+                    onClick={onRowClick ? () => onRowClick(item, index) : undefined}
+                    className={cn(
+                      "hover:bg-surface/50 transition-colors group",
+                      onRowClick && "cursor-pointer"
+                    )}
                   >
                     {columns.map((col) => (
                       <td
@@ -457,132 +766,7 @@ export function AdminDataTable<T>({
           </table>
         </div>
 
-        {/* Footer Pagination Row */}
-        {pagination && (
-          <div className="border-t border-border/70 px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-muted-foreground select-none">
-            {/* Left/Top Row: Records count + Per-Page selector on ONE line on mobile */}
-            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 sm:gap-6">
-              <div className="text-xs">
-                Showing{" "}
-                <span className="font-semibold text-foreground">
-                  {data.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-semibold text-foreground">
-                  {pagination.totalItems}
-                </span>
-              </div>
-
-              {/* Mobile Compact Dropdown (Keeps "Showing" and "Per page" in 1 single row) */}
-              <div className="flex sm:hidden items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground">Per page:</span>
-                <div className="relative flex items-center">
-                  <select
-                    value={pagination.pageSize}
-                    onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
-                    aria-label="Items per page"
-                    className="appearance-none bg-surface border border-border/80 text-foreground text-xs font-semibold rounded-lg pl-2.5 pr-7 py-1 focus:outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer shadow-2xs"
-                  >
-                    {pageSizeOptions.map((size) => (
-                      <option key={size} value={size} className="bg-card text-foreground">
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                  <RiArrowDownSLine className="w-3.5 h-3.5 text-muted-foreground absolute right-2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Desktop Segmented Buttons */}
-              <div className="hidden sm:flex items-center gap-2">
-                <span>Per page:</span>
-                <div className="flex items-center gap-1 bg-surface/70 p-1 rounded-xl border border-border/60">
-                  {pageSizeOptions.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => pagination.onPageSizeChange(size)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-lg font-semibold text-xs transition-all cursor-pointer",
-                        pagination.pageSize === size
-                          ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
-                          : "text-muted-foreground hover:text-foreground hover:bg-surface"
-                      )}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right/Bottom: Multi-Page Navigation Buttons */}
-            <div className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-1 sm:gap-1.5 flex-wrap pt-1 sm:pt-0">
-              {/* Prev Button */}
-              <button
-                type="button"
-                onClick={() =>
-                  pagination.onPageChange(Math.max(1, pagination.currentPage - 1))
-                }
-                disabled={pagination.currentPage <= 1}
-                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
-                aria-label="Previous page"
-              >
-                <RiArrowLeftSLine className="h-4 w-4" />
-              </button>
-
-              {/* Page Numbers */}
-              {getPageNumbers(
-                pagination.currentPage,
-                Math.max(1, pagination.totalPages)
-              ).map((page, idx) => {
-                if (page === "ellipsis") {
-                  return (
-                    <span
-                      key={`ellipsis-${idx}`}
-                      className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center text-muted-foreground text-xs select-none"
-                    >
-                      …
-                    </span>
-                  );
-                }
-                const isCurrent = page === pagination.currentPage;
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => pagination.onPageChange(page)}
-                    className={cn(
-                      "w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer",
-                      isCurrent
-                        ? "bg-black text-white dark:bg-white dark:text-black shadow-xs"
-                        : "border border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground shadow-2xs"
-                    )}
-                    aria-label={`Go to page ${page}`}
-                    aria-current={isCurrent ? "page" : undefined}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-
-              {/* Next Button */}
-              <button
-                type="button"
-                onClick={() =>
-                  pagination.onPageChange(
-                    Math.min(pagination.totalPages, pagination.currentPage + 1)
-                  )
-                }
-                disabled={pagination.currentPage >= pagination.totalPages}
-                className="w-8 h-8 sm:w-8.5 sm:h-8.5 flex items-center justify-center rounded-xl border border-border/70 hover:bg-surface text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer shadow-2xs"
-                aria-label="Next page"
-              >
-                <RiArrowRightSLine className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        {renderPagination()}
       </div>
     </div>
   );
