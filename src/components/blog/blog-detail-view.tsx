@@ -60,19 +60,19 @@ export function BlogDetailView({
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight sm:leading-[1.18] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight sm:leading-[1.18] tracking-tight text-balance">
             {blog.title}
           </h1>
 
           {/* Subtitle */}
           {blog.subTitle ? (
-            <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed text-balance">
               {blog.subTitle}
             </p>
           ) : null}
 
           {/* Author Badge */}
-          <div className="mt-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-xs sm:text-sm font-medium text-primary">
+          <div className="mt-5 inline-flex items-center gap-1 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-xs sm:text-sm font-medium text-primary">
             <span>By</span>
             <span className="font-semibold">{authorName}</span>
           </div>

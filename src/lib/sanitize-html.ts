@@ -97,8 +97,6 @@ const ALLOWED_CSS_PROPERTIES = new Set([
   "font-weight",
   "font-style",
   "text-decoration",
-  "color",
-  "background-color",
   "margin",
   "margin-left",
   "margin-right",
@@ -115,7 +113,6 @@ const ALLOWED_CSS_PROPERTIES = new Set([
   "border-top",
   "border-bottom",
   "border-radius",
-  "border-color",
   "border-style",
   "border-width",
   "max-width",
@@ -211,6 +208,18 @@ export const sanitizeHtml = (raw = ""): string => {
       if (name.startsWith("on") || !allowedAttrs.has(name)) {
         node.removeAttribute(attr.name);
         return;
+      }
+
+      // Strip legacy Quill color and background classes that break theme contrast
+      if (name === "class") {
+        const cleanedClasses = attr.value
+          .split(/\s+/)
+          .filter((cls) => cls && !cls.startsWith("ql-color-") && !cls.startsWith("ql-bg-"));
+        if (cleanedClasses.length > 0) {
+          node.setAttribute("class", cleanedClasses.join(" "));
+        } else {
+          node.removeAttribute("class");
+        }
       }
 
       // Handle align attribute and normalize to classes

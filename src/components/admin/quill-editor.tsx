@@ -163,7 +163,6 @@ export function QuillEditor({
               [{ align: [] }],
               [{ list: "ordered" }, { list: "bullet" }],
               ["blockquote"],
-              [{ color: [] }, { background: [] }],
               ["link", "image"],
               ["clean"],
             ],

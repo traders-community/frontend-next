@@ -961,3 +961,60 @@ section,
   margin: 1rem 0;
   color: var(--muted-foreground);
 }
+
+/* ==========================================================================
+   Rich Text Theme Safety: Border Color & Legacy Inline Color Normalization
+   ========================================================================== */
+/* Default border color: light mode is crisp light grayish (--border: #d1d5db),
+   dark mode is muted tone grayish-navy (--border: #1a2542) */
+.rich-text [style*="border"],
+.rich-text [style*="border-color"],
+.rich-text table,
+.rich-text th,
+.rich-text td {
+  border-color: var(--border) !important;
+}
+
+/* Neutralize legacy or pasted arbitrary font colors in dark & light modes */
+.dark .rich-text [style*="color: #000"],
+.dark .rich-text [style*="color:#000"],
+.dark .rich-text [style*="color: rgb(0, 0, 0)"],
+.dark .rich-text [style*="color:rgb(0,0,0)"],
+.dark .rich-text [style*="color: black"],
+.dark .rich-text [style*="color: rgb(17, 24, 39)"] {
+  color: var(--foreground) !important;
+}
+
+:not(.dark) .rich-text [style*="color: #fff"],
+:not(.dark) .rich-text [style*="color:#fff"],
+:not(.dark) .rich-text [style*="color: rgb(255, 255, 255)"],
+:not(.dark) .rich-text [style*="color:rgb(255,255,255)"],
+:not(.dark) .rich-text [style*="color: white"] {
+  color: var(--foreground) !important;
+}
+
+/* Neutralize legacy or pasted background highlights in dark & light modes */
+.dark .rich-text [style*="background-color: #fff"],
+.dark .rich-text [style*="background-color:#fff"],
+.dark .rich-text [style*="background-color: rgb(255, 255, 255)"],
+.dark .rich-text [style*="background-color:rgb(255,255,255)"],
+.dark .rich-text [style*="background-color: white"] {
+  background-color: transparent !important;
+}
+
+:not(.dark) .rich-text [style*="background-color: #000"],
+:not(.dark) .rich-text [style*="background-color:#000"],
+:not(.dark) .rich-text [style*="background-color: rgb(0, 0, 0)"],
+:not(.dark) .rich-text [style*="background-color:rgb(0,0,0)"],
+:not(.dark) .rich-text [style*="background-color: black"] {
+  background-color: transparent !important;
+}
+
+/* Neutralize any legacy Quill color & background classes */
+.rich-text [class*="ql-color-"] {
+  color: inherit !important;
+}
+
+.rich-text [class*="ql-bg-"] {
+  background-color: transparent !important;
+}
