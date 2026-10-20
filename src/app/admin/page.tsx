@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Right Header Actions: Time Filter, Theme Toggle, Profile */}
-          <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <DashboardTimeFilter
               value={period}
               onChange={handlePeriodChange}
@@ -163,8 +163,8 @@ export default function AdminDashboardPage() {
         </div>
       </FadeIn>
 
-      {/* Row 1: 3 KPI Cards (Top Stats - NOT whole clickable, clean icons) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Row 1: 3 KPI Cards (Top Stats - 3 columns on tablet and desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         <FadeIn delay={0.06} distance={14} duration={0.4}>
           <DashboardStatCard
             title="Total Revenue"

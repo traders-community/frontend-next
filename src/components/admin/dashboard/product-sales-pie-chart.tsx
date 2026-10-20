@@ -107,16 +107,18 @@ export function ProductSalesPieChart({ data = [] }: ProductSalesPieChartProps) {
   }, [isDark, totalPurchases, data]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 h-full w-full">
+    <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center justify-center sm:justify-between lg:justify-center xl:justify-between gap-4 sm:gap-6 lg:gap-3 xl:gap-6 h-full w-full min-w-0 overflow-hidden">
       {/* Pie Canvas */}
-      <div className="relative w-44 h-44 sm:w-52 sm:h-52 shrink-0 flex items-center justify-center">
+      <div className="relative w-36 h-36 sm:w-44 sm:h-44 lg:w-36 lg:h-36 xl:w-48 xl:h-48 shrink-0 flex items-center justify-center">
         <Pie data={chartData} options={options} />
       </div>
 
       {/* Product List Legend */}
-      <div className="flex-1 w-full space-y-2.5">
+      <div className="flex-1 w-full space-y-2 min-w-0 max-w-full overflow-hidden">
         {data.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No product purchase records found</p>
+          <p className="text-xs text-muted-foreground text-center sm:text-left lg:text-center xl:text-left">
+            No product purchase records found
+          </p>
         ) : (
           data.map((item, idx) => {
             const color = PRODUCT_PALETTE[idx % PRODUCT_PALETTE.length];
@@ -126,9 +128,9 @@ export function ProductSalesPieChart({ data = [] }: ProductSalesPieChartProps) {
             return (
               <div
                 key={item.label}
-                className="flex items-center justify-between text-xs gap-3"
+                className="flex items-center justify-between text-xs gap-2 min-w-0"
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span
                     className="size-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: color }}
@@ -137,9 +139,9 @@ export function ProductSalesPieChart({ data = [] }: ProductSalesPieChartProps) {
                     {item.label}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 text-muted-foreground font-mono">
+                <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground font-mono text-[11px]">
                   <span>{item.count} orders</span>
-                  <span className="text-[10px] w-9 text-right text-muted-foreground/80 font-semibold">
+                  <span className="w-8 text-right text-muted-foreground/80 font-semibold">
                     {pct}%
                   </span>
                 </div>

@@ -33,39 +33,39 @@ export function DashboardStatCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/70 bg-card p-6 shadow-xs",
+        "rounded-xl border border-border/70 bg-card p-4 sm:p-5 lg:p-6 shadow-xs",
         "flex flex-col justify-between transition-colors",
         className
       )}
     >
       {/* Top Header: Title and Minimal Icon (NO hover arrow, NOT clickable) */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-muted-foreground select-none">
+        <span className="text-xs sm:text-sm font-medium text-muted-foreground select-none truncate">
           {title}
         </span>
-        <Icon className="size-4.5 text-muted-foreground/80 shrink-0" />
+        <Icon className="size-4 sm:size-4.5 text-muted-foreground/80 shrink-0" />
       </div>
 
       {/* Main Metric Value */}
-      <div className="mt-3">
+      <div className="mt-2.5 sm:mt-3">
         {isLoading ? (
           <div className="h-8 w-28 bg-muted animate-pulse rounded-md" />
         ) : (
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">
             {value}
           </div>
         )}
       </div>
 
       {/* Bottom Row: Inline change indicator or Subtitle + Dedicated Action Link */}
-      <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground min-h-[22px]">
+      <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-between gap-2 text-xs text-muted-foreground min-h-[22px]">
         {isLoading ? (
           <div className="h-3 w-32 bg-muted animate-pulse rounded-md" />
         ) : typeof change === "number" ? (
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <span
               className={cn(
-                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold",
+                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold shrink-0",
                 change > 0
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                   : change < 0
@@ -77,23 +77,23 @@ export function DashboardStatCard({
               {change < 0 && <RiArrowDownLine className="size-3" />}
               {change > 0 ? `+${change}%` : `${change}%`}
             </span>
-            <span className="text-muted-foreground text-[11px]">
+            <span className="text-muted-foreground text-[11px] truncate" title={changeLabel}>
               {changeLabel}
             </span>
           </div>
         ) : subtitle ? (
-          <span className="text-[11px] text-muted-foreground truncate">
+          <span className="text-[11px] text-muted-foreground truncate flex-1 min-w-0" title={subtitle}>
             {subtitle}
           </span>
         ) : (
-          <span />
+          <span className="flex-1" />
         )}
 
         {/* Dedicated clickable link only on the action text, NOT the card */}
         {href && (
           <Link
             href={href}
-            className="text-[11px] font-medium text-primary hover:text-primary-hover hover:underline transition-colors shrink-0"
+            className="text-[11px] font-medium text-primary hover:text-primary-hover hover:underline transition-colors shrink-0 ml-auto whitespace-nowrap"
           >
             {actionLabel || "View"} &rarr;
           </Link>

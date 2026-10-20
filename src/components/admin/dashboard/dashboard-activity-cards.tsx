@@ -218,7 +218,7 @@ export function DashboardActivityCards({
                       >
                         {c.content}
                       </p>
-                      {c.blog?.title && (
+                      {typeof c.blog === "object" && c.blog !== null && "title" in c.blog && c.blog.title && (
                         <p className="text-[10px] text-muted-foreground/75 truncate mt-0.5">
                           on: {c.blog.title}
                         </p>
