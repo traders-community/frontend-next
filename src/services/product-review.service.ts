@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import {
   ProductReview,
   ProductReviewListResponse,
@@ -34,9 +35,10 @@ export const productReviewService = {
       sort?: "newest" | "highest" | "lowest";
     }
   ) =>
-    api.get<ProductReviewListResponse>(`/products/${productId}/reviews`, {
+    api.get<ProductReviewListResponse>(`/products/${encodeURIComponent(productId)}/reviews`, {
       params,
       revalidate: 60,
+      tags: [CACHE_TAGS.products],
     }),
 
   /**
@@ -47,7 +49,7 @@ export const productReviewService = {
       success: boolean;
       message?: string;
       review?: ProductReview;
-    }>(`/products/${productId}/reviews`, data),
+    }>(`/products/${encodeURIComponent(productId)}/reviews`, data),
 
   /**
    * Admin: Get all reviews with status filters, search, and pagination

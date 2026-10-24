@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import Link from "next/link";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { adminService } from "@/services/admin.service";
 import { authService } from "@/services/auth.service";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { cn } from "@/lib/utils";
 import {
   RiLogoutBoxRLine,
-  RiUser3Line,
   RiSettings4Line,
   RiSunLine,
   RiMoonLine,
@@ -27,23 +25,10 @@ export function AdminProfileDropdown({
   align = "right",
 }: AdminProfileDropdownProps) {
   const router = useRouter();
-  const [profileName, setProfileName] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("admin_display_name") || "Trader's Community";
-      } catch {}
-    }
-    return "Trader's Community";
+  const { profileName, email, avatar } = useAdminProfile({
+    fallbackName: "Trader's Community",
+    refreshOnFocus: true,
   });
-  const [email, setEmail] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("admin_email") || "";
-      } catch {}
-    }
-    return "";
-  });
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -52,71 +37,6 @@ export function AdminProfileDropdown({
     setMenuOpen(false);
     router.push(url);
   };
-
-  const fetchProfile = useCallback(() => {
-    adminService
-      .getProfile()
-      .then((res) => {
-        if (res.data?.profile) {
-          const p = res.data.profile;
-          const name = p.displayName || p.name;
-          if (name) {
-            setProfileName(name);
-            try {
-              localStorage.setItem("admin_display_name", name);
-            } catch {}
-          }
-          const emailVal = p.email;
-          if (emailVal) {
-            setEmail(emailVal);
-            try {
-              localStorage.setItem("admin_email", emailVal);
-            } catch {}
-          }
-          if (p.avatar) {
-            setAvatar(p.avatar);
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchProfile();
-
-    const onProfileUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        const p = customEvent.detail;
-        const name = p.displayName || p.name;
-        if (name) {
-          setProfileName(name);
-          try {
-            localStorage.setItem("admin_display_name", name);
-          } catch {}
-        }
-        const emailVal = p.email;
-        if (emailVal) {
-          setEmail(emailVal);
-          try {
-            localStorage.setItem("admin_email", emailVal);
-          } catch {}
-        }
-        if (p.avatar) {
-          setAvatar(p.avatar);
-        }
-      } else {
-        fetchProfile();
-      }
-    };
-
-    window.addEventListener("admin_profile_updated", onProfileUpdate);
-    window.addEventListener("focus", fetchProfile);
-    return () => {
-      window.removeEventListener("admin_profile_updated", onProfileUpdate);
-      window.removeEventListener("focus", fetchProfile);
-    };
-  }, [fetchProfile]);
 
   // Close dropdown menu on click outside or escape key
   useEffect(() => {

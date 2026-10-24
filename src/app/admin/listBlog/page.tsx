@@ -276,12 +276,9 @@ export default function AdminListBlogPage() {
           <button
             type="button"
             onClick={() => {
+              // Draft previews are authorized by the admin cookie (same origin), never by the URL
               authService.syncTokenCookie();
-              const token = authService.getToken();
-              const targetUrl = !blog.isPublished && token
-                ? `/blog/${blog.slug || blog._id}?previewToken=${encodeURIComponent(token)}`
-                : `/blog/${blog.slug || blog._id}`;
-              window.open(targetUrl, "_blank", "noopener,noreferrer");
+              window.open(`/blog/${blog.slug || blog._id}`, "_blank", "noopener,noreferrer");
             }}
             title={blog.isPublished ? "View article" : "Preview draft article"}
             className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border/60 transition-colors cursor-pointer"

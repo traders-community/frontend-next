@@ -1,21 +1,8 @@
 import type { NextConfig } from "next";
-import fs from "fs";
-import path from "path";
-
-// Synchronize custom icon.png to replace default Vercel favicon
-try {
-  const iconSrc = path.join(process.cwd(), "public", "icon.png");
-  if (fs.existsSync(iconSrc)) {
-    fs.copyFileSync(iconSrc, path.join(process.cwd(), "src", "app", "icon.png"));
-    fs.copyFileSync(iconSrc, path.join(process.cwd(), "src", "app", "favicon.ico"));
-    fs.copyFileSync(iconSrc, path.join(process.cwd(), "public", "favicon.ico"));
-  }
-} catch {
-  // Silent fail
-}
 
 const nextConfig: NextConfig = {
   images: {
+    // Only hosts the app actually serves images from (uploads go to ImageKit)
     remotePatterns: [
       {
         protocol: "https",
@@ -25,11 +12,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "**",
-      },
     ],
+  },
+  experimental: {
+    // Client router cache: dynamic pages (home, articles) are always refetched on navigation,
+    // fully-prefetched links stay reusable for at most 30s so admin updates show up quickly.
+    staleTimes: {
+      dynamic: 0,
+      static: 30,
+    },
   },
   allowedDevOrigins: [
     "localhost:3000",

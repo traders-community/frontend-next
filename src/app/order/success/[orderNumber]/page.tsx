@@ -17,7 +17,7 @@ export async function generateMetadata({
 }: OrderSuccessPageProps): Promise<Metadata> {
   const { orderNumber } = await params;
   return constructMetadata({
-    title: `Order Confirmation #${orderNumber} | Trader's Community`,
+    title: `Order Confirmation #${orderNumber}`,
     description: `Official subscription receipt and Telegram channel activation for Order #${orderNumber}.`,
     noIndex: true, // Keep customer transaction receipts private from crawlers
   });

@@ -7,9 +7,6 @@ import { CourseCard } from "@/components/course/course-card";
 import {
   RiGraduationCapLine,
   RiBookOpenLine,
-  RiShieldCheckLine,
-  RiSparklingLine,
-  RiCompass3Line,
 } from "@remixicon/react";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 

@@ -18,6 +18,7 @@ import { FadeIn } from "@/components/motion";
 import { EASE } from "@/lib/motion";
 
 interface BlogSectionProps {
+  /** Server-rendered first page. `undefined` means "not provided" and triggers a client fetch. */
   initialBlogs?: Blog[];
   initialTotal?: number;
   initialHasMore?: boolean;
@@ -120,7 +121,7 @@ export function BlogSectionSkeleton() {
 }
 
 export function BlogSection({
-  initialBlogs = [],
+  initialBlogs,
   initialTotal = 0,
   initialHasMore = false,
   categories,
@@ -130,6 +131,7 @@ export function BlogSection({
   const searchParams = useSearchParams();
   const urlCategory = searchParams?.get("category") || initialCategory;
   const urlSearch = searchParams?.get("q") || initialSearch;
+  const hasServerData = initialBlogs !== undefined;
 
   const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
   const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
@@ -137,20 +139,39 @@ export function BlogSection({
     categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
   );
   const [isCategoriesLoading, setIsCategoriesLoading] = useState<boolean>(false);
-  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
+  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs ?? []);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [, setTotal] = useState<number>(initialTotal);
 
-  // Initial cold loading: true ONLY if initialBlogs is empty on first mount
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(
-    initialBlogs.length === 0
-  );
+  // Initial cold loading: only when the server did not provide the first page
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(!hasServerData);
   // Category/search filtering: round spinner shown when clicking categories or searching
   const [isFiltering, setIsFiltering] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
   const requestIdRef = useRef<number>(0);
+
+  // When the server streams a fresh first page (e.g. navigating back to "/" after an admin
+  // update), adopt it instead of keeping the previously rendered list.
+  const [syncedInitialBlogs, setSyncedInitialBlogs] = useState(initialBlogs);
+  if (hasServerData && initialBlogs !== syncedInitialBlogs) {
+    setSyncedInitialBlogs(initialBlogs);
+    setBlogs(initialBlogs);
+    setPage(1);
+    setHasMore(initialHasMore);
+    setTotal(initialTotal);
+    setSelectedCategory(urlCategory);
+    setSearchQuery(urlSearch);
+    setIsInitialLoading(false);
+    setIsFiltering(false);
+    setLoadingMore(false);
+  }
+
+  // Server data supersedes any client request still in flight
+  useEffect(() => {
+    requestIdRef.current += 1;
+  }, [initialBlogs]);
 
   // Synchronize URL query params cleanly without reloading page
   const updateUrlParams = useCallback((cat: string, query: string) => {
@@ -178,13 +199,15 @@ export function BlogSection({
       cat: string,
       query: string,
       targetPage: number = 1,
-      append: boolean = false
+      append: boolean = false,
+      /** When true, keep showing current cards and swap in the result (no spinner) */
+      silent: boolean = false
     ) => {
       const currentRequestId = ++requestIdRef.current;
 
       if (append) {
         setLoadingMore(true);
-      } else {
+      } else if (!silent) {
         setIsFiltering(true);
       }
 
@@ -233,15 +256,14 @@ export function BlogSection({
     [updateUrlParams]
   );
 
-  // Initial mount: if initialBlogs is empty, fetch fresh data
+  // Always re-check the API when this section mounts (Soft-nav Home ← About, hard load, etc.).
+  // If the server already painted a list, refresh silently so the UI does not flash a spinner.
   useEffect(() => {
-    if (initialBlogs.length === 0) {
-      setIsInitialLoading(true);
-      fetchFilteredBlogs(selectedCategory, searchQuery, 1, false);
-    }
+    fetchFilteredBlogs(selectedCategory, searchQuery, 1, false, hasServerData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / Soft-nav remount only
   }, []);
 
-  // Fetch active categories on mount to ensure tabs match latest categories in DB
+  // Fallback only: categories are normally provided by the server
   useEffect(() => {
     if (categories && categories.length > 0) {
       return;

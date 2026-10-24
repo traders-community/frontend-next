@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { adminService } from "@/services/admin.service";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminProfileDropdown } from "@/components/admin/admin-profile-dropdown";
 import { FadeIn } from "@/components/motion";
@@ -39,45 +40,21 @@ const getComparisonPeriodLabel = (p: DashboardPeriod) => {
   }
 };
 
-export default function AdminDashboardPage() {
-  const [profileName, setProfileName] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("admin_display_name") || "";
-      } catch {}
-    }
-    return "";
-  });
+const DEFAULT_PERIOD: DashboardPeriod = "30d";
 
-  const [period, setPeriod] = useState<DashboardPeriod>("30d");
+export default function AdminDashboardPage() {
+  const { profileName } = useAdminProfile();
+
+  const [period, setPeriod] = useState<DashboardPeriod>(DEFAULT_PERIOD);
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Locks the period filter while a period change is in flight
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const fetchProfile = useCallback(() => {
-    adminService
-      .getProfile()
-      .then((res) => {
-        if (res.data?.profile) {
-          const p = res.data.profile;
-          const name = p.displayName || p.name || "";
-          if (name) {
-            setProfileName(name);
-            try {
-              localStorage.setItem("admin_display_name", name);
-            } catch {}
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const fetchDashboard = useCallback((selectedPeriod: DashboardPeriod, showSpinner = false) => {
-    if (showSpinner) {
-      setIsLoading(true);
-    } else {
-      setIsRefreshing(true);
-    }
+  // Single request per load/period change: skeleton always, filter locked on period changes
+  const fetchDashboard = useCallback((selectedPeriod: DashboardPeriod, isPeriodChange = false) => {
+    setIsLoading(true);
+    if (isPeriodChange) setIsRefreshing(true);
 
     adminService
       .getDashboard(selectedPeriod)
@@ -96,35 +73,13 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchProfile();
-    fetchDashboard(period, true);
-
-    const onProfileUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        const p = customEvent.detail;
-        const name = p.displayName || p.name || "";
-        if (name) {
-          setProfileName(name);
-          try {
-            localStorage.setItem("admin_display_name", name);
-          } catch {}
-        }
-      } else {
-        fetchProfile();
-      }
-    };
-
-    window.addEventListener("admin_profile_updated", onProfileUpdate);
-    return () => {
-      window.removeEventListener("admin_profile_updated", onProfileUpdate);
-    };
-  }, [fetchProfile, fetchDashboard, period]);
+    fetchDashboard(DEFAULT_PERIOD);
+  }, [fetchDashboard]);
 
   const handlePeriodChange = (newPeriod: DashboardPeriod) => {
     if (newPeriod === period) return;
     setPeriod(newPeriod);
-    fetchDashboard(newPeriod, false);
+    fetchDashboard(newPeriod, true);
   };
 
   const firstName = profileName.trim() ? profileName.trim().split(" ")[0] : "";

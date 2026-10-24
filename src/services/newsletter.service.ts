@@ -17,13 +17,6 @@ export const newsletterService = {
   },
 
   /**
-   * Public: Unsubscribe from newsletter
-   */
-  async unsubscribe(params: { token?: string; email?: string }) {
-    return api.post<ApiResponse>("/newsletter/unsubscribe", params);
-  },
-
-  /**
    * Admin: Get paginated subscribers
    */
   async getSubscribers(

@@ -7,9 +7,12 @@ import { Footer } from "@/components/layout/footer";
 import { DisclaimerGate } from "@/components/common/disclaimer-gate";
 import { ScrollToTop } from "@/components/common/scroll-to-top";
 import { authService } from "@/services/auth.service";
+import { SiteSettings } from "@/types";
 
 interface AppShellProps {
   children: React.ReactNode;
+  /** Public site settings fetched by the root layout on the server */
+  initialSettings?: SiteSettings;
 }
 
 /**
@@ -17,7 +20,7 @@ interface AppShellProps {
  * Admin and Login routes omit public marketing headers, footers, and disclaimer gates,
  * presenting a dedicated, distraction-free interface.
  */
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, initialSettings }: AppShellProps) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export function AppShell({ children }: AppShellProps) {
     <>
       <DisclaimerGate />
       <ScrollToTop />
-      <Navbar />
+      <Navbar initialSettings={initialSettings} />
       <main className="flex-1 relative">{children}</main>
       <Footer />
     </>

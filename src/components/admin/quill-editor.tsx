@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { ArticleRenderer } from "@/components/blog/article-renderer";
 import { cn } from "@/lib/utils";
 import "@/styles/quill.snow.css";
@@ -122,7 +122,8 @@ export function QuillEditor({
   // Warning dialog shown when switching to Visual Editor with rich HTML
   const [showRichHtmlWarning, setShowRichHtmlWarning] = useState(false);
   const pendingTabRef = useRef<"editor" | "html" | "preview" | null>(null);
-  const userAllowedRichLossRef = useRef(false);
+  // Drives the inline warning, so it must be state (refs cannot be read during render)
+  const [userAllowedRichLoss, setUserAllowedRichLoss] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const quillInstanceRef = useRef<QuillInstance | null>(null);
@@ -217,11 +218,11 @@ export function QuillEditor({
 
   // If value arrives asynchronously with rich HTML while on editor tab, route safely to HTML tab
   useEffect(() => {
-    if (userAllowedRichLossRef.current) return;
+    if (userAllowedRichLoss) return;
     if (value && hasRichHtml(value) && activeTab === "editor") {
       setActiveTab("html");
     }
-  }, [value, activeTab]);
+  }, [value, activeTab, userAllowedRichLoss]);
 
   // Sync external changes (e.g. form reset or initialData load when empty) into Quill
   useEffect(() => {
@@ -247,7 +248,7 @@ export function QuillEditor({
       nextTab === "editor" &&
       activeTab !== "editor" &&
       hasRichHtml(value) &&
-      !userAllowedRichLossRef.current
+      !userAllowedRichLoss
     ) {
       // Warn user that switching to Quill will lose rich formatting
       pendingTabRef.current = nextTab;
@@ -264,7 +265,7 @@ export function QuillEditor({
   // Called when user confirms they accept losing rich styling
   const confirmRichHtmlSwitch = () => {
     setShowRichHtmlWarning(false);
-    userAllowedRichLossRef.current = true;
+    setUserAllowedRichLoss(true);
     const next = pendingTabRef.current ?? "editor";
     pendingTabRef.current = null;
 
@@ -287,7 +288,7 @@ export function QuillEditor({
 
   const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextHtml = e.target.value;
-    userAllowedRichLossRef.current = false;
+    setUserAllowedRichLoss(false);
     onChange(nextHtml);
   };
 
@@ -333,7 +334,7 @@ export function QuillEditor({
       )}
       {/* Tab Switcher */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-neutral-100 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744] shadow-2xs">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-neutral-100 dark:bg-admin-field border border-border/80 dark:border-admin-field-border shadow-2xs">
           {(["editor", "html", "preview"] as const).map((tab) => (
             <button
               key={tab}
@@ -343,7 +344,7 @@ export function QuillEditor({
                 "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer",
                 activeTab === tab
                   ? "bg-black text-white dark:bg-white dark:text-black shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-[#131e38]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-surface-hover"
               )}
             >
               {tab === "editor" ? "Visual Editor" : tab === "html" ? "HTML Source" : "Live Preview"}
@@ -360,7 +361,7 @@ export function QuillEditor({
 
       {/* Editor Tab */}
       <div className={cn("w-full transition-all", activeTab === "editor" ? "block" : "hidden")}>
-        {hasRichHtml(value) && !userAllowedRichLossRef.current && (
+        {hasRichHtml(value) && !userAllowedRichLoss && (
           <div className="mb-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
             <span className="text-base leading-none mt-0.5 select-none">⚠️</span>
             <div className="space-y-1 flex-1">
@@ -388,7 +389,7 @@ export function QuillEditor({
             </p>
           </div>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-[#1a2744] bg-neutral-50 dark:bg-[#060b18] shadow-2xs">
+          <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-admin-field-border bg-neutral-50 dark:bg-admin-field shadow-2xs">
             {!isQuillReady && (
               <div className="min-h-[280px] p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
                 <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -408,13 +409,13 @@ export function QuillEditor({
 
       {/* HTML Tab */}
       {activeTab === "html" && (
-        <div className="rounded-2xl overflow-hidden border border-border/80 dark:border-[#1a2744] bg-neutral-50 dark:bg-[#060b18] shadow-2xs">
+        <div className="rounded-2xl overflow-hidden border border-border/80 dark:border-admin-field-border bg-neutral-50 dark:bg-admin-field shadow-2xs">
           <textarea
             value={value}
             onChange={handleHtmlChange}
             rows={16}
             placeholder="<p>Write your raw HTML content here...</p>"
-            className="w-full p-4 font-mono text-xs leading-relaxed bg-neutral-50 dark:bg-[#060b18] text-foreground border-none outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
+            className="w-full p-4 font-mono text-xs leading-relaxed bg-neutral-50 dark:bg-admin-field text-foreground border-none outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-y"
           />
         </div>
       )}

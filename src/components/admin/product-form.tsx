@@ -20,7 +20,7 @@ import { productService } from "@/services/product.service";
 import { Product, DurationUnit } from "@/types";
 import { QuillEditor } from "@/components/admin/quill-editor";
 import { AdminSelect } from "@/components/admin/admin-select";
-import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { cn } from "@/lib/utils";
 
 export interface ProductFormProps {
@@ -47,7 +47,7 @@ interface FormVariation {
 
 // Universal unified input class for tactile contrast, depth, and identical typography
 const inputBase =
-  "w-full px-3.5 py-2.5 text-sm font-medium bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744] rounded-xl text-foreground placeholder:text-muted-foreground/40 dark:placeholder:text-muted-foreground/30 shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+  "w-full px-3.5 py-2.5 text-sm font-medium bg-neutral-50 dark:bg-admin-field border border-border/80 dark:border-admin-field-border rounded-xl text-foreground placeholder:text-muted-foreground/40 dark:placeholder:text-muted-foreground/30 shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
 
 export function ProductForm({
   initialData,
@@ -586,7 +586,7 @@ export function ProductForm({
         {variations.length === 0 ? (
           <div
             onClick={handleAddVariation}
-            className="p-8 rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/50 text-center space-y-2 cursor-pointer transition-colors bg-neutral-50/50 dark:bg-[#060b18]/40"
+            className="p-8 rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/50 text-center space-y-2 cursor-pointer transition-colors bg-neutral-50/50 dark:bg-admin-field/40"
           >
             <div className="h-10 w-10 mx-auto rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground">
               <RiPriceTag3Line className="h-5 w-5" />
@@ -623,7 +623,7 @@ export function ProductForm({
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer",
                         v.isDefault
                           ? "bg-primary/15 text-primary border border-primary/30 font-semibold"
-                          : "bg-neutral-100 text-neutral-600 dark:bg-[#060b18] dark:text-neutral-400 hover:text-foreground border border-border/70"
+                          : "bg-neutral-100 text-neutral-600 dark:bg-admin-field dark:text-neutral-400 hover:text-foreground border border-border/70"
                       )}
                       title={v.isDefault ? "Default pre-selected plan" : "Click to set as default"}
                     >
@@ -864,9 +864,9 @@ export function ProductForm({
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              className="aspect-square max-w-xs mx-auto w-full rounded-2xl border-2 border-dashed border-border/80 dark:border-[#1e2c4f] hover:border-primary/60 bg-neutral-50 dark:bg-[#060b18] hover:bg-neutral-100/80 dark:hover:bg-[#0a1226] transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer p-6"
+              className="aspect-square max-w-xs mx-auto w-full rounded-2xl border-2 border-dashed border-border/80 dark:border-admin-field-border-strong hover:border-primary/60 bg-neutral-50 dark:bg-admin-field hover:bg-neutral-100/80 dark:hover:bg-admin-field-hover transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer p-6"
             >
-              <div className="h-10 w-10 rounded-xl bg-card dark:bg-[#0d162c] border border-border/80 dark:border-[#1e2c4f] flex items-center justify-center text-primary">
+              <div className="h-10 w-10 rounded-xl bg-card border border-border/80 dark:border-admin-field-border-strong flex items-center justify-center text-primary">
                 <RiImageAddLine className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold text-foreground text-center">
@@ -880,7 +880,7 @@ export function ProductForm({
         </div>
 
         {/* Telegram Channel & Group Integration Card */}
-        <div className="space-y-3.5 p-4 rounded-2xl bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744]">
+        <div className="space-y-3.5 p-4 rounded-2xl bg-neutral-50 dark:bg-admin-field border border-border/80 dark:border-admin-field-border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -947,7 +947,7 @@ export function ProductForm({
         </div>
 
         {/* Integrated Publication Status Strip — Clean, No Empty Space */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-neutral-50 dark:bg-admin-field border border-border/80 dark:border-admin-field-border">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
               Publication Status
@@ -1020,7 +1020,7 @@ export function ProductForm({
         {points.length === 0 ? (
           <div
             onClick={handleAddPoint}
-            className="p-5 rounded-xl border border-dashed border-border/80 hover:border-primary/50 text-center text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors bg-neutral-50/50 dark:bg-[#060b18]/40"
+            className="p-5 rounded-xl border border-dashed border-border/80 hover:border-primary/50 text-center text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors bg-neutral-50/50 dark:bg-admin-field/40"
           >
             No feature highlights added yet. Click &quot;+ Add Point&quot; to add a bullet point.
           </div>

@@ -49,7 +49,7 @@ export async function generateMetadata({
     : "";
 
   return constructMetadata({
-    title: `${product.title} | Traders Community`,
+    title: product.title,
     description:
       plainShortDescription ||
       `Join ${product.title}. Starting at ₹${minPrice.toLocaleString("en-IN")}. Verified trading track.`,

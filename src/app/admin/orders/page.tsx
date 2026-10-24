@@ -837,7 +837,7 @@ export default function AdminOrdersPage() {
               )}
 
               <p className="text-[11px] text-muted-foreground/80 italic pt-1 border-t border-blue-500/10">
-                ⚡ Note: On local development environments (<code className="font-mono text-[10px]">http://localhost</code>), Telegram cloud webhooks cannot ping localhost. Click <strong>"Mark User as Joined"</strong> to test or manually verify member join status.
+                ⚡ Note: On local development environments (<code className="font-mono text-[10px]">http://localhost</code>), Telegram cloud webhooks cannot ping localhost. Click <strong>&quot;Mark User as Joined&quot;</strong> to test or manually verify member join status.
               </p>
             </div>
 

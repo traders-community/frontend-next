@@ -1,6 +1,29 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/seo.config";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import { blogService, productService } from "@/services";
+import { Blog } from "@/types";
+
+// The public blog endpoint caps `limit` at 24, so the sitemap walks every page.
+const BLOG_PAGE_SIZE = 24;
+const MAX_BLOG_PAGES = 100;
+const SITEMAP_REVALIDATE_SECONDS = 3600;
+
+async function fetchAllPublishedBlogs(): Promise<Blog[]> {
+  const blogs: Blog[] = [];
+  for (let page = 1; page <= MAX_BLOG_PAGES; page++) {
+    const res = await blogService.getBlogs({
+      page,
+      limit: BLOG_PAGE_SIZE,
+      revalidate: SITEMAP_REVALIDATE_SECONDS,
+      tags: [CACHE_TAGS.blogs],
+    });
+    if (!res.data?.success) break;
+    blogs.push(...(res.data.blogs || []));
+    if (!res.data.hasMore) break;
+  }
+  return blogs;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
@@ -43,12 +66,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [blogsRes, productsRes] = await Promise.all([
-      blogService.getBlogs({ limit: 100, revalidate: 3600 }).catch(() => null),
-      productService.getPublicProducts().catch(() => null),
+    const [blogs, productsRes] = await Promise.all([
+      fetchAllPublishedBlogs(),
+      productService.getPublicProducts(),
     ]);
 
-    const blogs = blogsRes?.data?.blogs || [];
     if (blogs.length > 0) {
       const blogUrls: MetadataRoute.Sitemap = blogs
         .filter((b) => b.isPublished !== false)

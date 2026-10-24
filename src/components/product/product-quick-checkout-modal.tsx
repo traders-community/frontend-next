@@ -190,6 +190,8 @@ export function ProductQuickCheckoutModal({
       const orderData = orderRes.data;
       const razorpayKey =
         orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+      // The backend only issues mock orders in local development without gateway keys
+      const isMockOrder = orderData.razorpayOrderId?.startsWith("order_mock_") ?? false;
 
       // 3. Check for window.Razorpay instance
       const RazorpayConstructor = (window as unknown as { Razorpay: unknown }).Razorpay as
@@ -197,7 +199,7 @@ export function ProductQuickCheckoutModal({
         | undefined;
 
       // Handle Live or Sandbox Razorpay Modal
-      if (RazorpayConstructor && razorpayKey && !razorpayKey.includes("placeholder")) {
+      if (!isMockOrder && RazorpayConstructor && razorpayKey && !razorpayKey.includes("placeholder")) {
         const options = {
           key: razorpayKey,
           amount: orderData.amountInPaise,
@@ -250,8 +252,13 @@ export function ProductQuickCheckoutModal({
 
         const rzp = new RazorpayConstructor(options);
         rzp.open();
+      } else if (!isMockOrder) {
+        // Real order but the gateway could not be initialised (script blocked / key missing).
+        // Never fabricate a payment here; the order stays pending so the customer can retry.
+        toast.error("Payment gateway could not be loaded. Please check your connection and try again.");
+        setProcessingPayment(false);
       } else {
-        // Fallback for Development & Sandbox testing when placeholder keys are active
+        // Local development only: the backend created a mock order (no Razorpay keys configured)
         toast.info("Simulating secure test payment verification...");
         const verifyRes = await orderService.verifyRazorpayPayment({
           orderNumber: orderData.orderNumber,

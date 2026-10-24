@@ -3,10 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import {
-  RiUser3Line,
   RiMailLine,
   RiCheckLine,
-  RiCloseLine,
   RiDeleteBinLine,
   RiAddLine,
   RiCheckboxCircleLine,

@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import {
   Product,
   ProductListResponse,
@@ -12,6 +13,7 @@ export const productService = {
   getPublicProducts: () =>
     api.get<{ success: boolean; products: Product[] }>("/products", {
       revalidate: 60,
+      tags: [CACHE_TAGS.products],
     }),
 
   /**
@@ -19,12 +21,12 @@ export const productService = {
    */
   getProductBySlugOrId: (slugOrId: string) =>
     api.get<{ success: boolean; product?: Product; message?: string }>(
-      `/products/${slugOrId}`,
-      { revalidate: 60 }
+      `/products/${encodeURIComponent(slugOrId)}`,
+      { revalidate: 60, tags: [CACHE_TAGS.products] }
     ),
 
   /**
-   * Admin / Public: Check slug availability
+   * Admin: Check slug availability
    */
   checkSlugAvailability: (slug: string, excludeId?: string) =>
     api.get<{

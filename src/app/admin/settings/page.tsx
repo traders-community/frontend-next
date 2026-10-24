@@ -21,13 +21,13 @@ import {
   RiInstagramLine,
   RiGithubLine,
   RiLink,
-  RiShieldCheckLine,
   RiInformationLine,
   RiCameraLine,
   RiMailSendLine,
 } from "@remixicon/react";
 import { adminService } from "@/services/admin.service";
 import { newsletterService } from "@/services/newsletter.service";
+import { dispatchAdminProfileUpdated, rememberAdminProfile } from "@/lib/admin-profile-storage";
 import { AdminProfile, SiteSettings } from "@/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -260,26 +260,9 @@ function SettingsContent() {
           avatarFileInputRef.current.value = "";
         }
 
-        // Sync local storage display details & dispatch custom event for sidebar
-        if (typeof window !== "undefined") {
-          const name = updated.displayName || updated.name;
-          if (name) {
-            try {
-              localStorage.setItem("admin_display_name", name);
-            } catch {}
-          }
-          const email = updated.email;
-          if (email) {
-            try {
-              localStorage.setItem("admin_email", email);
-            } catch {}
-          }
-          window.dispatchEvent(
-            new CustomEvent("admin_profile_updated", {
-              detail: updated,
-            })
-          );
-        }
+        // Sync cached display details & notify the sidebar / dropdown / dashboard
+        rememberAdminProfile(updated);
+        dispatchAdminProfileUpdated(updated);
       } else {
         toast.error(res.data?.message || "Failed to update profile");
       }

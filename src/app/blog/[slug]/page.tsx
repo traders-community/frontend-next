@@ -11,37 +11,41 @@ import { BlogDetailView } from "@/components/blog/blog-detail-view";
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ previewToken?: string }>;
 }
 
-// Enable ISR Caching on Vercel Edge with 60-second background revalidation
-export const revalidate = 60;
+// Always fetch the article fresh so Soft-nav after an admin edit shows new content/images
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+/**
+ * Admin preview authorization comes from the session cookie mirrored by authService,
+ * never from the URL, so tokens stay out of browser history, server logs and referrers.
+ */
+const getAdminToken = async (): Promise<string | undefined> => {
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get("admin_token")?.value || cookieStore.get("token")?.value;
+    return raw ? decodeURIComponent(raw) : undefined;
+  } catch {
+    // Static build context
+    return undefined;
+  }
+};
 
 /**
  * Deduplicated Blog Fetcher (memoized per-request lifecycle via React cache)
  */
 const getCachedBlog = cache(async (slug: string, token?: string) => {
-  return blogService.getBlogById(slug, token ? 0 : 60, token);
+  return blogService.getBlogById(slug, 0, token);
 });
 
 /**
  * Generate dynamic SEO metadata for each blog article.
  * Unpublished articles are strictly hidden behind standard 404 metadata for all non-admin visitors.
  */
-export async function generateMetadata({ params, searchParams }: BlogPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  let token = resolvedSearchParams.previewToken;
-
-  if (!token) {
-    try {
-      const cookieStore = await cookies();
-      const raw = cookieStore.get("admin_token")?.value || cookieStore.get("token")?.value;
-      token = raw ? decodeURIComponent(raw) : undefined;
-    } catch {
-      // Static build context
-    }
-  }
+  const token = await getAdminToken();
 
   const res = await getCachedBlog(slug, token);
   const blog = res.data?.blog;
@@ -89,25 +93,14 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
  * 3. Unpublished article + Public user: Strictly renders standard 404 (notFound())
  *    without any loading indicator or hint that a draft exists.
  */
-export default async function BlogDetailPage({ params, searchParams }: BlogPageProps) {
+export default async function BlogDetailPage({ params }: BlogPageProps) {
   const { slug } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  let token = resolvedSearchParams.previewToken;
-
-  if (!token) {
-    try {
-      const cookieStore = await cookies();
-      const raw = cookieStore.get("admin_token")?.value || cookieStore.get("token")?.value;
-      token = raw ? decodeURIComponent(raw) : undefined;
-    } catch {
-      // Static build context
-    }
-  }
+  const token = await getAdminToken();
 
   // Concurrent server-side data fetching with ISR caching (or no-store for admin preview)
   const [blogRes, profileRes, commentsRes] = await Promise.all([
     getCachedBlog(slug, token),
-    settingsService.getPublicProfile(60),
+    settingsService.getPublicProfile(0),
     blogService.getBlogComments(slug, { page: 1, limit: 10 }, token),
   ]);
 

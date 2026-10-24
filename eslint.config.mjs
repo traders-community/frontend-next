@@ -15,12 +15,16 @@ const eslintConfig = defineConfig([
   ]),
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/preserve-manual-memoization": "off",
-      "react-hooks/exhaustive-deps": "off",
-      "@next/next/no-location-assign-relative-destination": "off",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
+      "react-hooks/exhaustive-deps": "warn",
+      // React Compiler lint rules: tracked as warnings until the flagged effects are refactored
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
+      // Admin tables intentionally render raw <img> for ImageKit thumbnails (no layout shift budget)
       "@next/next/no-img-element": "off",
     },
   },

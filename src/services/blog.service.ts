@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import { Blog, BlogListResponse, Comment } from "@/types";
 
 export interface GetBlogsParams {
@@ -7,6 +8,8 @@ export interface GetBlogsParams {
   category?: string;
   search?: string;
   revalidate?: number | false;
+  /** Next.js cache tags (server-side only) so the backend can purge via /api/revalidate */
+  tags?: string[];
 }
 
 export interface SingleBlogResponse {
@@ -35,7 +38,7 @@ export const blogService = {
    * Fetches paginated blogs with optional category and search filters.
    */
   async getBlogs(params: GetBlogsParams = {}) {
-    const { page = 1, limit = 8, category, search, revalidate } = params;
+    const { page = 1, limit = 8, category, search, revalidate, tags } = params;
 
     const queryParams: Record<string, string | number> = {
       page,
@@ -53,20 +56,23 @@ export const blogService = {
     return api.get<BlogListResponse>("/blog/all", {
       params: queryParams,
       revalidate,
+      tags,
     });
   },
 
   /**
    * Fetches a single blog by its ID/slug.
-   * If token is provided, attaches Bearer token to allow previewing unpublished drafts.
+   * If token is provided, attaches Bearer token to allow previewing unpublished drafts
+   * (admin requests are never cached).
    */
   async getBlogById(id: string, revalidate?: number | false, token?: string) {
     const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
     }
-    return api.get<SingleBlogResponse>(`/blog/${id}`, {
+    return api.get<SingleBlogResponse>(`/blog/${encodeURIComponent(id)}`, {
       revalidate,
+      tags: token ? undefined : [CACHE_TAGS.blogs],
       headers,
     });
   },

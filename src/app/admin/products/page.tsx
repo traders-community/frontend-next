@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   RiShoppingBag3Line,
@@ -14,7 +12,6 @@ import {
   RiStarFill,
   RiFileList3Line,
   RiInformationLine,
-  RiPriceTag3Line,
 } from "@remixicon/react";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
@@ -27,7 +24,6 @@ import { ProductForm } from "@/components/admin/product-form";
 import { formatDate, formatDateTime, cn } from "@/lib/utils";
 
 export default function AdminProductsPage() {
-  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);

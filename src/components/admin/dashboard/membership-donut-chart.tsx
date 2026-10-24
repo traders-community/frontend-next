@@ -76,7 +76,6 @@ export function MembershipDonutChart({
   }, [data, totalCount, isDark]);
 
   const options: ChartOptions<"doughnut"> = useMemo(() => {
-    const textColor = isDark ? "rgba(244, 244, 244, 0.7)" : "rgba(32, 32, 32, 0.7)";
     const tooltipBg = isDark ? "#0d162c" : "#ffffff";
     const tooltipTitle = isDark ? "#ffffff" : "#111827";
     const tooltipBody = isDark ? "#d1d5db" : "#374151";

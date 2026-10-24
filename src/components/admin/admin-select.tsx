@@ -82,7 +82,7 @@ export function AdminSelect({
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         className={cn(
           "w-full px-3.5 py-2.5 text-sm font-medium rounded-xl text-foreground text-left",
-          "bg-neutral-50 dark:bg-[#060b18] border border-border/80 dark:border-[#1a2744]",
+          "bg-neutral-50 dark:bg-admin-field border border-border/80 dark:border-admin-field-border",
           "flex items-center justify-between gap-2 transition-all cursor-pointer shadow-2xs select-none",
           "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
           isOpen && "ring-2 ring-primary/20 border-primary",
@@ -119,7 +119,7 @@ export function AdminSelect({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-xl bg-card border border-border/80 dark:border-[#1e2c4f] shadow-2xl p-1.5 space-y-0.5 max-h-60 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-100"
+          className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-xl bg-card border border-border/80 dark:border-admin-field-border-strong shadow-2xl p-1.5 space-y-0.5 max-h-60 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-100"
         >
           {normalizedOptions.length === 0 ? (
             <div className="p-3 text-xs text-muted-foreground text-center">
@@ -138,7 +138,7 @@ export function AdminSelect({
                     "flex items-center justify-between gap-2",
                     isSelected
                       ? "bg-primary/15 text-primary font-semibold"
-                      : "text-foreground hover:bg-neutral-100 dark:hover:bg-[#131e38]"
+                      : "text-foreground hover:bg-neutral-100 dark:hover:bg-surface-hover"
                   )}
                   role="option"
                   aria-selected={isSelected}

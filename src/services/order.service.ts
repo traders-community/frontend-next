@@ -66,24 +66,6 @@ export const orderService = {
     ),
 
   /**
-   * Public: Customer Checkout / Create order
-   */
-  createPublicOrder: (data: {
-    productId: string;
-    variationId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    telegramUsername?: string;
-  }) =>
-    api.post<{
-      success: boolean;
-      message?: string;
-      order?: Order;
-    }>("/orders/checkout", data),
-
-  /**
    * Public: Send email verification OTP for checkout
    */
   sendOtp: (email: string) =>
@@ -150,7 +132,7 @@ export const orderService = {
       success: boolean;
       receipt?: Order;
       message?: string;
-    }>(`/orders/receipt/${orderNumber}`),
+    }>(`/orders/receipt/${encodeURIComponent(orderNumber)}`),
 };
 
 

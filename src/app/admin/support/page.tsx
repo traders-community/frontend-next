@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import {
   RiCustomerService2Line,
-  RiMailLine,
   RiPhoneLine,
   RiInboxLine,
   RiCheckboxCircleLine,

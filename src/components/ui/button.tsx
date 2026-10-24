@@ -11,6 +11,9 @@ export interface ButtonProps
   variant?: "primary" | "secondary" | "outline" | "ghost" | "tertiary";
   size?: "sm" | "md" | "lg" | "icon";
   href?: string;
+  /** Anchor attributes forwarded when `href` is set */
+  target?: React.HTMLAttributeAnchorTarget;
+  rel?: string;
   className?: string;
   children?: React.ReactNode;
 }
@@ -41,6 +44,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       href,
+      target,
+      rel,
       className,
       children,
       disabled,
@@ -67,6 +72,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       : {};
 
     if (href) {
+      // Shared attributes that make sense on both a button and a link
+      const { id, title, role, tabIndex, style, onClick } = props;
       return (
         <motion.div
           className="inline-flex"
@@ -75,6 +82,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           <Link
             href={href}
             className={combinedClasses}
+            target={target}
+            rel={rel ?? (target === "_blank" ? "noopener noreferrer" : undefined)}
+            aria-label={props["aria-label"]}
+            aria-disabled={disabled || undefined}
+            id={id}
+            title={title}
+            role={role}
+            tabIndex={tabIndex}
+            style={style as React.CSSProperties | undefined}
+            onClick={onClick as React.MouseEventHandler<HTMLAnchorElement> | undefined}
           >
             {children}
           </Link>

@@ -15,6 +15,7 @@ import {
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authService } from "@/services/auth.service";
+import { storeAdminEmail } from "@/lib/admin-profile-storage";
 import { motion } from "motion/react";
 import { modalCardVariants } from "@/lib/motion";
 
@@ -61,9 +62,7 @@ export default function AdminLoginPage() {
 
       if (res.success && res.data?.token) {
         authService.setToken(res.data.token);
-        try {
-          localStorage.setItem("admin_email", email.trim());
-        } catch {}
+        storeAdminEmail(email.trim());
         const destination = getRedirectUrl();
         toast.success(
           destination !== "/admin"

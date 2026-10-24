@@ -1,6 +1,28 @@
 import { api } from "@/lib/api/client";
 import { LoginCredentials, AuthResponse } from "@/types";
 
+const TOKEN_COOKIE_NAMES = ["admin_token", "token"] as const;
+const COOKIE_MAX_AGE_SECONDS = 604800; // 7 days
+
+/** Cookie attributes; `Secure` is added automatically on HTTPS origins */
+const cookieAttributes = () => {
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  return `path=/; SameSite=Lax${secure}`;
+};
+
+const writeTokenCookies = (token: string) => {
+  const encoded = encodeURIComponent(token);
+  for (const name of TOKEN_COOKIE_NAMES) {
+    document.cookie = `${name}=${encoded}; ${cookieAttributes()}; max-age=${COOKIE_MAX_AGE_SECONDS}`;
+  }
+};
+
+const clearTokenCookies = () => {
+  for (const name of TOKEN_COOKIE_NAMES) {
+    document.cookie = `${name}=; ${cookieAttributes()}; max-age=0`;
+  }
+};
+
 export const authService = {
   /**
    * Authenticates admin with email and password.
@@ -28,9 +50,7 @@ export const authService = {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem("token", token);
-      const encoded = encodeURIComponent(token);
-      document.cookie = `admin_token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
-      document.cookie = `token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
+      writeTokenCookies(token);
     } catch (e) {
       console.error("Failed to store auth token:", e);
     }
@@ -43,8 +63,7 @@ export const authService = {
     if (typeof window === "undefined") return;
     try {
       localStorage.removeItem("token");
-      document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      clearTokenCookies();
     } catch (e) {
       console.error("Failed to remove auth token:", e);
     }
@@ -58,12 +77,9 @@ export const authService = {
     try {
       const token = this.getToken();
       if (token) {
-        const encoded = encodeURIComponent(token);
-        document.cookie = `admin_token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
-        document.cookie = `token=${encoded}; path=/; SameSite=Lax; max-age=604800`;
+        writeTokenCookies(token);
       } else {
-        document.cookie = "admin_token=; path=/; max-age=0; SameSite=Lax";
-        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+        clearTokenCookies();
       }
     } catch {
       // Storage/cookie restricted

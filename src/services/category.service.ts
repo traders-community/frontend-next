@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import { Category } from "@/types";
 
 export interface PublicCategoriesResponse {
@@ -17,6 +18,7 @@ export const categoryService = {
   async getPublicCategories(revalidate: number | false = 0) {
     return api.get<PublicCategoriesResponse>("/admin/public-categories", {
       revalidate,
+      tags: [CACHE_TAGS.categories],
     });
   },
 

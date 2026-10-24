@@ -20,11 +20,18 @@ import { dropdownMenuVariants } from "@/lib/motion";
 import { settingsService } from "@/services";
 import { SiteSettings } from "@/types";
 
-export function Navbar() {
+const DEFAULT_GRAPHY_URL = "https://traderscommunity.graphy.com/";
+
+interface NavbarProps {
+  /** Site settings resolved by the root layout on the server (avoids a client fetch on mount) */
+  initialSettings?: SiteSettings;
+}
+
+export function Navbar({ initialSettings }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const [graphyUrl, setGraphyUrl] = useState("https://traderscommunity.graphy.com/");
+  const [graphyUrl, setGraphyUrl] = useState(initialSettings?.graphyUrl || DEFAULT_GRAPHY_URL);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -39,7 +46,10 @@ export function Navbar() {
         // graceful fallback to default
       }
     }
-    loadSettings();
+    // Fallback only: the server normally provides settings through the layout
+    if (!initialSettings) {
+      loadSettings();
+    }
 
     const handleSettingsUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<SiteSettings>;
@@ -53,7 +63,7 @@ export function Navbar() {
       isMounted = false;
       window.removeEventListener("admin_settings_updated", handleSettingsUpdated);
     };
-  }, []);
+  }, [initialSettings]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -146,7 +156,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  prefetch={!isExternal}
+                  prefetch={isExternal ? false : undefined}
                   target={isExternal ? "_blank" : undefined}
                   rel={isExternal ? "noopener noreferrer" : undefined}
                   className={cn(
@@ -218,7 +228,7 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      prefetch={!isExternal}
+                      prefetch={isExternal ? false : undefined}
                       target={isExternal ? "_blank" : undefined}
                       rel={isExternal ? "noopener noreferrer" : undefined}
                       onClick={() => setMobileMenuOpen(false)}

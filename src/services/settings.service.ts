@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { CACHE_TAGS } from "@/lib/api/cache-tags";
 import { SiteSettings, AdminProfile } from "@/types";
 
 export interface PublicSettingsResponse {
@@ -23,6 +24,7 @@ export const settingsService = {
   async getPublicSettings(revalidate: number | false = 0) {
     return api.get<PublicSettingsResponse>("/admin/public-settings", {
       revalidate,
+      tags: [CACHE_TAGS.settings],
     });
   },
 
@@ -32,6 +34,7 @@ export const settingsService = {
   async getPublicProfile(revalidate: number | false = 0) {
     return api.get<PublicProfileResponse>("/admin/public-profile", {
       revalidate,
+      tags: [CACHE_TAGS.profile],
     });
   },
 };

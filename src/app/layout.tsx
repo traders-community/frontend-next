@@ -5,9 +5,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { constructMetadata } from "@/lib/seo/metadata";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
-import { siteConfig } from "@/config/seo.config";
 import { GoogleAnalytics } from "@/components/common/google-analytics";
 import { AppToastContainer } from "@/components/common/toast-provider";
+import { settingsService } from "@/services/settings.service";
 import "./globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -33,11 +33,19 @@ const inter = Inter({
 
 export const metadata: Metadata = constructMetadata();
 
-export default function RootLayout({
+/** Public settings for the navbar; cached for 60s and purged on demand by the backend */
+async function getInitialSettings() {
+  const res = await settingsService.getPublicSettings(60);
+  return res.data?.success ? res.data.settings : undefined;
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialSettings = await getInitialSettings();
+
   return (
     <html
       lang="en"
@@ -61,7 +69,7 @@ export default function RootLayout({
           enableSystem
           storageKey="theme"
         >
-          <AppShell>{children}</AppShell>
+          <AppShell initialSettings={initialSettings}>{children}</AppShell>
           <AppToastContainer />
         </ThemeProvider>
         <GoogleAnalytics />

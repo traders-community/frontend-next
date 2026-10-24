@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,11 +8,9 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   RiDashboardLine,
   RiFileList3Line,
-  RiAddCircleLine,
   RiChat1Line,
   RiPriceTag3Line,
   RiSettings4Line,
-  RiUser3Line,
   RiArrowLeftLine,
   RiArrowDownSLine,
   RiArrowRightSLine,
@@ -32,18 +30,11 @@ import {
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
 import { authService } from "@/services/auth.service";
-import { adminService } from "@/services/admin.service";
+import { useAdminProfile } from "@/hooks/use-admin-profile";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminProfileDropdown } from "./admin-profile-dropdown";
 import { cn } from "@/lib/utils";
 import { dropdownMenuVariants, modalBackdropVariants, accordionVariants, EASE } from "@/lib/motion";
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  exact?: boolean;
-}
 
 /**
  * Portal-based Tooltip for Collapsed Sidebar
@@ -145,86 +136,12 @@ export function AdminSidebar() {
   };
 
   // Profile and quick menu state
-  const [profileName, setProfileName] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("admin_display_name") || "Trader's Community";
-      } catch {}
-    }
-    return "Trader's Community";
+  const { profileName, email, avatar, refresh: fetchProfile } = useAdminProfile({
+    fallbackName: "Trader's Community",
+    refreshOnFocus: true,
   });
-  const [email, setEmail] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("admin_email") || "";
-      } catch {}
-    }
-    return "";
-  });
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const fetchProfile = useCallback(() => {
-    adminService
-      .getProfile()
-      .then((res) => {
-        if (res.data?.profile) {
-          const p = res.data.profile;
-          const name = p.displayName || p.name;
-          if (name) {
-            setProfileName(name);
-            try {
-              localStorage.setItem("admin_display_name", name);
-            } catch {}
-          }
-          const emailVal = p.email;
-          if (emailVal) {
-            setEmail(emailVal);
-            try {
-              localStorage.setItem("admin_email", emailVal);
-            } catch {}
-          }
-          if (p.avatar) setAvatar(p.avatar);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchProfile();
-
-    const onProfileUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        const p = customEvent.detail;
-        const name = p.displayName || p.name;
-        if (name) {
-          setProfileName(name);
-          try {
-            localStorage.setItem("admin_display_name", name);
-          } catch {}
-        }
-        const emailVal = p.email;
-        if (emailVal) {
-          setEmail(emailVal);
-          try {
-            localStorage.setItem("admin_email", emailVal);
-          } catch {}
-        }
-        if (p.avatar) setAvatar(p.avatar);
-      } else {
-        fetchProfile();
-      }
-    };
-
-    window.addEventListener("admin_profile_updated", onProfileUpdate);
-    window.addEventListener("focus", fetchProfile);
-    return () => {
-      window.removeEventListener("admin_profile_updated", onProfileUpdate);
-      window.removeEventListener("focus", fetchProfile);
-    };
-  }, [fetchProfile]);
 
   // Re-fetch profile on admin navigation to ensure never stale
   useEffect(() => {

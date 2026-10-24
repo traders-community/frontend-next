@@ -57,7 +57,7 @@ export function ProductStickyBar({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-[#070d1b] border-t border-border/80 dark:border-border/60 shadow-[0_-4px_25px_rgba(0,0,0,0.14)] dark:shadow-[0_-4px_30px_rgba(0,0,0,0.6)] py-3 px-4 sm:px-6"
+          className="fixed bottom-0 inset-x-0 z-[9999] bg-white dark:bg-sticky-bar border-t border-border/80 dark:border-border/60 shadow-[0_-4px_25px_rgba(0,0,0,0.14)] dark:shadow-[0_-4px_30px_rgba(0,0,0,0.6)] py-3 px-4 sm:px-6"
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             {/* Left: Thumbnail & Essential Product Info */}

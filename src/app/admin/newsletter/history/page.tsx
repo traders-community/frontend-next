@@ -6,15 +6,12 @@ import { toast } from "react-toastify";
 import {
   RiMailSendLine,
   RiCheckLine,
-  RiTimeLine,
-  RiAlertFill,
   RiCheckboxCircleLine,
   RiCursorLine,
   RiExternalLinkLine,
   RiEyeLine,
   RiPercentLine,
   RiArticleLine,
-  RiFilterLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiSearchLine,
@@ -24,7 +21,7 @@ import { newsletterService } from "@/services/newsletter.service";
 import { NewsletterCampaign, NewsletterStats, CampaignType, CampaignStatus } from "@/types";
 import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 import { AdminModal } from "@/components/admin/admin-modal";
-import { formatDate, formatDateTime, cn } from "@/lib/utils";
+import { formatDateTime, cn } from "@/lib/utils";
 
 export default function AdminNewsletterHistoryPage() {
   const [campaigns, setCampaigns] = useState<NewsletterCampaign[]>([]);
@@ -46,8 +43,6 @@ export default function AdminNewsletterHistoryPage() {
 
   // Selected Campaign Details Modal
   const [selectedCampaign, setSelectedCampaign] = useState<NewsletterCampaign | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-
   // Click Engagement & Delivery Activity Sub-Pagination & Search State inside Modal
   const [logPage, setLogPage] = useState(1);
   const [logPageSize, setLogPageSize] = useState(5);
@@ -147,7 +142,6 @@ export default function AdminNewsletterHistoryPage() {
     setSelectedCampaign(campaign);
     setLogPage(1);
     setLogSearch("");
-    setDetailsLoading(true);
     try {
       const res = await newsletterService.getCampaignDetails(campaign._id);
       if (res.data?.success && res.data.campaign) {
@@ -155,8 +149,6 @@ export default function AdminNewsletterHistoryPage() {
       }
     } catch {
       // Fallback to existing campaign state
-    } finally {
-      setDetailsLoading(false);
     }
   };
 

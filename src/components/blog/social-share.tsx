@@ -88,7 +88,7 @@ export function SocialShare({ title, subTitle }: SocialShareProps) {
   };
 
   return (
-    <section aria-label="Social sharing" className="w-full mt-10 pt-6 border-t border-[#cecece] dark:border-border/80">
+    <section aria-label="Social sharing" className="w-full mt-10 pt-6 border-t border-divider-soft dark:border-border/80">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
           <p className="text-sm font-semibold mb-3 text-primary">
