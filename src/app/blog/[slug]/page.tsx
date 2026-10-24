@@ -13,9 +13,9 @@ interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Always fetch the article fresh so Soft-nav after an admin edit shows new content/images
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Short ISR window; Soft-nav stays snappy. Admin edits still show after navigation
+// because getBlogById uses revalidate:0 below (no long-lived Data Cache on the article fetch).
+export const revalidate = 60;
 
 /**
  * Admin preview authorization comes from the session cookie mirrored by authService,
@@ -36,7 +36,8 @@ const getAdminToken = async (): Promise<string | undefined> => {
  * Deduplicated Blog Fetcher (memoized per-request lifecycle via React cache)
  */
 const getCachedBlog = cache(async (slug: string, token?: string) => {
-  return blogService.getBlogById(slug, 0, token);
+  // Preview never cached; public reads use a short Data Cache (purged by /api/revalidate)
+  return blogService.getBlogById(slug, token ? 0 : 60, token);
 });
 
 /**
@@ -100,7 +101,7 @@ export default async function BlogDetailPage({ params }: BlogPageProps) {
   // Concurrent server-side data fetching with ISR caching (or no-store for admin preview)
   const [blogRes, profileRes, commentsRes] = await Promise.all([
     getCachedBlog(slug, token),
-    settingsService.getPublicProfile(0),
+    settingsService.getPublicProfile(60),
     blogService.getBlogComments(slug, { page: 1, limit: 10 }, token),
   ]);
 

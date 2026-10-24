@@ -3,95 +3,20 @@ import { BlogSection, BlogSectionSkeleton } from "@/components/blog/blog-section
 import { TradingBackground } from "@/components/common/trading-background";
 import { FadeIn } from "@/components/motion";
 import { constructMetadata } from "@/lib/seo/metadata";
-import { CACHE_TAGS } from "@/lib/api/cache-tags";
-import { blogService, categoryService } from "@/services";
-import { Blog } from "@/types";
 
 export const metadata = constructMetadata({
   canonicalUrl: "/",
   image: "/featured_img.jpg",
 });
 
-// Soft navigation must never reuse a cached home payload (admin publish/unpublish)
-export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 8;
-
-interface HomeProps {
-  searchParams: Promise<{ category?: string; q?: string }>;
-}
-
-interface HomeFeedData {
-  blogs?: Blog[];
-  total: number;
-  hasMore: boolean;
-  categories?: string[];
-}
-
-const firstValue = (value?: string) => (typeof value === "string" ? value.trim() : "");
-
 /**
- * Always hits the API (no Data Cache). Soft-nav Home → About → Home must show the
- * latest publish state without a hard reload. Categories stay tagged so admin
- * mutations can still purge them via /api/revalidate when configured.
+ * Home is a static shell on purpose.
+ *
+ * Soft-nav (About → Home) must paint hero + chrome immediately. The blog list is
+ * fetched client-side inside BlogSection so a slow Render/Mongo round-trip never
+ * blocks the route transition (force-dynamic + server await caused that freeze).
  */
-async function getHomeFeed(category: string, search: string): Promise<HomeFeedData> {
-  const [blogsRes, categoriesRes] = await Promise.all([
-    blogService.getBlogs({
-      page: 1,
-      limit: PAGE_SIZE,
-      category: category || undefined,
-      search: search || undefined,
-      revalidate: 0,
-      tags: [CACHE_TAGS.blogs],
-    }),
-    categoryService.getPublicCategories(0),
-  ]);
-
-  const categories = categoriesRes.data?.success
-    ? [
-        "All",
-        ...categoriesRes.data.categories
-          .filter((c) => c && c.isActive !== false && c.name)
-          .map((c) => c.name),
-      ]
-    : undefined;
-
-  if (!blogsRes.data?.success) {
-    return { blogs: undefined, total: 0, hasMore: false, categories };
-  }
-
-  return {
-    blogs: blogsRes.data.blogs || [],
-    total: blogsRes.data.total ?? 0,
-    hasMore: Boolean(blogsRes.data.hasMore),
-    categories: categories ? Array.from(new Set(categories)) : undefined,
-  };
-}
-
-async function HomeFeed({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const category = firstValue(params.category);
-  const search = firstValue(params.q);
-  const feed = await getHomeFeed(category.toLowerCase() === "all" ? "" : category, search);
-
-  return (
-    <BlogSection
-      initialBlogs={feed.blogs}
-      initialTotal={feed.total}
-      initialHasMore={feed.hasMore}
-      categories={feed.categories}
-      initialCategory={category || "All"}
-      initialSearch={search}
-    />
-  );
-}
-
-export default async function Home({ searchParams }: HomeProps) {
-  // Awaiting searchParams marks the route dynamic so the client router never
-  // reuses a previous RSC payload when navigating back to "/".
-  await searchParams;
-
+export default function Home() {
   return (
     <>
       <TradingBackground />
@@ -120,8 +45,9 @@ export default async function Home({ searchParams }: HomeProps) {
           </FadeIn>
         </header>
 
+        {/* Client island: Suspense for useSearchParams; data loads after paint */}
         <Suspense fallback={<BlogSectionSkeleton />}>
-          <HomeFeed searchParams={searchParams} />
+          <BlogSection />
         </Suspense>
       </div>
     </>

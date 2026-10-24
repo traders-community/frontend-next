@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Blog } from "@/types";
 import { blogService, categoryService } from "@/services";
 import { SearchBar } from "./search-bar";
@@ -18,7 +18,7 @@ import { FadeIn } from "@/components/motion";
 import { EASE } from "@/lib/motion";
 
 interface BlogSectionProps {
-  /** Server-rendered first page. `undefined` means "not provided" and triggers a client fetch. */
+  /** Optional SSR seed. Home intentionally omits this so Soft-nav never waits on the API. */
   initialBlogs?: Blog[];
   initialTotal?: number;
   initialHasMore?: boolean;
@@ -128,10 +128,11 @@ export function BlogSection({
   initialCategory = "All",
   initialSearch = "",
 }: BlogSectionProps) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlCategory = searchParams?.get("category") || initialCategory;
   const urlSearch = searchParams?.get("q") || initialSearch;
-  const hasServerData = initialBlogs !== undefined;
+  const hasServerSeed = Array.isArray(initialBlogs) && initialBlogs.length > 0;
 
   const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
   const [searchQuery, setSearchQuery] = useState<string>(urlSearch);
@@ -144,36 +145,13 @@ export function BlogSection({
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [, setTotal] = useState<number>(initialTotal);
 
-  // Initial cold loading: only when the server did not provide the first page
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(!hasServerData);
-  // Category/search filtering: round spinner shown when clicking categories or searching
+  // Show the articles spinner until the first client fetch finishes (home Soft-nav path)
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(!hasServerSeed);
   const [isFiltering, setIsFiltering] = useState<boolean>(false);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
   const requestIdRef = useRef<number>(0);
 
-  // When the server streams a fresh first page (e.g. navigating back to "/" after an admin
-  // update), adopt it instead of keeping the previously rendered list.
-  const [syncedInitialBlogs, setSyncedInitialBlogs] = useState(initialBlogs);
-  if (hasServerData && initialBlogs !== syncedInitialBlogs) {
-    setSyncedInitialBlogs(initialBlogs);
-    setBlogs(initialBlogs);
-    setPage(1);
-    setHasMore(initialHasMore);
-    setTotal(initialTotal);
-    setSelectedCategory(urlCategory);
-    setSearchQuery(urlSearch);
-    setIsInitialLoading(false);
-    setIsFiltering(false);
-    setLoadingMore(false);
-  }
-
-  // Server data supersedes any client request still in flight
-  useEffect(() => {
-    requestIdRef.current += 1;
-  }, [initialBlogs]);
-
-  // Synchronize URL query params cleanly without reloading page
   const updateUrlParams = useCallback((cat: string, query: string) => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -193,21 +171,18 @@ export function BlogSection({
     window.history.replaceState({}, "", url.toString());
   }, []);
 
-  // Primary filtering function: directly requests filtered blogs from the backend
   const fetchFilteredBlogs = useCallback(
     async (
       cat: string,
       query: string,
       targetPage: number = 1,
-      append: boolean = false,
-      /** When true, keep showing current cards and swap in the result (no spinner) */
-      silent: boolean = false
+      append: boolean = false
     ) => {
       const currentRequestId = ++requestIdRef.current;
 
       if (append) {
         setLoadingMore(true);
-      } else if (!silent) {
+      } else {
         setIsFiltering(true);
       }
 
@@ -256,14 +231,15 @@ export function BlogSection({
     [updateUrlParams]
   );
 
-  // Always re-check the API when this section mounts (Soft-nav Home ← About, hard load, etc.).
-  // If the server already painted a list, refresh silently so the UI does not flash a spinner.
+  // Fresh list every time we land on Home (Soft-nav remount or hard load).
+  // Pathname dep covers client-router cache restores that skip a cold mount.
   useEffect(() => {
-    fetchFilteredBlogs(selectedCategory, searchQuery, 1, false, hasServerData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount / Soft-nav remount only
-  }, []);
+    if (pathname !== "/") return;
+    setIsInitialLoading(true);
+    fetchFilteredBlogs(selectedCategory, searchQuery, 1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Soft-nav / mount refresh only
+  }, [pathname]);
 
-  // Fallback only: categories are normally provided by the server
   useEffect(() => {
     if (categories && categories.length > 0) {
       return;
