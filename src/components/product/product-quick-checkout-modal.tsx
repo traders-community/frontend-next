@@ -194,8 +194,12 @@ export function ProductQuickCheckoutModal({
       const isMockOrder = orderData.razorpayOrderId?.startsWith("order_mock_") ?? false;
 
       // 3. Check for window.Razorpay instance
+      type RazorpayInstance = {
+        open: () => void;
+        on: (event: string, handler: (response: { error?: { description?: string; reason?: string } }) => void) => void;
+      };
       const RazorpayConstructor = (window as unknown as { Razorpay: unknown }).Razorpay as
-        | (new (options: unknown) => { open: () => void })
+        | (new (options: unknown) => RazorpayInstance)
         | undefined;
 
       // Handle Live or Sandbox Razorpay Modal
@@ -251,6 +255,15 @@ export function ProductQuickCheckoutModal({
         };
 
         const rzp = new RazorpayConstructor(options);
+        rzp.on("payment.failed", (response) => {
+          setProcessingPayment(false);
+          setVerifyingPayment(false);
+          const reason =
+            response?.error?.description ||
+            response?.error?.reason ||
+            "Payment failed. Please try again with a different method.";
+          toast.error(reason);
+        });
         rzp.open();
       } else if (!isMockOrder) {
         // Real order but the gateway could not be initialised (script blocked / key missing).
